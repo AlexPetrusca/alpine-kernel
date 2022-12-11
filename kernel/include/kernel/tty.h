@@ -9,6 +9,8 @@
 void terminal_initialize();
 void terminal_scroll_up();
 void terminal_scroll_down();
+void terminal_setcolor(uint8_t color);
+uint16_t terminal_getline();
 
 void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
 void terminal_disable_cursor();

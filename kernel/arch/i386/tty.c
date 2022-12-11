@@ -10,11 +10,10 @@
 static uint8_t cursor_y;
 static uint8_t cursor_x;
 static uint8_t terminal_color;
+static uint16_t terminal_line;
 static uint16_t * terminal_buffer;
 
 void terminal_initialize() {
-	cursor_y = 0;
-	cursor_x = 0;
 	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 	terminal_buffer = (uint16_t *) VGA_MEMORY;
 	terminal_clear();
@@ -39,13 +38,27 @@ void terminal_clearn(uint16_t pos, uint16_t n) {
 }
 
 void terminal_scroll_up() {
-	memmove(terminal_buffer + VGA_WIDTH, terminal_buffer, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_buffer));
-	terminal_clear_row(0);
+	if (terminal_line > 0) {
+		memmove(terminal_buffer + VGA_WIDTH, terminal_buffer, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_buffer));
+		terminal_clear_row(0);
+		terminal_line--;
+	}
 }
 
 void terminal_scroll_down() {
-	memmove(terminal_buffer, terminal_buffer + VGA_WIDTH, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_buffer));
-	terminal_clear_row(VGA_HEIGHT - 1);
+	if (terminal_line < UINT16_MAX) {
+		memmove(terminal_buffer, terminal_buffer + VGA_WIDTH, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_buffer));
+		terminal_clear_row(VGA_HEIGHT - 1);
+		terminal_line++;
+	}
+}
+
+void terminal_setcolor(uint8_t color) {
+	terminal_color = color;
+}
+
+uint16_t terminal_getline() {
+	return terminal_line;
 }
 
 void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
@@ -76,10 +89,6 @@ void terminal_set_cursor_pos_xy(uint8_t x, uint8_t y) {
 
 uint16_t terminal_get_cursor_pos() {
     return cursor_y * VGA_WIDTH + cursor_x;
-}
-
-void terminal_setcolor(uint8_t color) {
-	terminal_color = color;
 }
 
 void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {

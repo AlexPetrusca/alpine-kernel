@@ -35,6 +35,7 @@ stdio/putchar.o \
 stdio/puts.o \
 stdlib/abort.o \
 stdlib/itoa.o \
+string/memchr.o \
 string/memcmp.o \
 string/memcpy.o \
 string/memmove.o \
@@ -44,6 +45,11 @@ string/strrev.o \
 string/strlen.o \
 string/strcmp.o \
 string/strequ.o \
+string/strchr.o \
+string/strtok.o \
+string/strspn.o \
+string/strstr.o \
+string/strcat.o \
 sys/circ_buf.o \
 
 HOSTEDOBJS=\

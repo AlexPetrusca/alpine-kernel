@@ -1,13 +1,13 @@
 #include <stdio.h>
+#include <string.h>
 
 #include <sys/circ_buf.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
 
-char buffer[4096 * 4];
-struct circ_buf cb_struct;
-
 void test_circ_buf() {
+	char buffer[4096 * 4];
+	struct circ_buf cb_struct;
 	circ_buf_t cb = &cb_struct;
 	cb->buf = buffer;
 	cb->capacity = 4;
@@ -27,12 +27,12 @@ void test_circ_buf() {
 	circ_buf_push(cb, s);
 
 	printf("buffer (peekn_head): \n");
-	for (int i = 0; i < cb->size; i++) {
+	for (size_t i = 0; i < cb->size; i++) {
 		char * s = circ_buf_peekn_head(cb, i);
 		printf("    %d: %s\n", i , s);
 	}
 	printf("buffer (peekn_tail): \n");
-	for (int i = 0; i < cb->size; i++) {
+	for (size_t i = 0; i < cb->size; i++) {
 		char * s = circ_buf_peekn_tail(cb, i);
 		printf("    %d: %s\n", i , s);
 	}
@@ -47,8 +47,138 @@ void test_circ_buf() {
 	printf("capacity: %d\n", cb->capacity);
 }
 
+void test_memchr(void) {
+	char * s1 = "";
+	char * s2 = "abcdefabcdef";
+	char * s3 = "11111111111111111111";
+
+	printf("Testing memchr():\nTest1...");
+	if (memchr(s1, 'x', 0) == NULL)
+		printf("passed.");
+	else	printf("FAILED.");
+	printf("\nTest2...");
+	if (memchr(s2, 'y', 0) == NULL)
+		printf("passed.");
+	else	printf("FAILED.");
+	printf("\nTest3...");
+	if ((char *)memchr(s2, 'a', 1) - s2 == 0)
+		printf("passed.");
+	else	printf("FAILED.");
+	printf("\nTest4...");
+	if (memchr(s2, 'd', 2)  == NULL)
+		printf("passed.");
+	else	printf("FAILED.");
+	printf("\nTest5...");
+	if ((char *)memchr(s2, 'd', 12)  - s2 == 3)
+		printf("passed.");
+	else	printf("FAILED.");
+	printf("\nTest6...");
+	if ((char *)memchr(s2, 'f', 12)  - s2 == 5)
+		printf("passed.");
+	else	printf("FAILED.");
+	printf("\nTest7...");
+	if ((char *)memchr(s3, '1', 20)  - s3 == 0)
+		printf("passed.");
+	else	printf("FAILED.");
+	putchar('\n');
+}
+
+void test_memrchr() {
+	printf("Testing memrchr():\n");
+	const char str[] = "http://www.tutorialspoint.com";
+	const char ch = '.';
+
+	char * ret = memrchr(str, ch, strlen(str));
+	printf("String after |%c| is - |%s|\n", ch, ret);
+}
+
+void test_strchr() {
+	printf("Testing strchr():\n");
+	const char str[] = "http://www.tutorialspoint.com";
+	const char ch = '.';
+
+	char * ret = strchr(str, ch);
+	printf("String after |%c| is - |%s|\n", ch, ret);
+}
+
+void test_strrchr() {
+	printf("Testing strrchr():\n");
+	const char str[] = "http://www.tutorialspoint.com";
+	const char ch = '.';
+
+	char * ret = strrchr(str, ch);
+	printf("String after |%c| is - |%s|\n", ch, ret);
+}
+
+void test_strtok() {
+	printf("Testing strtok():\n");
+	char str[80] = "This is - www.tutorialspoint.com - website";
+	const char s[2] = "-";
+	char * token;
+
+	token = strtok(str, s);
+	while (token != NULL) {
+		printf("%s\n", token);
+		token = strtok(NULL, s);
+	}
+}
+
+void test_strtok_r() {
+	printf("Testing strtok_r():\n");
+	char str[80] = "This is - www.tutorialspoint.com - website";
+	const char s[2] = "-";
+	char * rest;
+	char * token;
+	
+	token = strtok_r(str, s, &rest);
+    while (token != NULL) {   
+        printf("%s\n", token);
+		token = strtok_r(NULL, s, &rest);
+    }
+}
+
+void test_strstr() {
+	printf("Testing strstr():\n");
+	const char haystack[20] = "TutorialsPoint";
+	const char needle[10] = "Point";
+	char * ret;
+
+	ret = strstr(haystack, needle);
+	printf("The substring is: %s\n", ret);
+}
+
+void test_strcat() {
+	printf("Testing strcat():\n");
+	char src[50], dest[50];
+	strcpy(src,  "This is source");
+	strcpy(dest, "This is destination");
+
+	strcat(dest, src);
+	printf("Final destination string : |%s|\n", dest);
+}
+
+void test_strncat() {
+	printf("Testing strncat():\n");
+	char src[50], dest[50];
+	strcpy(src,  "This is source");
+	strcpy(dest, "This is destination");
+
+	strncat(dest, src, 15);
+	printf("Final destination string : |%s|\n", dest);
+}
+
 void kernel_main() {
 	terminal_initialize();
-	shell_start();
+	// shell_start();
+
 	// test_circ_buf();
+	// test_memchr();
+	// test_memrchr();
+	// test_strchr();
+	// test_strrchr();
+	// test_strtok();
+	// test_strtok_r();
+	test_strstr();
+	test_strcat();
+	test_strncat();
 }
