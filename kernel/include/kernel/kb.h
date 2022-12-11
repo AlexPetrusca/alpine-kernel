@@ -1,9 +1,12 @@
 #ifndef _KERNEL_KB_H
 #define _KERNEL_KB_H
 
-
-
 #include <sys/io.h>
+
+#define RIGHT_ARROW 1
+#define UP_ARROW 2
+#define LEFT_ARROW 3
+#define DOWN_ARROW 4
 
 unsigned char keyboard_us_layout[128] = {
     0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
@@ -36,15 +39,15 @@ unsigned char keyboard_us_layout[128] = {
     0,	    /* Num Lock*/
     0,	    /* Scroll Lock */
     0,	    /* Home Key */
-    0,	    /* Up Arrow */
+    UP_ARROW,	    /* Up Arrow */
     0,	    /* Page Up */
     '-',
-    0,	    /* Left Arrow */
+    LEFT_ARROW,	    /* Left Arrow */
     0,
-    0,	    /* Right Arrow */
+    RIGHT_ARROW,	    /* Right Arrow */
     '+',
     0,	    /* End Key*/
-    0,	    /* Down Arrow */
+    DOWN_ARROW,	    /* Down Arrow */
     0,	    /* Page Down */
     0,	    /* Insert Key */
     0,	    /* Delete Key */
