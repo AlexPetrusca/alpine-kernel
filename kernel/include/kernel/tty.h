@@ -22,5 +22,6 @@ void terminal_putchar(char c);
 void terminal_write(const char * data, size_t size);
 void terminal_writestring(const char * data);
 void terminal_clear();
+void terminal_clearn(uint16_t pos, uint16_t n);
 
 #endif

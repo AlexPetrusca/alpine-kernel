@@ -22,13 +22,19 @@ void terminal_initialize() {
 
 void terminal_clear_row(uint8_t row) {
 	for (size_t i = 0; i < VGA_WIDTH; i++) {
-		terminal_buffer[i + row * VGA_WIDTH] = vga_entry(' ', terminal_color);
+		terminal_buffer[row * VGA_WIDTH + i] = vga_entry(' ', terminal_color);
 	}
 }
 
 void terminal_clear() {
 	for (size_t i = 0; i < VGA_HEIGHT; i++) {
 		terminal_clear_row(i);
+	}
+}
+
+void terminal_clearn(uint16_t pos, uint16_t n) {
+	for (size_t i = 0; i < n; i++) {
+		terminal_buffer[pos + i] = vga_entry(' ', terminal_color);
 	}
 }
 
