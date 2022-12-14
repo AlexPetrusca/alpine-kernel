@@ -1,5 +1,5 @@
-#ifndef _STRING_H
-#define _STRING_H 1
+#ifndef _ERRNO_H
+#define _ERRNO_H 1
 
 extern int errno;
 

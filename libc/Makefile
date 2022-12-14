@@ -31,6 +31,7 @@ FREEOBJS=\
 $(ARCH_FREEOBJS) \
 stdio/printf.o \
 stdio/sprintf.o \
+stdio/getchar.o \
 stdio/putchar.o \
 stdio/puts.o \
 stdlib/abort.o \

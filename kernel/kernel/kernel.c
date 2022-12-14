@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <sys/circ_buf.h>
+#include <kernel/kb.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
 
@@ -47,7 +48,7 @@ void test_circ_buf() {
 	printf("capacity: %d\n", cb->capacity);
 }
 
-void test_memchr(void) {
+void test_memchr() {
 	char * s1 = "";
 	char * s2 = "abcdefabcdef";
 	char * s3 = "11111111111111111111";
@@ -167,10 +168,25 @@ void test_strncat() {
 	printf("Final destination string : |%s|\n", dest);
 }
 
+void test_kb() {
+	while (1) {
+		int scan = keyboard_readscan();
+		char ch = keyboard_scan2ch(scan);
+		if (keyboard_scan2release(scan)) {
+			keyboard_set_released(ch);
+		} else if (keyboard_is_released(ch)) {
+			keyboard_set_pressed(ch);
+            printf("{scan: %d, ch: %d, display: %c}\n", scan & 0x7F, ch, ch);
+		}
+	}
+}
+
 void kernel_main() {
 	terminal_initialize();
-	// shell_start();
+	shell_start();
+	// test(); // todo: remove me
 
+	// test_kb();
 	// test_circ_buf();
 	// test_memchr();
 	// test_memrchr();
@@ -178,7 +194,7 @@ void kernel_main() {
 	// test_strrchr();
 	// test_strtok();
 	// test_strtok_r();
-	test_strstr();
-	test_strcat();
-	test_strncat();
+	// test_strstr();
+	// test_strcat();
+	// test_strncat();
 }

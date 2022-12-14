@@ -3,14 +3,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <kernel/tty.h>
-#include <kernel/kb.h>
 #include <sys/circ_buf.h>
+#include <kernel/kb.h>
+#include <kernel/tty.h>
+#include <kernel/sh.h>
 
 #define MAX_HISTORY 5
 #define MAX_COMMAND 4096
 
-char history_buffer[(MAX_HISTORY + 1) * MAX_COMMAND];
+char history_buf[(MAX_HISTORY + 1) * (MAX_COMMAND + 1)];
 struct circ_buf history_circ_buf;
 
 int16_t prompt_limit;
@@ -67,6 +68,7 @@ void shell_execute() {
         } else {
             printf("ash: command not found: %s", command);
         }
+        // todo: if command "ls" is executed multiple times, history should only contain "ls" once
         circ_buf_push(&history_circ_buf, "\0");
     }
     shell_prompt();
@@ -86,7 +88,9 @@ void shell_right_arrow() {
 }
 
 void shell_up_arrow() {
-    if ((history_idx == 0 && command_idx == 0) || history_idx > 0) {
+    if (keyboard_is_pressed(OPTION)) {
+        terminal_scroll_up();
+    } else if ((history_idx == 0 && command_idx == 0) || history_idx > 0) {
         if (history_idx < history_circ_buf.size - 1) {
             history_idx++;
             shell_load_history();
@@ -108,14 +112,20 @@ void shell_left_arrow() {
 }
 
 void shell_down_arrow() {
-    if (history_idx > 0) {
+    if (keyboard_is_pressed(OPTION)) {
+        terminal_scroll_down();
+    } else if (history_idx > 0) {
         history_idx--;
         shell_load_history();
     }
 }
 
 void shell_tab() {
+    // todo: implement TAB
+}
 
+void shell_caps_lock() {
+    // todo: implement CAPS_LOCK
 }
 
 void shell_backspace() {
@@ -126,8 +136,12 @@ void shell_backspace() {
     shell_write_command_buffer('\0');
 }
 
-void shell_handle_input(char ch) {
+void shell_handle_input(int ch) {
     switch (ch) {
+        case CONTROL ... RIGHT_SHIFT:
+        case F1 ... F12:
+        case ESC:
+            break;
         case RIGHT_ARROW:
             shell_right_arrow();
             break;
@@ -140,6 +154,9 @@ void shell_handle_input(char ch) {
         case DOWN_ARROW:
             shell_down_arrow();
             break;
+        case CAPS_LOCK:
+            shell_caps_lock();
+            break;
         case '\t':
             shell_tab();
             break;
@@ -150,14 +167,16 @@ void shell_handle_input(char ch) {
             shell_execute();
             break;
         default:
-            printf("%c", ch);
-            shell_write_command_buffer(ch);
-            command_idx++;
+            if (command_idx < MAX_COMMAND) {
+                printf("%c", ch);
+                shell_write_command_buffer(ch);
+                command_idx++;
+            }
     }
 }
 
 void shell_initialize() {;
-    history_circ_buf.buf = history_buffer;
+    history_circ_buf.buf = history_buf;
     history_circ_buf.capacity = MAX_HISTORY + 1;
     history_circ_buf.granularity = MAX_COMMAND;
     circ_buf_push(&history_circ_buf, "\0");
@@ -169,15 +188,8 @@ void shell_initialize() {;
 
 void shell_start() {
     shell_initialize();
-	bool pressed[128];
-	while (1) {
-		int scan = keyboard_readscan();
-		char ch = keyboard_scan2ch(scan);
-		if (keyboard_scan2release(scan)) {
-			pressed[scan & 0x7F] = false;
-		} else if (!pressed[scan & 0x7F]) {
-            shell_handle_input(ch);
-			pressed[scan & 0x7F] = true;
-		}
+	while (true) {
+        int ch = keyboard_getchar();
+        shell_handle_input(ch);
 	}
 }

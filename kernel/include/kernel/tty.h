@@ -26,4 +26,6 @@ void terminal_writestring(const char * data);
 void terminal_clear();
 void terminal_clearn(uint16_t pos, uint16_t n);
 
+void test(); // todo: remove
+
 #endif

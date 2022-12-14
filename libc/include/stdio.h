@@ -14,6 +14,7 @@ int sprintf(char * str, const char * format, ...);
 int vprintf(const char * format, va_list ap);
 int vsprintf(char * str, const char * format, va_list ap);
 
+int getchar();
 int putchar(int c);
 int puts(const char * s);
 
