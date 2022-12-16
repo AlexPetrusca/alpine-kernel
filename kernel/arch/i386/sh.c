@@ -27,12 +27,6 @@ static inline void shell_write_command_buffer(char ch) {
 }
 
 void shell_command_printf(const char * format, ...) {
-    // size_t prompt_len = strlen("$ ");
-    // size_t command_line_len = prompt_len + command_idx;
-    // size_t offset = command_line_len / VGA_WIDTH + (command_line_len % VGA_WIDTH) ? 1 : 0;
-    // prompt_limit = VGA_MEMORY + VGA_HEIGHT * (VGA_WIDTH - offset - 1) + prompt_len;
-
-    // todo: can we drop use of terminal_getline
     int pre_line = terminal_getline();
     
     va_list arg;
@@ -142,10 +136,11 @@ void shell_tab() {
 }
 
 void shell_backspace() {
-    // todo: fix backspace at shell_limit
-    terminal_delete(1);
-    command_idx--;
-    shell_write_command_buffer('\0');
+    if (terminal_get_cursor_pos() > prompt_limit) {
+        command_idx--;
+        shell_write_command_buffer('\0');
+        terminal_delete(1);
+    }
 }
 
 void shell_handle_input(int ch) {
