@@ -156,10 +156,9 @@ void terminal_delete(size_t n) {
 			circ_buf_dequeue_tail(&terminal_circ_line_buf);
 			tail_ptr = *((char **) circ_buf_peek_tail(&terminal_circ_line_buf));
 		}
-
 		uint16_t pos = terminal_get_cursor_pos();
 		terminal_set_cursor_pos(pos - 1);
-		terminal_vga_buffer[pos -1] = vga_entry(' ', terminal_color);
+		terminal_vga_buffer[pos - 1] = vga_entry(' ', terminal_color);
 
 		*terminal_buf_wptr = '\0';
 		terminal_buffer_decrement_ptr(&terminal_buf_wptr);
@@ -251,14 +250,14 @@ void terminal_scroll_up() {
 }
 
 void terminal_scroll_down() {
-	if (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, VGA_HEIGHT) != terminal_line_buf + terminal_circ_line_buf.tail * sizeof(char *)) {
+	if (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y) != terminal_line_buf + (terminal_circ_line_buf.tail - 1) * sizeof(char *)) {
 		terminal_scroll_down_force();
 
 		uint8_t cursor_x_temp = cursor_x;
 		uint8_t cursor_y_temp = cursor_y;
-		terminal_set_cursor_pos_xy(0, VGA_HEIGHT - 1);
+		terminal_set_cursor_pos_xy(0, cursor_y);
 		// todo: refactor out
-		char * line = *((char **) (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, VGA_HEIGHT - 1)));
+		char * line = *((char **) (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y)));
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
 			terminal_buffer_increment_ptr(&line);
@@ -342,8 +341,10 @@ void terminal_writestring(const char * data) {
 	// buffer limit: TERMINAL_BUFFER_SIZE = 300 --> a, b, c, d, ... until DEQUEUE (check validity)
 	// line limit: TERMINAL_LINE_LIMIT = 30 --> a, b, c, d, ... until DEQUEUE (check validity + only scroll by 5)
 
-	// test multi-line commands in sh
+	// test writing multi-line commands
 	// test recalling multi-line commands from history
+	// test scrolling after writing a multi-line command (2 lines) and then deleting down to 1 line
+	// test scrolling after recalling multi-line command (4+ lines) then recalling small command (1 line)
 
 void terminal_putchar_s(char c) {
 	switch (c) {
