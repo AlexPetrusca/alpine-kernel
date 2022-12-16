@@ -80,7 +80,7 @@ void * circ_buf_peekn_head(circ_buf_t cb, size_t n) {
 
 
 void * circ_buf_peek_tail(circ_buf_t cb) {
-    return cb->buf + circ_buf_granular_index(cb, cb->tail);
+    return cb->buf + circ_buf_granular_index(cb, cb->tail - 1);
 }
 
 void * circ_buf_peekn_tail(circ_buf_t cb, size_t n) {

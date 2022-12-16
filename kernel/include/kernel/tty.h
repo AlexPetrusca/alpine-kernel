@@ -18,13 +18,12 @@ uint16_t terminal_get_cursor_pos();
 void terminal_set_cursor_pos(uint16_t pos);
 void terminal_set_cursor_pos_xy(uint8_t x, uint8_t y);
 
-char terminal_getchar(uint16_t pos);
 char * terminal_getbuffer(char * s, uint16_t offset, uint16_t n);
 void terminal_putchar(char c);
 void terminal_write(const char * data, size_t size);
 void terminal_writestring(const char * data);
 void terminal_clear();
-void terminal_clearn(uint16_t pos, uint16_t n);
+void terminal_delete(size_t n);
 
 void test(); // todo: remove
 

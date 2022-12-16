@@ -116,7 +116,6 @@ static int vwprintf(char * str, const char * format, va_list ap, bool (*write)(c
 				return -1;
 			written += len;
 		} else {
-			write_tty(NULL, "HIT\n", 4);
 			format = format_begun_at;
 			size_t len = strlen(format);
 			if (maxrem < len) {

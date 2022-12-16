@@ -26,17 +26,38 @@ static inline void shell_write_command_buffer(char ch) {
     shell_command_buffer()[command_idx] = ch;
 }
 
+int shell_printf(const char * format, ...) {
+    // todo: can we drop use of terminal_getline
+    int pre_line = terminal_getline();
+    
+    int written;
+    va_list arg;
+	va_start(arg, format);
+    written = vprintf(format, arg);
+    va_end(arg);
+
+    int post_line = terminal_getline();
+
+    if (post_line > pre_line) {
+        prompt_limit -= VGA_WIDTH * (post_line - pre_line);
+    }
+
+    return written;
+}
+
 void shell_prompt() {
     if (terminal_get_cursor_pos() % VGA_WIDTH != 0) {
-        printf("\n");
+        shell_printf("\n");
     }
-    printf("$ ");
+    shell_printf("$ ");
     prompt_limit = terminal_get_cursor_pos();
     history_idx = 0;
     command_idx = 0;
 }
 
 void shell_load_history() {
+    terminal_delete(command_idx);
+
     char * command = shell_command_buffer();
     if (history_idx == 0) {
         command[0] = '\0';
@@ -45,18 +66,12 @@ void shell_load_history() {
         strcpy(command, circ_buf_peekn(&history_circ_buf, history_idx));
         command_idx = strlen(command);
     }
-    int pre_line = terminal_getline();
-    terminal_clearn(prompt_limit, MAX_COMMAND);
     terminal_set_cursor_pos(prompt_limit);
-    printf("%s", command);
-    int post_line = terminal_getline();
-    if (post_line > pre_line) {
-        prompt_limit -= VGA_WIDTH * (post_line - pre_line);
-    }
+    shell_printf("%s", command);
 }
 
 void shell_execute() {
-    printf("\n");
+    shell_printf("\n");
     shell_write_command_buffer('\0');
     char * command = shell_command_buffer();
     // todo: instead, check if input contains only whitespace
@@ -66,7 +81,7 @@ void shell_execute() {
                 printf("%d: %s\n", i, circ_buf_peekn(&history_circ_buf, i));
             }
         } else {
-            printf("ash: command not found: %s", command);
+            shell_printf("ash: command not found: %s", command);
         }
         // todo: if command "ls" is executed multiple times, history should only contain "ls" once
         circ_buf_push(&history_circ_buf, "\0");
@@ -124,21 +139,16 @@ void shell_tab() {
     // todo: implement TAB
 }
 
-void shell_caps_lock() {
-    // todo: implement CAPS_LOCK
-}
-
 void shell_backspace() {
-    shell_left_arrow();
-    putchar(' ');
-    shell_left_arrow();
+    // todo: fix backspace at shell_limit
+    terminal_delete(1);
     command_idx--;
     shell_write_command_buffer('\0');
 }
 
 void shell_handle_input(int ch) {
     switch (ch) {
-        case CONTROL ... RIGHT_SHIFT:
+        case CONTROL ... SCROLL_LOCK:
         case F1 ... F12:
         case ESC:
             break;
@@ -154,9 +164,6 @@ void shell_handle_input(int ch) {
         case DOWN_ARROW:
             shell_down_arrow();
             break;
-        case CAPS_LOCK:
-            shell_caps_lock();
-            break;
         case '\t':
             shell_tab();
             break;
@@ -168,7 +175,7 @@ void shell_handle_input(int ch) {
             break;
         default:
             if (command_idx < MAX_COMMAND) {
-                printf("%c", ch);
+                shell_printf("%c", ch);
                 shell_write_command_buffer(ch);
                 command_idx++;
             }
@@ -182,7 +189,7 @@ void shell_initialize() {;
     circ_buf_push(&history_circ_buf, "\0");
 
     terminal_enable_cursor(14, 15);
-    printf("Welcome to alpine shell!\n\n");
+    shell_printf("Welcome to alpine shell!\n\n");
     shell_prompt();
 }
 
