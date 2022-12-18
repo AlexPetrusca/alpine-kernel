@@ -13,9 +13,9 @@
 char terminal_buf[TERMINAL_BUFFER_SIZE];
 char * terminal_buf_wptr;
 
-char terminal_line_buf[TERMINAL_LINE_LIMIT * sizeof(char *)]; // todo: maybe convert to char * []
+char * terminal_line_buf[TERMINAL_LINE_LIMIT];
 struct circ_buf terminal_circ_line_buf;
-char * terminal_line_buf_rptr;
+char ** terminal_line_buf_rptr;
 
 uint8_t cursor_x;
 uint8_t cursor_y;
@@ -57,30 +57,30 @@ static inline char * terminal_buffer_add_ptr(char * ptr, size_t n) {
 	return new_ptr;
 }
 
-static inline void terminal_line_buffer_increment_ptr(char ** ptr) {
-	(*ptr) += sizeof(char *);
-	if (*ptr == terminal_line_buf + TERMINAL_LINE_LIMIT * sizeof(char *)) { // reached end, wrap around
+static inline void terminal_line_buffer_increment_ptr(char *** ptr) {
+	(*ptr)++;
+	if (*ptr == terminal_line_buf + TERMINAL_LINE_LIMIT) { // reached end, wrap around
 		*ptr = terminal_line_buf;
 	}
 }
 
-static inline void terminal_line_buffer_decrement_ptr(char ** ptr) {
+static inline void terminal_line_buffer_decrement_ptr(char *** ptr) {
 	if (*ptr == terminal_line_buf) { // reached end, wrap around
-		*ptr = terminal_line_buf + TERMINAL_LINE_LIMIT * sizeof(char *);
+		*ptr = terminal_line_buf + TERMINAL_LINE_LIMIT;
 	}
-	(*ptr) -= sizeof(char *);
+	(*ptr)--;
 }
 
-static inline char * terminal_line_buffer_add_ptr(char * ptr, size_t n) {
-	char * new_ptr = ptr;
+static inline char ** terminal_line_buffer_add_ptr(char ** ptr, size_t n) {
+	char ** new_ptr = ptr;
 	for (size_t i = 0; i < n; i++) {
 		terminal_line_buffer_increment_ptr(&new_ptr);
 	}
 	return new_ptr;
 }
 
-static inline char * terminal_line_buffer_subtract_ptr(char * ptr, size_t n) {
-	char * new_ptr = ptr;
+static inline char ** terminal_line_buffer_subtract_ptr(char ** ptr, size_t n) {
+	char ** new_ptr = ptr;
 	for (size_t i = 0; i < n; i++) {
 		terminal_line_buffer_decrement_ptr(&new_ptr);
 	}
@@ -88,7 +88,7 @@ static inline char * terminal_line_buffer_subtract_ptr(char * ptr, size_t n) {
 }
 
 static inline char * terminal_cursorxy_to_buffer_wptr(uint8_t x, uint8_t y) {
-	char * line_ptr = *((char **) terminal_line_buffer_add_ptr(terminal_line_buf_rptr, y));
+	char * line_ptr = *(terminal_line_buffer_add_ptr(terminal_line_buf_rptr, y));
 	return terminal_buffer_add_ptr(line_ptr, x);
 }
 
@@ -122,7 +122,7 @@ void terminal_buffer_enqueue_line(char * line) {
 }
 
 void terminal_initialize() {
-	terminal_circ_line_buf.buf = terminal_line_buf;
+	terminal_circ_line_buf.buf = (char *) terminal_line_buf;
     terminal_circ_line_buf.capacity = TERMINAL_LINE_LIMIT;
     terminal_circ_line_buf.granularity = sizeof(char *);
 
@@ -230,14 +230,14 @@ void terminal_scroll_down_force() {
 }
 
 void terminal_scroll_up() {
-	if (terminal_line_buf_rptr != terminal_line_buf + terminal_circ_line_buf.head * sizeof(char *)) {
+	if (terminal_line_buf_rptr != terminal_line_buf + terminal_circ_line_buf.head) {
 		terminal_scroll_up_force();
 
 		uint8_t cursor_x_temp = cursor_x;
 		uint8_t cursor_y_temp = cursor_y;
 		terminal_set_cursor_pos_xy(0, 0);
 		// todo: refactor out
-		char * line = *((char **) terminal_line_buf_rptr);
+		char * line = *(terminal_line_buf_rptr);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
 			terminal_buffer_increment_ptr(&line);
@@ -247,14 +247,14 @@ void terminal_scroll_up() {
 }
 
 void terminal_scroll_down() {
-	if (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y) != terminal_line_buf + (terminal_circ_line_buf.tail - 1) * sizeof(char *)) {
+	if (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y) != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
 		terminal_scroll_down_force();
 
 		uint8_t cursor_x_temp = cursor_x;
 		uint8_t cursor_y_temp = cursor_y;
 		terminal_set_cursor_pos_xy(0, cursor_y);
 		// todo: refactor out
-		char * line = *((char **) (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y)));
+		char * line = *terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
 			terminal_buffer_increment_ptr(&line);
