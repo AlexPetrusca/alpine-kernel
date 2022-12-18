@@ -52,6 +52,7 @@ string/strspn.o \
 string/strstr.o \
 string/strcat.o \
 sys/circ_buf.o \
+sys/circ_buf_ptr.o \
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

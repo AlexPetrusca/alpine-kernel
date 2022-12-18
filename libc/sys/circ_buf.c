@@ -1,7 +1,12 @@
-#include <stdio.h>
 #include <stddef.h>
 
 #include <sys/circ_buf.h>
+
+void circ_buf_init(circ_buf_t cb, void * buf, size_t capacity, size_t granularity) {
+    cb->buf = (char *) buf;
+    cb->capacity = capacity;
+    cb->granularity = granularity;
+}
 
 static inline size_t circ_buf_granular_index(circ_buf_t cb, size_t index) {
     return index * cb->granularity;

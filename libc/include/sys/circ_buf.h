@@ -1,7 +1,6 @@
 #ifndef _SYS_CIRC_BUF_H
 #define _SYS_CIRC_BUF_H
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -17,6 +16,8 @@ typedef struct circ_buf {
 } * circ_buf_t;
 
 __BEGIN_DECLS
+
+void circ_buf_init(circ_buf_t cb, void * buf, size_t capacity, size_t granularity);
 
 void circ_buf_enqueue(circ_buf_t cb, void * val);
 void * circ_buf_dequeue(circ_buf_t cb);
