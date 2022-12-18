@@ -8,8 +8,6 @@
 
 #define TERMINAL_BUFFER_SIZE 65535
 #define TERMINAL_LINE_LIMIT 1000
-// #define TERMINAL_BUFFER_SIZE 65535
-// #define TERMINAL_LINE_LIMIT 30
 #define TAB_LENGTH 8
 
 char terminal_buf[TERMINAL_BUFFER_SIZE];
@@ -193,7 +191,6 @@ void terminal_set_cursor_pos_xy(uint8_t x, uint8_t y) {
 	cursor_x = x;
 	cursor_y = y;
 
-	// todo: set terminal buffer cursor (terminal_buf_wptr) as well
 	terminal_buf_wptr = terminal_cursorxy_to_buffer_wptr(x, y);
 
 	uint16_t pos = y * VGA_WIDTH + x;
