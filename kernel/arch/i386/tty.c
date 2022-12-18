@@ -20,10 +20,8 @@ char ** terminal_line_buf_rptr;
 uint8_t cursor_x;
 uint8_t cursor_y;
 uint8_t terminal_color;
-uint16_t terminal_line; // todo: maybe remove altogether
-uint16_t * terminal_vga_buffer;
-
-// todo: refactor literally EVERYTHING (not just in this file)
+uint16_t terminal_line;
+uint16_t * terminal_vga_buf;
 
 // -----
 void terminal_writeint_s(int num); // remove me
@@ -33,92 +31,89 @@ void terminal_putchar_s(char c); // remove me
 void terminal_scroll_down_force(); // remove me
 // -----
 
-static inline void terminal_buffer_increment_ptr(char ** ptr) {
+static inline void terminal_buf_increment_ptr(char ** ptr) {
 	(*ptr)++;
-	if (*ptr == terminal_buf + TERMINAL_BUFFER_SIZE) { // reached end, wrap around
-		// terminal_writestring_s("-WRAP-");
+	if (*ptr == terminal_buf + TERMINAL_BUFFER_SIZE) {
 		*ptr = terminal_buf;
 	}
 }
 
-static inline void terminal_buffer_decrement_ptr(char ** ptr) {
-	if (*ptr == terminal_buf) { // reached end, wrap around
-		// terminal_writestring_s("-WRAP-");
+static inline void terminal_buf_decrement_ptr(char ** ptr) {
+	if (*ptr == terminal_buf) {
 		*ptr = terminal_buf + TERMINAL_BUFFER_SIZE;
 	}
 	(*ptr)--;
 }
 
-static inline char * terminal_buffer_add_ptr(char * ptr, size_t n) {
+static inline char * terminal_buf_add_ptr(char * ptr, size_t n) {
 	char * new_ptr = ptr;
 	for (size_t i = 0; i < n; i++) {
-		terminal_buffer_increment_ptr(&new_ptr);
+		terminal_buf_increment_ptr(&new_ptr);
 	}
 	return new_ptr;
 }
 
-static inline void terminal_line_buffer_increment_ptr(char *** ptr) {
+static inline void terminal_line_buf_increment_ptr(char *** ptr) {
 	(*ptr)++;
 	if (*ptr == terminal_line_buf + TERMINAL_LINE_LIMIT) { // reached end, wrap around
 		*ptr = terminal_line_buf;
 	}
 }
 
-static inline void terminal_line_buffer_decrement_ptr(char *** ptr) {
+static inline void terminal_line_buf_decrement_ptr(char *** ptr) {
 	if (*ptr == terminal_line_buf) { // reached end, wrap around
 		*ptr = terminal_line_buf + TERMINAL_LINE_LIMIT;
 	}
 	(*ptr)--;
 }
 
-static inline char ** terminal_line_buffer_add_ptr(char ** ptr, size_t n) {
+static inline char ** terminal_line_buf_add_ptr(char ** ptr, size_t n) {
 	char ** new_ptr = ptr;
 	for (size_t i = 0; i < n; i++) {
-		terminal_line_buffer_increment_ptr(&new_ptr);
+		terminal_line_buf_increment_ptr(&new_ptr);
 	}
 	return new_ptr;
 }
 
-static inline char ** terminal_line_buffer_subtract_ptr(char ** ptr, size_t n) {
+static inline char ** terminal_line_buf_subtract_ptr(char ** ptr, size_t n) {
 	char ** new_ptr = ptr;
 	for (size_t i = 0; i < n; i++) {
-		terminal_line_buffer_decrement_ptr(&new_ptr);
+		terminal_line_buf_decrement_ptr(&new_ptr);
 	}
 	return new_ptr;
 }
 
-static inline char * terminal_cursorxy_to_buffer_wptr(uint8_t x, uint8_t y) {
-	char * line_ptr = *(terminal_line_buffer_add_ptr(terminal_line_buf_rptr, y));
-	return terminal_buffer_add_ptr(line_ptr, x);
+static inline char * terminal_cursorxy_to_buf_wptr(uint8_t x, uint8_t y) {
+	char * line_ptr = *(terminal_line_buf_add_ptr(terminal_line_buf_rptr, y));
+	return terminal_buf_add_ptr(line_ptr, x);
 }
 
-static inline char * terminal_cursor_to_buffer_wptr(uint16_t pos) {
-	return terminal_cursorxy_to_buffer_wptr(pos % VGA_WIDTH, pos / VGA_WIDTH);
+static inline char * terminal_cursor_to_buf_wptr(uint16_t pos) {
+	return terminal_cursorxy_to_buf_wptr(pos % VGA_WIDTH, pos / VGA_WIDTH);
 }
 
 // todo: move this somewhere else
-static inline char * terminal_buffer_dequeue_line() {
-	// terminal_writestring_s("-DEQUEUE-");
+static inline char * terminal_buf_dequeue_line() {
 	return *((char **) circ_buf_dequeue(&terminal_circ_line_buf));
 }
 
 // todo: move this somewhere else
-static inline char * terminal_buffer_read_line(size_t n) {
+static inline char * terminal_buf_read_line(size_t n) {
 	return *((char **) circ_buf_peekn(&terminal_circ_line_buf, n));
 }
 
 // todo: move this somewhere else
-void terminal_buffer_write_null_terminator() {
-	if (terminal_circ_line_buf.size > 1 && terminal_buf_wptr == terminal_buffer_read_line(0)) {
-		terminal_buffer_dequeue_line();
+void terminal_buf_write_null_terminator() {
+	if (terminal_circ_line_buf.size > 1 && terminal_buf_wptr == terminal_buf_read_line(0)) {
+		terminal_buf_dequeue_line();
 	}
 	*terminal_buf_wptr = '\0';
 }
 
 // todo: move this somewhere else
-void terminal_buffer_enqueue_line(char * line) {	
+void terminal_buf_enqueue_line(char * line) {	
 	circ_buf_enqueue(&terminal_circ_line_buf, &line);
-	// terminal_buffer_write_null_terminator(); // do we need this?
+	// terminal_buf_write_null_terminator(); // do we need this?
 }
 
 void terminal_initialize() {
@@ -128,16 +123,16 @@ void terminal_initialize() {
 
 	terminal_buf_wptr = terminal_buf;
 	terminal_line_buf_rptr = terminal_line_buf;
-	terminal_buffer_enqueue_line(terminal_buf_wptr);
+	terminal_buf_enqueue_line(terminal_buf_wptr);
 
 	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-	terminal_vga_buffer = (uint16_t *) VGA_MEMORY;
+	terminal_vga_buf = (uint16_t *) VGA_MEMORY;
 	terminal_clear();
 }
 
 void terminal_clear_row(uint8_t row) {
 	for (size_t i = 0; i < VGA_WIDTH; i++) {
-		terminal_vga_buffer[row * VGA_WIDTH + i] = vga_entry(' ', terminal_color);
+		terminal_vga_buf[row * VGA_WIDTH + i] = vga_entry(' ', terminal_color);
 	}
 }
 
@@ -156,10 +151,10 @@ void terminal_delete(size_t n) {
 		}
 		uint16_t pos = terminal_get_cursor_pos();
 		terminal_set_cursor_pos(pos - 1);
-		terminal_vga_buffer[pos - 1] = vga_entry(' ', terminal_color);
+		terminal_vga_buf[pos - 1] = vga_entry(' ', terminal_color);
 
 		*terminal_buf_wptr = '\0';
-		terminal_buffer_decrement_ptr(&terminal_buf_wptr);
+		terminal_buf_decrement_ptr(&terminal_buf_wptr);
 	}
 }
 
@@ -190,9 +185,7 @@ void terminal_set_cursor_pos(uint16_t pos) {
 void terminal_set_cursor_pos_xy(uint8_t x, uint8_t y) {
 	cursor_x = x;
 	cursor_y = y;
-
-	terminal_buf_wptr = terminal_cursorxy_to_buffer_wptr(x, y);
-
+	terminal_buf_wptr = terminal_cursorxy_to_buf_wptr(x, y);
 	uint16_t pos = y * VGA_WIDTH + x;
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, (uint8_t) (pos & 0xFF));
@@ -205,28 +198,28 @@ uint16_t terminal_get_cursor_pos() {
 }
 
 void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y) {
-	terminal_vga_buffer[y * VGA_WIDTH + x] = vga_entry(c, color);
+	terminal_vga_buf[y * VGA_WIDTH + x] = vga_entry(c, color);
 }
 
 char * terminal_getbuffer(char * s, uint16_t offset, uint16_t n) {
 	for (size_t i = 0; i < n; i++) {
-		s[i] = terminal_vga_buffer[i + offset];
+		s[i] = terminal_vga_buf[i + offset];
 	}
 	return s;
 }
 
 void terminal_scroll_up_force() {
-	memmove(terminal_vga_buffer + VGA_WIDTH, terminal_vga_buffer, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_vga_buffer));
+	memmove(terminal_vga_buf + VGA_WIDTH, terminal_vga_buf, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_vga_buf));
 	terminal_clear_row(0);
+	terminal_line_buf_decrement_ptr(&terminal_line_buf_rptr);
 	terminal_line--;
-	terminal_line_buffer_decrement_ptr(&terminal_line_buf_rptr);
 }
 
 void terminal_scroll_down_force() {
-	memmove(terminal_vga_buffer, terminal_vga_buffer + VGA_WIDTH, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_vga_buffer));
+	memmove(terminal_vga_buf, terminal_vga_buf + VGA_WIDTH, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_vga_buf));
 	terminal_clear_row(VGA_HEIGHT - 1);
+	terminal_line_buf_increment_ptr(&terminal_line_buf_rptr);
 	terminal_line++;
-	terminal_line_buffer_increment_ptr(&terminal_line_buf_rptr);
 }
 
 void terminal_scroll_up() {
@@ -240,24 +233,24 @@ void terminal_scroll_up() {
 		char * line = *(terminal_line_buf_rptr);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 		terminal_set_cursor_pos_xy(cursor_x_temp, cursor_y_temp);
 	}
 }
 
 void terminal_scroll_down() {
-	if (terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y) != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
+	if (terminal_line_buf_add_ptr(terminal_line_buf_rptr, cursor_y) != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
 		terminal_scroll_down_force();
 
 		uint8_t cursor_x_temp = cursor_x;
 		uint8_t cursor_y_temp = cursor_y;
 		terminal_set_cursor_pos_xy(0, cursor_y);
 		// todo: refactor out
-		char * line = *terminal_line_buffer_add_ptr(terminal_line_buf_rptr, cursor_y);
+		char * line = *terminal_line_buf_add_ptr(terminal_line_buf_rptr, cursor_y);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 		terminal_set_cursor_pos_xy(cursor_x_temp, cursor_y_temp);
 	}
@@ -265,29 +258,28 @@ void terminal_scroll_down() {
 
 // todo: move this somewhere else
 // todo: WOW... refactor this shit.
-void terminal_buffer_write(char c) {
-	if (terminal_circ_line_buf.size > 1 && terminal_buf_wptr == terminal_buffer_read_line(0)) {
-		// terminal_writestring_s("-DEQUEUE-");
-		terminal_buffer_dequeue_line();
+void terminal_buf_write(char c) {
+	if (terminal_circ_line_buf.size > 1 && terminal_buf_wptr == terminal_buf_read_line(0)) {
+		terminal_buf_dequeue_line();
 	}
 	if (c == '\n') {
 		*terminal_buf_wptr = '\0';
-		terminal_buffer_increment_ptr(&terminal_buf_wptr);
-		terminal_buffer_enqueue_line(terminal_buf_wptr);
+		terminal_buf_increment_ptr(&terminal_buf_wptr);
+		terminal_buf_enqueue_line(terminal_buf_wptr);
 	} else {
 		*terminal_buf_wptr = c;
-		terminal_buffer_increment_ptr(&terminal_buf_wptr);
-		terminal_buffer_write_null_terminator();
+		terminal_buf_increment_ptr(&terminal_buf_wptr);
+		terminal_buf_write_null_terminator();
 		if (cursor_x == VGA_WIDTH - 1) {
-			terminal_buffer_write_null_terminator();
-			terminal_buffer_increment_ptr(&terminal_buf_wptr);
-			terminal_buffer_enqueue_line(terminal_buf_wptr);
+			terminal_buf_write_null_terminator();
+			terminal_buf_increment_ptr(&terminal_buf_wptr);
+			terminal_buf_enqueue_line(terminal_buf_wptr);
 		}
 	}
 }
 
 void terminal_putchar(char c) {
-	terminal_buffer_write(c);
+	terminal_buf_write(c);
 	switch (c) {
 		case '\t':
 			while ((cursor_x + 1) % TAB_LENGTH != 0) {
@@ -398,10 +390,10 @@ void testOverflowByOneNullTerminator() {
 
 	for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
 		terminal_writestring_s("\n------\n");
-		char * line = terminal_buffer_read_line(i);
+		char * line = terminal_buf_read_line(i);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 	}
 	terminal_writestring_s("\n------\n");
@@ -418,10 +410,10 @@ void testOverflowAndStringWrapAround() {
 
 	for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
 		terminal_writestring_s("\n------\n");
-		char * line = terminal_buffer_read_line(i);
+		char * line = terminal_buf_read_line(i);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 	}
 	terminal_writestring_s("\n------\n");
@@ -439,10 +431,10 @@ void testOverflowAndStringWrapAroundAndLineLimit() {
 
 	for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
 		terminal_writestring_s("\n------\n");
-		char * line = terminal_buffer_read_line(i);
+		char * line = terminal_buf_read_line(i);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 	}
 	terminal_writestring_s("\n------\n");
@@ -463,10 +455,10 @@ void testImplicitNewLine() {
 
 	for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
 		terminal_writestring_s("\n------\n");
-		char * line = terminal_buffer_read_line(i);
+		char * line = terminal_buf_read_line(i);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 	}
 	terminal_writestring_s("\n------\n");
@@ -486,10 +478,10 @@ void testImplicitNewLineAndPerfectFitCondition() {
 
 	for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
 		terminal_writestring_s("\n------\n");
-		char * line = terminal_buffer_read_line(i);
+		char * line = terminal_buf_read_line(i);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 	}
 	terminal_writestring_s("\n------\n");
@@ -510,10 +502,10 @@ void testImplicitNewLineAndOverflow() {
 
 	for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
 		terminal_writestring_s("\n------\n");
-		char * line = terminal_buffer_read_line(i);
+		char * line = terminal_buf_read_line(i);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 	}
 	terminal_writestring_s("\n------\n");
@@ -529,10 +521,10 @@ void testCursorIntoTerminalBuffer() {
 
 	for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
 		terminal_writestring_s("\n------\n");
-		char * line = terminal_buffer_read_line(i);
+		char * line = terminal_buf_read_line(i);
 		while (*line != '\0') {
 			terminal_putchar_s(*line);
-			terminal_buffer_increment_ptr(&line);
+			terminal_buf_increment_ptr(&line);
 		}
 	}
 	terminal_writestring_s("\n------\n");
