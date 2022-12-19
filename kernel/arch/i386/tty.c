@@ -62,7 +62,7 @@ void terminal_buf_write_null_terminator() {
 }
 
 // todo: move this somewhere else
-void terminal_buf_enqueue_line(char * line) {	
+void terminal_buf_enqueue_line(char * line) {
 	circ_buf_enqueue(&terminal_circ_line_buf, &line);
 	// terminal_buf_write_null_terminator(); // do we need this?
 }
@@ -174,31 +174,50 @@ void terminal_flush_line(size_t y) {
 	terminal_set_cursor_pos_xy(cursor_x_temp, cursor_y_temp);
 }
 
+void terminal_flush() {
+	terminal_clear();
+
+	uint8_t cursor_x_temp = cursor_x;
+	uint8_t cursor_y_temp = cursor_y;
+	terminal_set_cursor_pos_xy(0, 0);
+
+	struct circ_buf_ptr line_ptr;
+	circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
+	for (size_t i = 0; i < VGA_HEIGHT; i++) {
+		line_ptr.ptr = *((char **) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, i));
+		while (*line_ptr.ptr != '\0') {
+			terminal_putchar_s(*line_ptr.ptr);
+			circ_buf_ptr_increment(&line_ptr);
+		}
+		if (i != VGA_HEIGHT - 1) {
+			terminal_putchar_s('\n');
+		}
+	}
+
+	terminal_set_cursor_pos_xy(cursor_x_temp, cursor_y_temp);
+}
+
 void terminal_scroll_up_force() {
-	memmove(terminal_vga_buf + VGA_WIDTH, terminal_vga_buf, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_vga_buf));
-	terminal_clear_row(0);
-	circ_buf_ptr_decrement(&terminal_line_buf_rptr);
 	terminal_line--;
+	circ_buf_ptr_decrement(&terminal_line_buf_rptr);
+	terminal_flush();
 }
 
 void terminal_scroll_down_force() {
-	memmove(terminal_vga_buf, terminal_vga_buf + VGA_WIDTH, VGA_HEIGHT * VGA_WIDTH * sizeof(terminal_vga_buf));
-	terminal_clear_row(VGA_HEIGHT - 1);
-	circ_buf_ptr_increment(&terminal_line_buf_rptr);
 	terminal_line++;
+	circ_buf_ptr_increment(&terminal_line_buf_rptr);
+	terminal_flush();
 }
 
 void terminal_scroll_up() {
 	if ((char **) terminal_line_buf_rptr.ptr != terminal_line_buf + terminal_circ_line_buf.head) {
 		terminal_scroll_up_force();
-		terminal_flush_line(0);
 	}
 }
 
 void terminal_scroll_down() {
 	if ((char **) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, cursor_y) != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
 		terminal_scroll_down_force();
-		terminal_flush_line(VGA_HEIGHT - 1);
 	}
 }
 
