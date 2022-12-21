@@ -4,9 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <kernel/vga.h>
+#include <kernel/td.h>
 
-void terminal_initialize();
+void terminal_initialize(tty_device* _device);
+uint32_t terminal_get_width();
+uint32_t terminal_get_height();
+
 void terminal_scroll_up();
 void terminal_scroll_down();
 void terminal_setcolor(uint8_t color);
@@ -18,10 +21,9 @@ uint16_t terminal_get_cursor_pos();
 void terminal_set_cursor_pos(uint16_t pos);
 void terminal_set_cursor_pos_xy(uint8_t x, uint8_t y);
 
-char * terminal_getbuffer(char * s, uint16_t offset, uint16_t n);
 void terminal_putchar(char c);
-void terminal_write(const char * data, size_t size);
-void terminal_writestring(const char * data);
+void terminal_write(const char* data, size_t size);
+void terminal_writestring(const char* data);
 void terminal_clear();
 void terminal_delete(size_t n);
 
