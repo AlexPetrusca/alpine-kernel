@@ -9,14 +9,14 @@
 
 __BEGIN_DECLS
 
-int printf(const char * format, ...);
-int sprintf(char * str, const char * format, ...);
-int vprintf(const char * format, va_list ap);
-int vsprintf(char * str, const char * format, va_list ap);
+int printf(const char* format, ...);
+int sprintf(char* str, const char* format, ...);
+int vprintf(const char* format, va_list ap);
+int vsprintf(char* str, const char* format, va_list ap);
 
 int getchar();
 int putchar(int c);
-int puts(const char * s);
+int puts(const char* s);
 
 __END_DECLS
 

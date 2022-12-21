@@ -1,2 +1,12 @@
 build
+cmake-build-debug
+iso
+edk2
 .vscode
+.idea
+**/*.iso
+**/*.o
+**/*.so
+**/*.img
+**/*.lst
+**/*.EFI

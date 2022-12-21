@@ -3,6 +3,6 @@
 #include <kernel/kb.h>
 
 int getchar() {
-    // todo: implement
-    return 0;
+  // todo: implement
+  return 0;
 }

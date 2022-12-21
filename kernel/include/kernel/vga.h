@@ -3,36 +3,57 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/io.h>
+#include <kernel/td.h>
 
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 #define VGA_MEMORY 0xB8000
 
-enum vga_color {
-	VGA_COLOR_BLACK = 0,
-	VGA_COLOR_BLUE = 1,
-	VGA_COLOR_GREEN = 2,
-	VGA_COLOR_CYAN = 3,
-	VGA_COLOR_RED = 4,
-	VGA_COLOR_MAGENTA = 5,
-	VGA_COLOR_BROWN = 6,
-	VGA_COLOR_LIGHT_GREY = 7,
-	VGA_COLOR_DARK_GREY = 8,
-	VGA_COLOR_LIGHT_BLUE = 9,
-	VGA_COLOR_LIGHT_GREEN = 10,
-	VGA_COLOR_LIGHT_CYAN = 11,
-	VGA_COLOR_LIGHT_RED = 12,
-	VGA_COLOR_LIGHT_MAGENTA = 13,
-	VGA_COLOR_LIGHT_BROWN = 14,
-	VGA_COLOR_WHITE = 15,
-};
-
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
-	return fg | bg << 4;
+uint32_t get_width() {
+  return VGA_WIDTH;
 }
 
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
-	return (uint16_t) uc | (uint16_t) color << 8;
+uint32_t get_height() {
+  return VGA_HEIGHT;
 }
+
+static inline uint16_t vga_entry(unsigned char uc, uint8_t attr) {
+  return (uint16_t) uc | (uint16_t) attr << 8;
+}
+
+void put_char(uint32_t x, uint32_t y, uint8_t ch, uint8_t attr) {
+  ((uint16_t*) VGA_MEMORY)[y * VGA_WIDTH + x] = vga_entry(ch, attr);
+}
+
+void enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+  outb(0x3D4, 0x0A);
+  outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+  outb(0x3D4, 0x0B);
+  outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+}
+
+void disable_cursor() {
+  outb(0x3D4, 0x0A);
+  outb(0x3D5, 0x20);
+}
+
+void set_cursor(uint32_t x, uint32_t y) {
+  uint16_t pos = y * VGA_WIDTH + x;
+  outb(0x3D4, 0x0F);
+  outb(0x3D5, (uint8_t) (pos & 0xFF));
+  outb(0x3D4, 0x0E);
+  outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+void clear() {
+  for (size_t y = 0; y < get_height(); y++) {
+    for (size_t x = 0; x < get_width(); x++) {
+      put_char(x, y, ' ', attributes(COLOR_LIGHT_GREEN, COLOR_BLACK));
+    }
+  }
+}
+
+tty_device vga_tty_device = {get_width, get_height, put_char, enable_cursor, disable_cursor, set_cursor, clear};
 
 #endif

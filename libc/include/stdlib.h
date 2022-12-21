@@ -13,7 +13,7 @@ __BEGIN_DECLS
 __attribute__((__noreturn__))
 void abort();
 
-char * itoa(int value, char * str, int base);
+char* itoa(int value, char* str, int base);
 
 __END_DECLS
 
