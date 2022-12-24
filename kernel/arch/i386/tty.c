@@ -168,9 +168,15 @@ void terminal_flush() {
   for (size_t i = 0; i < height; i++) {
 
     line_ptr.ptr = *((char**) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, i));
+    uint32_t written_chars = 0;
     while (*line_ptr.ptr != '\0') {
       terminal_putchar_s(*line_ptr.ptr);
       circ_buf_ptr_increment(&line_ptr);
+      written_chars++;
+    }
+    while (written_chars < width) {
+      terminal_putchar_s(' ');
+      written_chars++;
     }
     if (i != height - 1) {
       terminal_putchar_s('\n');
