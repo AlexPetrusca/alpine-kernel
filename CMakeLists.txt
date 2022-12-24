@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(alpine_kernel C)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
 
 include_directories(kernel/include)
 include_directories(kernel/include/kernel)
@@ -52,4 +52,9 @@ add_executable(alpine_kernel
         libc/string/strspn.c
         libc/string/strstr.c
         libc/string/strtok.c
-        libc/sys/circ_buf.c)
+        libc/sys/circ_buf.c
+        kernel/kernel/test.c
+        kernel/include/test.h
+        libc/stdio/printf_test.c
+        libc/include/stdio_tests.h
+        )

@@ -7,6 +7,7 @@
 #include <kernel/sh.h>
 #include <kernel/vga.h>
 #include <kernel/cpu.h>
+#include <stdio_tests.h>
 
 void test_circ_buf() {
   char buffer[4096 * 4];
@@ -185,7 +186,7 @@ void test_kb() {
 
 void kernel_main() {
   terminal_initialize(&vga_tty_device);
-  sh_command commands[] = {{"cpu", print_cpu_info}, {"", NULL}};
+  sh_command commands[] = {{"cpu", print_cpu_info}, {"test", printf_tests}, {"", NULL}};
   shell_start(commands);
   // test(); // todo: remove me
 
