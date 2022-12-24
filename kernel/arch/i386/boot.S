@@ -1,39 +1,51 @@
-# Declare constants for the multiboot header.
-.set ALIGN,    1<<0             # align loaded modules on page boundaries
-.set MEMINFO,  1<<1             # provide memory map
-.set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
-.set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
-.set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
+#define ASM_FILE        1
+#include <kernel/multiboot2.h>
 
-# Declare a header as in the Multiboot Standard.
-.section .multiboot
-.align 4
-.long MAGIC
-.long FLAGS
-.long CHECKSUM
+#define STACK_SIZE      0x4000
 
-# Reserve a stack for the initial thread.
-.section .bss
-.align 16
-stack_bottom:
-.skip 16384 # 16 KiB
-stack_top:
+        .section .multiboot
 
-# The kernel entry point.
-.section .text
-.global _start
-.type _start, @function
+header_start:
+        .align  8
+        .long   MULTIBOOT2_HEADER_MAGIC
+        .long   MULTIBOOT_ARCHITECTURE_I386
+        .long   header_end - header_start
+        .long   -(MULTIBOOT2_HEADER_MAGIC + MULTIBOOT_ARCHITECTURE_I386 + (header_end - header_start))
+
+//framebuffer_tag:
+//        .align  8
+//        .short MULTIBOOT_HEADER_TAG_FRAMEBUFFER
+//        .short MULTIBOOT_HEADER_TAG_OPTIONAL
+//        .long framebuffer_tag_end - framebuffer_tag_start
+//        .long 1024
+//        .long 768
+//        .long 32
+
+end_tag:
+        .align  8
+        .short MULTIBOOT_HEADER_TAG_END
+        .short 0
+        .long 8
+
+header_end:
+
+
+        .section .text
+        .global _start
+        .type _start, @function
+
 _start:
-	movl $stack_top, %esp
+        movl    $(stack + STACK_SIZE), %esp     /*  Initialize the stack pointer. */
 
-	# Call the global constructors.
-	call _init
+        pushl   $0      /*  Reset EFLAGS. */
+        popf
 
-	# Transfer control to the main kernel.
-	call kernel_main
+        pushl   %ebx    /*  Push the pointer to the Multiboot information structure. */
+        pushl   %eax    /*  Push the magic value. */
+        call    cmain   /*  Now enter the C main function... */
 
-	# Hang if kernel_main unexpectedly returns.
-	cli
-1:	hlt
-	jmp 1b
-.size _start, . - _start
+
+loop:   hlt
+        jmp     loop
+
+        .comm   stack, STACK_SIZE      /*  Stack area, 16KB. */
