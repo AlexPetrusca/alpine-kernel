@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(alpine_kernel C)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
 
 include_directories(kernel/include)
 include_directories(kernel/include/kernel)
@@ -16,12 +16,18 @@ add_executable(alpine_kernel
         kernel/arch/i386/tty.c
         kernel/arch/i386/msr.c
         kernel/arch/i386/cpu.c
+        kernel/arch/i386/acpi.c
+        kernel/arch/i386/apic.c
         kernel/include/kernel/kb.h
         kernel/include/kernel/sh.h
         kernel/include/kernel/tty.h
         kernel/include/kernel/vga.h
         kernel/include/kernel/msr.h
         kernel/include/kernel/cpu.h
+        kernel/include/kernel/acpi.h
+        kernel/include/kernel/Acpi10.h
+        kernel/include/kernel/Acpi20.h
+        kernel/include/kernel/apic.h
         kernel/kernel/kernel.c
         libc/include/sys/cdefs.h
         libc/include/sys/circ_buf.h
@@ -52,4 +58,11 @@ add_executable(alpine_kernel
         libc/string/strspn.c
         libc/string/strstr.c
         libc/string/strtok.c
-        libc/sys/circ_buf.c)
+        libc/sys/circ_buf.c
+        kernel/kernel/test.c
+        kernel/include/test.h
+        libc/stdio/printf_test.c
+        libc/include/stdio_tests.h
+        kernel/include/kernel/multiboot2.h
+        kernel/arch/i386/boot.S
+        )
