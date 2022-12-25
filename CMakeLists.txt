@@ -16,12 +16,18 @@ add_executable(alpine_kernel
         kernel/arch/i386/tty.c
         kernel/arch/i386/msr.c
         kernel/arch/i386/cpu.c
+        kernel/arch/i386/acpi.c
+        kernel/arch/i386/apic.c
         kernel/include/kernel/kb.h
         kernel/include/kernel/sh.h
         kernel/include/kernel/tty.h
         kernel/include/kernel/vga.h
         kernel/include/kernel/msr.h
         kernel/include/kernel/cpu.h
+        kernel/include/kernel/acpi.h
+        kernel/include/kernel/Acpi10.h
+        kernel/include/kernel/Acpi20.h
+        kernel/include/kernel/apic.h
         kernel/kernel/kernel.c
         libc/include/sys/cdefs.h
         libc/include/sys/circ_buf.h
