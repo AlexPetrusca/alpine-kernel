@@ -76,6 +76,13 @@ sh_command* find_command(char* name) {
   return NULL;
 }
 
+void printCommands() {
+  for (sh_command* cmd = commands; cmd->run != NULL; cmd++) {
+    printf("%s ", cmd->name);
+  }
+  printf("\n");
+}
+
 bool shell_execute() {
   printf("\n");
   shell_write_command_buffer('\0');
@@ -89,6 +96,8 @@ bool shell_execute() {
       }
     } else if (strequ(command, "clear")) {
       terminal_clear();
+    } else if (strequ(command, "cmd")) {
+      printCommands();
     } else if (strequ(command, "exit")) {
       printf("Alpine shell terminated.");
       return false;

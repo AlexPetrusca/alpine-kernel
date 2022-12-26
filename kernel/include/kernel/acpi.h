@@ -5,10 +5,10 @@
 #include <string.h>
 #include <stdint.h>
 
-extern EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER* rsdp;
+extern Acpi2Rsdp* rsdp;
 
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER header;
+  AcpiDescriptionHeader header;
   uint32_t pointer_to_other_sdt[];
 } Rsdt;
 
@@ -52,8 +52,8 @@ typedef struct {
   uint8_t lint; // 0 or 1
 } LocalApicNMIEntry; // NMI = NON_MASKABLE_INTERRUPTS
 
-EFI_ACPI_DESCRIPTION_HEADER* find_acpi_table(char* name);
-EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER* find_apic_table();
+AcpiDescriptionHeader* find_acpi_table(char* name);
+Acpi2MultipleApicTableHeader* find_apic_table();
 void print_rsdt_info();
 void print_apic_info();
 

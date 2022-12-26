@@ -33,11 +33,11 @@
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 AddressSpaceId;
-  UINT8 RegisterBitWidth;
-  UINT8 RegisterBitOffset;
-  UINT8 AddressSize;
-  UINT64 RegisterAddress;
+  uint8_t AddressSpaceId;
+  uint8_t RegisterBitWidth;
+  uint8_t RegisterBitOffset;
+  uint8_t AddressSize;
+  uint64_t RegisterAddress;
 } EFI_ACPI_GENERIC_REGISTER_DESCRIPTOR;
 
 #pragma pack()
@@ -51,11 +51,11 @@ typedef struct {
 /// ACPI 2.0 Generic Address Space definition
 ///
 typedef struct {
-  UINT8 AddressSpaceId;
-  UINT8 RegisterBitWidth;
-  UINT8 RegisterBitOffset;
-  UINT8 Reserved;
-  UINT64 Address;
+  uint8_t AddressSpaceId;
+  uint8_t RegisterBitWidth;
+  uint8_t RegisterBitOffset;
+  uint8_t Reserved;
+  uint64_t Address;
 } EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE;
 
 //
@@ -76,16 +76,16 @@ typedef struct {
 /// Root System Description Pointer Structure
 ///
 typedef struct {
-  UINT64 Signature;
-  UINT8 Checksum;
-  UINT8 OemId[6];
-  UINT8 Revision;
-  UINT32 RsdtAddress;
-  UINT32 Length;
-  UINT64 XsdtAddress;
-  UINT8 ExtendedChecksum;
-  UINT8 Reserved[3];
-} EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER;
+  uint64_t Signature;
+  uint8_t Checksum;
+  uint8_t OemId[6];
+  uint8_t Revision;
+  uint32_t RsdtAddress;
+  uint32_t Length;
+  uint64_t XsdtAddress;
+  uint8_t ExtendedChecksum;
+  uint8_t Reserved[3];
+} Acpi2Rsdp;
 
 ///
 /// RSD_PTR Revision (as defined in ACPI 2.0 spec.)
@@ -97,8 +97,8 @@ typedef struct {
 /// excluding the RSD PTR structure
 ///
 typedef struct {
-  UINT32 Signature;
-  UINT32 Length;
+  uint32_t Signature;
+  uint32_t Length;
 } EFI_ACPI_2_0_COMMON_HEADER;
 
 //
@@ -127,50 +127,50 @@ typedef struct {
 /// Fixed ACPI Description Table Structure (FADT)
 ///
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER Header;
-  UINT32 FirmwareCtrl;
-  UINT32 Dsdt;
-  UINT8 Reserved0;
-  UINT8 PreferredPmProfile;
-  UINT16 SciInt;
-  UINT32 SmiCmd;
-  UINT8 AcpiEnable;
-  UINT8 AcpiDisable;
-  UINT8 S4BiosReq;
-  UINT8 PstateCnt;
-  UINT32 Pm1aEvtBlk;
-  UINT32 Pm1bEvtBlk;
-  UINT32 Pm1aCntBlk;
-  UINT32 Pm1bCntBlk;
-  UINT32 Pm2CntBlk;
-  UINT32 PmTmrBlk;
-  UINT32 Gpe0Blk;
-  UINT32 Gpe1Blk;
-  UINT8 Pm1EvtLen;
-  UINT8 Pm1CntLen;
-  UINT8 Pm2CntLen;
-  UINT8 PmTmrLen;
-  UINT8 Gpe0BlkLen;
-  UINT8 Gpe1BlkLen;
-  UINT8 Gpe1Base;
-  UINT8 CstCnt;
-  UINT16 PLvl2Lat;
-  UINT16 PLvl3Lat;
-  UINT16 FlushSize;
-  UINT16 FlushStride;
-  UINT8 DutyOffset;
-  UINT8 DutyWidth;
-  UINT8 DayAlrm;
-  UINT8 MonAlrm;
-  UINT8 Century;
-  UINT16 IaPcBootArch;
-  UINT8 Reserved1;
-  UINT32 Flags;
+  AcpiDescriptionHeader Header;
+  uint32_t FirmwareCtrl;
+  uint32_t Dsdt;
+  uint8_t Reserved0;
+  uint8_t PreferredPmProfile;
+  uint16_t SciInt;
+  uint32_t SmiCmd;
+  uint8_t AcpiEnable;
+  uint8_t AcpiDisable;
+  uint8_t S4BiosReq;
+  uint8_t PstateCnt;
+  uint32_t Pm1aEvtBlk;
+  uint32_t Pm1bEvtBlk;
+  uint32_t Pm1aCntBlk;
+  uint32_t Pm1bCntBlk;
+  uint32_t Pm2CntBlk;
+  uint32_t PmTmrBlk;
+  uint32_t Gpe0Blk;
+  uint32_t Gpe1Blk;
+  uint8_t Pm1EvtLen;
+  uint8_t Pm1CntLen;
+  uint8_t Pm2CntLen;
+  uint8_t PmTmrLen;
+  uint8_t Gpe0BlkLen;
+  uint8_t Gpe1BlkLen;
+  uint8_t Gpe1Base;
+  uint8_t CstCnt;
+  uint16_t PLvl2Lat;
+  uint16_t PLvl3Lat;
+  uint16_t FlushSize;
+  uint16_t FlushStride;
+  uint8_t DutyOffset;
+  uint8_t DutyWidth;
+  uint8_t DayAlrm;
+  uint8_t MonAlrm;
+  uint8_t Century;
+  uint16_t IaPcBootArch;
+  uint8_t Reserved1;
+  uint32_t Flags;
   EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE ResetReg;
-  UINT8 ResetValue;
-  UINT8 Reserved2[3];
-  UINT64 XFirmwareCtrl;
-  UINT64 XDsdt;
+  uint8_t ResetValue;
+  uint8_t Reserved2[3];
+  uint64_t XFirmwareCtrl;
+  uint64_t XDsdt;
   EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE XPm1aEvtBlk;
   EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE XPm1bEvtBlk;
   EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE XPm1aCntBlk;
@@ -227,15 +227,15 @@ typedef struct {
 /// Firmware ACPI Control Structure
 ///
 typedef struct {
-  UINT32 Signature;
-  UINT32 Length;
-  UINT32 HardwareSignature;
-  UINT32 FirmwareWakingVector;
-  UINT32 GlobalLock;
-  UINT32 Flags;
-  UINT64 XFirmwareWakingVector;
-  UINT8 Version;
-  UINT8 Reserved[31];
+  uint32_t Signature;
+  uint32_t Length;
+  uint32_t HardwareSignature;
+  uint32_t FirmwareWakingVector;
+  uint32_t GlobalLock;
+  uint32_t Flags;
+  uint64_t XFirmwareWakingVector;
+  uint8_t Version;
+  uint8_t Reserved[31];
 } EFI_ACPI_2_0_FIRMWARE_ACPI_CONTROL_STRUCTURE;
 
 ///
@@ -254,10 +254,10 @@ typedef struct {
 /// must be defined in a platform specific manner.
 ///
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER Header;
-  UINT32 LocalApicAddress;
-  UINT32 Flags;
-} EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER;
+  AcpiDescriptionHeader Header;
+  uint32_t LocalApicAddress;
+  uint32_t Flags;
+} Acpi2MultipleApicTableHeader;
 
 ///
 /// MADT Revision (as defined in ACPI 2.0 spec.)
@@ -293,11 +293,11 @@ typedef struct {
 /// Processor Local APIC Structure Definition
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 AcpiProcessorId;
-  UINT8 ApicId;
-  UINT32 Flags;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t AcpiProcessorId;
+  uint8_t ApicId;
+  uint32_t Flags;
 } EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE;
 
 ///
@@ -309,105 +309,105 @@ typedef struct {
 /// IO APIC Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 IoApicId;
-  UINT8 Reserved;
-  UINT32 IoApicAddress;
-  UINT32 GlobalSystemInterruptBase;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t IoApicId;
+  uint8_t Reserved;
+  uint32_t IoApicAddress;
+  uint32_t GlobalSystemInterruptBase;
 } EFI_ACPI_2_0_IO_APIC_STRUCTURE;
 
 ///
 /// Interrupt Source Override Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 Bus;
-  UINT8 Source;
-  UINT32 GlobalSystemInterrupt;
-  UINT16 Flags;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t Bus;
+  uint8_t Source;
+  uint32_t GlobalSystemInterrupt;
+  uint16_t Flags;
 } EFI_ACPI_2_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE;
 
 ///
 /// Non-Maskable Interrupt Source Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT16 Flags;
-  UINT32 GlobalSystemInterrupt;
+  uint8_t Type;
+  uint8_t Length;
+  uint16_t Flags;
+  uint32_t GlobalSystemInterrupt;
 } EFI_ACPI_2_0_NON_MASKABLE_INTERRUPT_SOURCE_STRUCTURE;
 
 ///
 /// Local APIC NMI Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 AcpiProcessorId;
-  UINT16 Flags;
-  UINT8 LocalApicLint;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t AcpiProcessorId;
+  uint16_t Flags;
+  uint8_t LocalApicLint;
 } EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE;
 
 ///
 /// Local APIC Address Override Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT16 Reserved;
-  UINT64 LocalApicAddress;
+  uint8_t Type;
+  uint8_t Length;
+  uint16_t Reserved;
+  uint64_t LocalApicAddress;
 } EFI_ACPI_2_0_LOCAL_APIC_ADDRESS_OVERRIDE_STRUCTURE;
 
 ///
 /// IO SAPIC Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 IoApicId;
-  UINT8 Reserved;
-  UINT32 GlobalSystemInterruptBase;
-  UINT64 IoSapicAddress;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t IoApicId;
+  uint8_t Reserved;
+  uint32_t GlobalSystemInterruptBase;
+  uint64_t IoSapicAddress;
 } EFI_ACPI_2_0_IO_SAPIC_STRUCTURE;
 
 ///
 /// Local SAPIC Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 AcpiProcessorId;
-  UINT8 LocalSapicId;
-  UINT8 LocalSapicEid;
-  UINT8 Reserved[3];
-  UINT32 Flags;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t AcpiProcessorId;
+  uint8_t LocalSapicId;
+  uint8_t LocalSapicEid;
+  uint8_t Reserved[3];
+  uint32_t Flags;
 } EFI_ACPI_2_0_PROCESSOR_LOCAL_SAPIC_STRUCTURE;
 
 ///
 /// Platform Interrupt Sources Structure
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT16 Flags;
-  UINT8 InterruptType;
-  UINT8 ProcessorId;
-  UINT8 ProcessorEid;
-  UINT8 IoSapicVector;
-  UINT32 GlobalSystemInterrupt;
-  UINT32 Reserved;
+  uint8_t Type;
+  uint8_t Length;
+  uint16_t Flags;
+  uint8_t InterruptType;
+  uint8_t ProcessorId;
+  uint8_t ProcessorEid;
+  uint8_t IoSapicVector;
+  uint32_t GlobalSystemInterrupt;
+  uint32_t Reserved;
 } EFI_ACPI_2_0_PLATFORM_INTERRUPT_SOURCES_STRUCTURE;
 
 ///
 /// Smart Battery Description Table (SBST)
 ///
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER Header;
-  UINT32 WarningEnergyLevel;
-  UINT32 LowEnergyLevel;
-  UINT32 CriticalEnergyLevel;
+  AcpiDescriptionHeader Header;
+  uint32_t WarningEnergyLevel;
+  uint32_t LowEnergyLevel;
+  uint32_t CriticalEnergyLevel;
 } EFI_ACPI_2_0_SMART_BATTERY_DESCRIPTION_TABLE;
 
 ///
@@ -421,11 +421,11 @@ typedef struct {
 /// a fully qualified reference to the name space object.
 ///
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER Header;
+  AcpiDescriptionHeader Header;
   EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE EcControl;
   EFI_ACPI_2_0_GENERIC_ADDRESS_STRUCTURE EcData;
-  UINT32 Uid;
-  UINT8 GpeBit;
+  uint32_t Uid;
+  uint8_t GpeBit;
 } EFI_ACPI_2_0_EMBEDDED_CONTROLLER_BOOT_RESOURCES_TABLE;
 
 ///
