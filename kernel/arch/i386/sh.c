@@ -90,7 +90,7 @@ bool shell_execute() {
     } else if (strequ(command, "clear")) {
       terminal_clear();
     } else if (strequ(command, "exit")) {
-      printf("Alpine shell terminated.\n\n");
+      printf("Alpine shell terminated.");
       return false;
     } else if ((cmd = find_command(command))) {
       cmd->run();
