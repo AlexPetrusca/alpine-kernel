@@ -115,7 +115,7 @@ void parse_mbi(bool print) {
   if (print) printf("Total parse_mbi size %d bytes\n", (unsigned) tag - kernel_addr);
 }
 
-void cmain(unsigned long magic, unsigned long _kernel_addr) {
+void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
   if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
     printf("Invalid magic number: 0x%x\n", (unsigned) magic);
     return;
