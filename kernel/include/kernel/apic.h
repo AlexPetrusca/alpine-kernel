@@ -30,7 +30,7 @@ typedef enum {
   APIC_REG_ICR = 0x380, //Initial Count Register (for Timer) (RW)
   APIC_REG_CCR = 0x390, //Current Count Register (for Timer) (R)
   APIC_REG_DCR = 0x3E0, //Divide Configuration Register (for Timer) (RW)
-} APIC_REG;
+} ApicReg;
 
 #define APIC_REG_SIV_ENABLE (1 << 8)
 
@@ -38,8 +38,8 @@ uint32_t globalEnableLAPIC();
 void enableLAPIC(uint64_t apic_base_addr);
 void sendLapicInit(uint64_t apic_base_addr);
 
-uint32_t readApicReg(APIC_REG reg, uint64_t apic_base_addr);
-void writeApicReg(APIC_REG reg, uint32_t value, uint64_t apic_base_addr);
+uint32_t readApicReg(ApicReg reg, uint64_t apic_base_addr);
+void writeApicReg(ApicReg reg, uint32_t value, uint64_t apic_base_addr);
 
 void printLapicInfo();
 

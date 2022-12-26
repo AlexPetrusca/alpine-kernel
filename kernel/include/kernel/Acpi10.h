@@ -16,18 +16,13 @@
 
 #include <stdint.h>
 
-typedef uint64_t UINT64;
-typedef uint32_t UINT32;
-typedef uint16_t UINT16;
-typedef uint8_t UINT8;
-
 ///
 /// Common table header, this prefaces all ACPI tables, including FACS, but
 /// excluding the RSD PTR structure.
 ///
 typedef struct {
-  UINT32 Signature;
-  UINT32 Length;
+  uint32_t Signature;
+  uint32_t Length;
 } EFI_ACPI_COMMON_HEADER;
 
 #pragma pack(1)
@@ -35,16 +30,16 @@ typedef struct {
 /// The common ACPI description table header.  This structure prefaces most ACPI tables.
 ///
 typedef struct {
-  UINT32 Signature;
-  UINT32 Length;
-  UINT8 Revision;
-  UINT8 Checksum;
-  UINT8 OemId[6];
-  UINT64 OemTableId;
-  UINT32 OemRevision;
-  UINT32 CreatorId;
-  UINT32 CreatorRevision;
-} EFI_ACPI_DESCRIPTION_HEADER;
+  uint32_t Signature;
+  uint32_t Length;
+  uint8_t Revision;
+  uint8_t Checksum;
+  uint8_t OemId[6];
+  uint64_t OemTableId;
+  uint32_t OemRevision;
+  uint32_t CreatorId;
+  uint32_t CreatorRevision;
+} AcpiDescriptionHeader;
 #pragma pack()
 
 //
@@ -124,36 +119,36 @@ typedef struct {
 /// Address Space Descriptors.
 ///
 typedef struct {
-  UINT8 Desc;
-  UINT16 Len;
-  UINT8 ResType;
-  UINT8 GenFlag;
-  UINT8 SpecificFlag;
-  UINT64 AddrSpaceGranularity;
-  UINT64 AddrRangeMin;
-  UINT64 AddrRangeMax;
-  UINT64 AddrTranslationOffset;
-  UINT64 AddrLen;
+  uint8_t Desc;
+  uint16_t Len;
+  uint8_t ResType;
+  uint8_t GenFlag;
+  uint8_t SpecificFlag;
+  uint64_t AddrSpaceGranularity;
+  uint64_t AddrRangeMin;
+  uint64_t AddrRangeMax;
+  uint64_t AddrTranslationOffset;
+  uint64_t AddrLen;
 } EFI_ACPI_ADDRESS_SPACE_DESCRIPTOR;
 
 typedef union {
-  UINT8 Byte;
+  uint8_t Byte;
   struct {
-    UINT8 Length: 3;
-    UINT8 Name: 4;
-    UINT8 Type: 1;
+    uint8_t Length;
+    uint8_t Name;
+    uint8_t Type;
   } Bits;
 } ACPI_SMALL_RESOURCE_HEADER;
 
 typedef struct {
   union {
-    UINT8 Byte;
+    uint8_t Byte;
     struct {
-      UINT8 Name: 7;
-      UINT8 Type: 1;
+      uint8_t Name;
+      uint8_t Type;
     } Bits;
   } Header;
-  UINT16 Length;
+  uint16_t Length;
 } ACPI_LARGE_RESOURCE_HEADER;
 
 ///
@@ -161,7 +156,7 @@ typedef struct {
 ///
 typedef struct {
   ACPI_SMALL_RESOURCE_HEADER Header;
-  UINT16 Mask;
+  uint16_t Mask;
 } EFI_ACPI_IRQ_NOFLAG_DESCRIPTOR;
 
 ///
@@ -169,8 +164,8 @@ typedef struct {
 ///
 typedef struct {
   ACPI_SMALL_RESOURCE_HEADER Header;
-  UINT16 Mask;
-  UINT8 Information;
+  uint16_t Mask;
+  uint8_t Information;
 } EFI_ACPI_IRQ_DESCRIPTOR;
 
 ///
@@ -178,8 +173,8 @@ typedef struct {
 ///
 typedef struct {
   ACPI_SMALL_RESOURCE_HEADER Header;
-  UINT8 ChannelMask;
-  UINT8 Information;
+  uint8_t ChannelMask;
+  uint8_t Information;
 } EFI_ACPI_DMA_DESCRIPTOR;
 
 ///
@@ -187,11 +182,11 @@ typedef struct {
 ///
 typedef struct {
   ACPI_SMALL_RESOURCE_HEADER Header;
-  UINT8 Information;
-  UINT16 BaseAddressMin;
-  UINT16 BaseAddressMax;
-  UINT8 Alignment;
-  UINT8 Length;
+  uint8_t Information;
+  uint16_t BaseAddressMin;
+  uint16_t BaseAddressMax;
+  uint8_t Alignment;
+  uint8_t Length;
 } EFI_ACPI_IO_PORT_DESCRIPTOR;
 
 ///
@@ -199,8 +194,8 @@ typedef struct {
 ///
 typedef struct {
   ACPI_SMALL_RESOURCE_HEADER Header;
-  UINT16 BaseAddress;
-  UINT8 Length;
+  uint16_t BaseAddress;
+  uint8_t Length;
 } EFI_ACPI_FIXED_LOCATION_IO_PORT_DESCRIPTOR;
 
 ///
@@ -208,11 +203,11 @@ typedef struct {
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 Information;
-  UINT16 BaseAddressMin;
-  UINT16 BaseAddressMax;
-  UINT16 Alignment;
-  UINT16 Length;
+  uint8_t Information;
+  uint16_t BaseAddressMin;
+  uint16_t BaseAddressMax;
+  uint16_t Alignment;
+  uint16_t Length;
 } EFI_ACPI_24_BIT_MEMORY_RANGE_DESCRIPTOR;
 
 ///
@@ -220,11 +215,11 @@ typedef struct {
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 Information;
-  UINT32 BaseAddressMin;
-  UINT32 BaseAddressMax;
-  UINT32 Alignment;
-  UINT32 Length;
+  uint8_t Information;
+  uint32_t BaseAddressMin;
+  uint32_t BaseAddressMax;
+  uint32_t Alignment;
+  uint32_t Length;
 } EFI_ACPI_32_BIT_MEMORY_RANGE_DESCRIPTOR;
 
 ///
@@ -232,9 +227,9 @@ typedef struct {
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 Information;
-  UINT32 BaseAddress;
-  UINT32 Length;
+  uint8_t Information;
+  uint32_t BaseAddress;
+  uint32_t Length;
 } EFI_ACPI_32_BIT_FIXED_MEMORY_RANGE_DESCRIPTOR;
 
 ///
@@ -242,14 +237,14 @@ typedef struct {
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 ResType;
-  UINT8 GenFlag;
-  UINT8 SpecificFlag;
-  UINT64 AddrSpaceGranularity;
-  UINT64 AddrRangeMin;
-  UINT64 AddrRangeMax;
-  UINT64 AddrTranslationOffset;
-  UINT64 AddrLen;
+  uint8_t ResType;
+  uint8_t GenFlag;
+  uint8_t SpecificFlag;
+  uint64_t AddrSpaceGranularity;
+  uint64_t AddrRangeMin;
+  uint64_t AddrRangeMax;
+  uint64_t AddrTranslationOffset;
+  uint64_t AddrLen;
 } EFI_ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR;
 
 ///
@@ -257,14 +252,14 @@ typedef struct {
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 ResType;
-  UINT8 GenFlag;
-  UINT8 SpecificFlag;
-  UINT32 AddrSpaceGranularity;
-  UINT32 AddrRangeMin;
-  UINT32 AddrRangeMax;
-  UINT32 AddrTranslationOffset;
-  UINT32 AddrLen;
+  uint8_t ResType;
+  uint8_t GenFlag;
+  uint8_t SpecificFlag;
+  uint32_t AddrSpaceGranularity;
+  uint32_t AddrRangeMin;
+  uint32_t AddrRangeMax;
+  uint32_t AddrTranslationOffset;
+  uint32_t AddrLen;
 } EFI_ACPI_DWORD_ADDRESS_SPACE_DESCRIPTOR;
 
 ///
@@ -272,14 +267,14 @@ typedef struct {
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 ResType;
-  UINT8 GenFlag;
-  UINT8 SpecificFlag;
-  UINT16 AddrSpaceGranularity;
-  UINT16 AddrRangeMin;
-  UINT16 AddrRangeMax;
-  UINT16 AddrTranslationOffset;
-  UINT16 AddrLen;
+  uint8_t ResType;
+  uint8_t GenFlag;
+  uint8_t SpecificFlag;
+  uint16_t AddrSpaceGranularity;
+  uint16_t AddrRangeMin;
+  uint16_t AddrRangeMax;
+  uint16_t AddrTranslationOffset;
+  uint16_t AddrLen;
 } EFI_ACPI_WORD_ADDRESS_SPACE_DESCRIPTOR;
 
 ///
@@ -287,9 +282,9 @@ typedef struct {
 ///
 typedef struct {
   ACPI_LARGE_RESOURCE_HEADER Header;
-  UINT8 InterruptVectorFlags;
-  UINT8 InterruptTableLength;
-  UINT32 InterruptNumber[1];
+  uint8_t InterruptVectorFlags;
+  uint8_t InterruptTableLength;
+  uint32_t InterruptNumber[1];
 } EFI_ACPI_EXTENDED_INTERRUPT_DESCRIPTOR;
 
 #pragma pack()
@@ -298,8 +293,8 @@ typedef struct {
 /// The End tag identifies an end of resource data.
 ///
 typedef struct {
-  UINT8 Desc;
-  UINT8 Checksum;
+  uint8_t Desc;
+  uint8_t Checksum;
 } EFI_ACPI_END_TAG_DESCRIPTOR;
 
 //
@@ -399,11 +394,11 @@ typedef struct {
 /// Root System Description Pointer Structure.
 ///
 typedef struct {
-  UINT64 Signature;
-  UINT8 Checksum;
-  UINT8 OemId[6];
-  UINT8 Reserved;
-  UINT32 RsdtAddress;
+  uint64_t Signature;
+  uint8_t Checksum;
+  uint8_t OemId[6];
+  uint8_t Reserved;
+  uint32_t RsdtAddress;
 } EFI_ACPI_1_0_ROOT_SYSTEM_DESCRIPTION_POINTER;
 
 //
@@ -421,46 +416,46 @@ typedef struct {
 /// Fixed ACPI Description Table Structure (FADT).
 ///
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER Header;
-  UINT32 FirmwareCtrl;
-  UINT32 Dsdt;
-  UINT8 IntModel;
-  UINT8 Reserved1;
-  UINT16 SciInt;
-  UINT32 SmiCmd;
-  UINT8 AcpiEnable;
-  UINT8 AcpiDisable;
-  UINT8 S4BiosReq;
-  UINT8 Reserved2;
-  UINT32 Pm1aEvtBlk;
-  UINT32 Pm1bEvtBlk;
-  UINT32 Pm1aCntBlk;
-  UINT32 Pm1bCntBlk;
-  UINT32 Pm2CntBlk;
-  UINT32 PmTmrBlk;
-  UINT32 Gpe0Blk;
-  UINT32 Gpe1Blk;
-  UINT8 Pm1EvtLen;
-  UINT8 Pm1CntLen;
-  UINT8 Pm2CntLen;
-  UINT8 PmTmLen;
-  UINT8 Gpe0BlkLen;
-  UINT8 Gpe1BlkLen;
-  UINT8 Gpe1Base;
-  UINT8 Reserved3;
-  UINT16 PLvl2Lat;
-  UINT16 PLvl3Lat;
-  UINT16 FlushSize;
-  UINT16 FlushStride;
-  UINT8 DutyOffset;
-  UINT8 DutyWidth;
-  UINT8 DayAlrm;
-  UINT8 MonAlrm;
-  UINT8 Century;
-  UINT8 Reserved4;
-  UINT8 Reserved5;
-  UINT8 Reserved6;
-  UINT32 Flags;
+  AcpiDescriptionHeader Header;
+  uint32_t FirmwareCtrl;
+  uint32_t Dsdt;
+  uint8_t IntModel;
+  uint8_t Reserved1;
+  uint16_t SciInt;
+  uint32_t SmiCmd;
+  uint8_t AcpiEnable;
+  uint8_t AcpiDisable;
+  uint8_t S4BiosReq;
+  uint8_t Reserved2;
+  uint32_t Pm1aEvtBlk;
+  uint32_t Pm1bEvtBlk;
+  uint32_t Pm1aCntBlk;
+  uint32_t Pm1bCntBlk;
+  uint32_t Pm2CntBlk;
+  uint32_t PmTmrBlk;
+  uint32_t Gpe0Blk;
+  uint32_t Gpe1Blk;
+  uint8_t Pm1EvtLen;
+  uint8_t Pm1CntLen;
+  uint8_t Pm2CntLen;
+  uint8_t PmTmLen;
+  uint8_t Gpe0BlkLen;
+  uint8_t Gpe1BlkLen;
+  uint8_t Gpe1Base;
+  uint8_t Reserved3;
+  uint16_t PLvl2Lat;
+  uint16_t PLvl3Lat;
+  uint16_t FlushSize;
+  uint16_t FlushStride;
+  uint8_t DutyOffset;
+  uint8_t DutyWidth;
+  uint8_t DayAlrm;
+  uint8_t MonAlrm;
+  uint8_t Century;
+  uint8_t Reserved4;
+  uint8_t Reserved5;
+  uint8_t Reserved6;
+  uint32_t Flags;
 } EFI_ACPI_1_0_FIXED_ACPI_DESCRIPTION_TABLE;
 
 ///
@@ -490,13 +485,13 @@ typedef struct {
 /// Firmware ACPI Control Structure.
 ///
 typedef struct {
-  UINT32 Signature;
-  UINT32 Length;
-  UINT32 HardwareSignature;
-  UINT32 FirmwareWakingVector;
-  UINT32 GlobalLock;
-  UINT32 Flags;
-  UINT8 Reserved[40];
+  uint32_t Signature;
+  uint32_t Length;
+  uint32_t HardwareSignature;
+  uint32_t FirmwareWakingVector;
+  uint32_t GlobalLock;
+  uint32_t Flags;
+  uint8_t Reserved[40];
 } EFI_ACPI_1_0_FIRMWARE_ACPI_CONTROL_STRUCTURE;
 
 ///
@@ -510,9 +505,9 @@ typedef struct {
 /// must be defined in a platform-specific manner.
 ///
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER Header;
-  UINT32 LocalApicAddress;
-  UINT32 Flags;
+  AcpiDescriptionHeader Header;
+  uint32_t LocalApicAddress;
+  uint32_t Flags;
 } EFI_ACPI_1_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER;
 
 ///
@@ -545,11 +540,11 @@ typedef struct {
 /// Processor Local APIC Structure Definition.
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 AcpiProcessorId;
-  UINT8 ApicId;
-  UINT32 Flags;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t AcpiProcessorId;
+  uint8_t ApicId;
+  uint32_t Flags;
 } EFI_ACPI_1_0_PROCESSOR_LOCAL_APIC_STRUCTURE;
 
 ///
@@ -561,55 +556,55 @@ typedef struct {
 /// IO APIC Structure.
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 IoApicId;
-  UINT8 Reserved;
-  UINT32 IoApicAddress;
-  UINT32 SystemVectorBase;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t IoApicId;
+  uint8_t Reserved;
+  uint32_t IoApicAddress;
+  uint32_t SystemVectorBase;
 } EFI_ACPI_1_0_IO_APIC_STRUCTURE;
 
 ///
 /// Interrupt Source Override Structure.
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 Bus;
-  UINT8 Source;
-  UINT32 GlobalSystemInterruptVector;
-  UINT16 Flags;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t Bus;
+  uint8_t Source;
+  uint32_t GlobalSystemInterruptVector;
+  uint16_t Flags;
 } EFI_ACPI_1_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE;
 
 ///
 /// Non-Maskable Interrupt Source Structure.
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT16 Flags;
-  UINT32 GlobalSystemInterruptVector;
+  uint8_t Type;
+  uint8_t Length;
+  uint16_t Flags;
+  uint32_t GlobalSystemInterruptVector;
 } EFI_ACPI_1_0_NON_MASKABLE_INTERRUPT_SOURCE_STRUCTURE;
 
 ///
 /// Local APIC NMI Structure.
 ///
 typedef struct {
-  UINT8 Type;
-  UINT8 Length;
-  UINT8 AcpiProcessorId;
-  UINT16 Flags;
-  UINT8 LocalApicInti;
+  uint8_t Type;
+  uint8_t Length;
+  uint8_t AcpiProcessorId;
+  uint16_t Flags;
+  uint8_t LocalApicInti;
 } EFI_ACPI_1_0_LOCAL_APIC_NMI_STRUCTURE;
 
 ///
 /// Smart Battery Description Table (SBST)
 ///
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER Header;
-  UINT32 WarningEnergyLevel;
-  UINT32 LowEnergyLevel;
-  UINT32 CriticalEnergyLevel;
+  AcpiDescriptionHeader Header;
+  uint32_t WarningEnergyLevel;
+  uint32_t LowEnergyLevel;
+  uint32_t CriticalEnergyLevel;
 } EFI_ACPI_1_0_SMART_BATTERY_DESCRIPTION_TABLE;
 
 //

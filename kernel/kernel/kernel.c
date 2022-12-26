@@ -102,7 +102,7 @@ void parse_mbi(bool print) {
       }
 
       case MULTIBOOT_TAG_TYPE_ACPI_OLD: {
-        rsdp = (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) &(((struct multiboot_tag_old_acpi*) tag)->rsdp);
+        rsdp = (Acpi2Rsdp*) &(((struct multiboot_tag_old_acpi*) tag)->rsdp);
         if (print) printf("RSDP Sig: '%.8s', address, 0x%x\n", (char*) rsdp, rsdp->RsdtAddress);
         break;
       }
@@ -128,11 +128,11 @@ void cmain(unsigned long magic, unsigned long _kernel_addr) {
 
   kernel_addr = _kernel_addr;
   terminal_initialize(&vga_tty_device);
-  parse_mbi(true);
+  parse_mbi(false);
 
   sh_command commands[] = {
     {"cpu", print_cpu_info},
-    {"test", printf_tests},
+    {"test", PrintfTestSuite},
     {"acpi", print_rsdt_info},
     {"apic", print_apic_info},
     {"", NULL}
