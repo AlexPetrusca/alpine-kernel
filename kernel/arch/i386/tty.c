@@ -23,15 +23,11 @@ uint16_t terminal_line;
 tty_device* device;
 uint32_t width, height;
 
-// -----
-void terminal_writestring_s(const char* data); // remove me
-void terminal_write_s(const char* data, size_t size); // remove me
-void terminal_putchar_s(char c); // remove me
-void terminal_scroll_down_force(); // remove me
-// -----
+void terminal_writestring_raw(const char* data);
+void terminal_write_raw(const char* data, size_t size);
+void terminal_putchar_raw(char c);
 
 static inline char* terminal_cursorxy_to_buf_wptr(uint8_t x, uint8_t y) {
-  // todo: rewrite?
   struct circ_buf_ptr line_ptr;
   char* line = *((char**) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, y));
   circ_buf_ptr_init(&line_ptr, line, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
@@ -63,7 +59,7 @@ void terminal_buf_write_null_terminator() {
 // todo: move this somewhere else
 void terminal_buf_enqueue_line(char* line) {
   circ_buf_enqueue(&terminal_circ_line_buf, &line);
-   terminal_buf_write_null_terminator(); // do we need this?
+  terminal_buf_write_null_terminator();
 }
 
 void terminal_initialize(tty_device* _device) {
@@ -147,7 +143,7 @@ void terminal_flush_line(size_t y) {
   char* line = *((char**) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, y));
   circ_buf_ptr_init(&line_ptr, line, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
   while (*line_ptr.ptr != '\0') {
-    terminal_putchar_s(*line_ptr.ptr);
+    terminal_putchar_raw(*line_ptr.ptr);
     circ_buf_ptr_increment(&line_ptr);
   }
 
@@ -168,16 +164,16 @@ void terminal_flush() {
     line_ptr.ptr = *((char**) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, i));
     uint32_t written_chars = 0;
     while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
+      terminal_putchar_raw(*line_ptr.ptr);
       circ_buf_ptr_increment(&line_ptr);
       written_chars++;
     }
     while (written_chars < width) {
-      terminal_putchar_s(' ');
+      terminal_putchar_raw(' ');
       written_chars++;
     }
     if (i != height - 1) {
-      terminal_putchar_s('\n');
+      terminal_putchar_raw('\n');
     }
   }
 
@@ -204,7 +200,7 @@ void terminal_scroll_up() {
 
 void terminal_scroll_down() {
   if ((char**) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, cursor_y)
-    != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
+      != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
     terminal_scroll_down_force();
   }
 }
@@ -230,8 +226,7 @@ void terminal_buf_write(char c) {
   }
 }
 
-void terminal_putchar(char c) {
-  terminal_buf_write(c);
+void terminal_putchar_raw(char c) {
   switch (c) {
     case '\t':
       while ((cursor_x + 1) % TAB_LENGTH != 0) {
@@ -261,6 +256,11 @@ void terminal_putchar(char c) {
     terminal_scroll_down_force();
   }
   terminal_set_cursor_pos_xy(cursor_x, cursor_y);
+}
+
+void terminal_putchar(char c) {
+  terminal_buf_write(c);
+  terminal_putchar_raw(c);
 }
 
 void terminal_write(const char* data, size_t size) {
@@ -273,10 +273,6 @@ void terminal_writestring(const char* data) {
   terminal_write(data, strlen(data));
 }
 
-// -----------------------------------------------------------------------
-// REMOVE THE FOLLOWING
-// -----------------------------------------------------------------------
-
 // manual tests:
 // buffer limit: TERMINAL_BUFFER_SIZE = 300 --> a, b, c, d, ... until DEQUEUE (check validity)
 // line limit: TERMINAL_LINE_LIMIT = 30 --> a, b, c, d, ... until DEQUEUE (check validity + only scroll by 5)
@@ -286,219 +282,12 @@ void terminal_writestring(const char* data) {
 // test scrolling after writing a multi-line command (2 lines) and then deleting down to 1 line
 // test scrolling after recalling multi-line command (4+ lines) then recalling small command (1 line)
 
-void terminal_putchar_s(char c) {
-  switch (c) {
-    case '\t':
-      while ((cursor_x + 1) % TAB_LENGTH != 0) {
-        cursor_x++;
-      }
-      if (cursor_x < width - 1) {
-        cursor_x++;
-      }
-      break;
-    case '\b':
-      cursor_x -= (cursor_x == 0) ? 0 : 1;
-      break;
-    case '\n':
-      cursor_y++;
-      cursor_x = 0;
-      break;
-    default:
-      if (cursor_x == width) {
-        cursor_x = 0;
-        cursor_y++;
-      }
-      device->put_char(cursor_x, cursor_y, c, terminal_color);
-      cursor_x++;
-  }
-  if (cursor_y >= height) {
-    cursor_y--;
-    terminal_scroll_down_force();
-  }
-  terminal_set_cursor_pos_xy(cursor_x, cursor_y);
-}
-
-void terminal_write_s(const char* data, size_t size) {
+void terminal_write_raw(const char* data, size_t size) {
   for (size_t i = 0; i < size; i++) {
-    terminal_putchar_s(data[i]);
+    terminal_putchar_raw(data[i]);
   }
 }
 
-void terminal_writestring_s(const char* data) {
-  terminal_write_s(data, strlen(data));
-}
-
-void testOverflowByOneNullTerminator() {
-  // #define TERMINAL_BUFFER_SIZE 17
-
-  terminal_writestring("az\n\nb\nc\nHello abc");
-
-  struct circ_buf_ptr line_ptr;
-  circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
-  for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
-    line_ptr.ptr = terminal_buf_read_line(i);
-    terminal_writestring_s("\n------\n");
-    while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
-      circ_buf_ptr_increment(&line_ptr);
-    }
-  }
-  terminal_writestring_s("\n------\n");
-
-  terminal_putchar_s('\n');
-  terminal_writestring_s("Size: "); // 4
-  terminal_putchar_s('0' + terminal_circ_line_buf.size);
-}
-
-void testOverflowAndStringWrapAround() {
-  // #define TERMINAL_BUFFER_SIZE 17
-
-  terminal_writestring("az\n\nb\nc\nHello abcdef");
-
-  struct circ_buf_ptr line_ptr;
-  circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
-  for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
-    line_ptr.ptr = terminal_buf_read_line(i);
-    terminal_writestring_s("\n------\n");
-    while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
-      circ_buf_ptr_increment(&line_ptr);
-    }
-  }
-  terminal_writestring_s("\n------\n");
-
-  terminal_putchar_s('\n');
-  terminal_writestring_s("Size: "); // 3
-  terminal_putchar_s('0' + terminal_circ_line_buf.size);
-}
-
-void testOverflowAndStringWrapAroundAndLineLimit() {
-  // #define TERMINAL_BUFFER_SIZE 17
-  // #define TERMINAL_LINE_LIMIT 3
-
-  terminal_writestring("az\n\nb\nc\nHello\nabcdef");
-
-  struct circ_buf_ptr line_ptr;
-  circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
-  for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
-    line_ptr.ptr = terminal_buf_read_line(i);
-    terminal_writestring_s("\n------\n");
-    while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
-      circ_buf_ptr_increment(&line_ptr);
-    }
-  }
-  terminal_writestring_s("\n------\n");
-
-  terminal_putchar_s('\n');
-  terminal_writestring_s("Size: "); // 3
-  terminal_putchar_s('0' + terminal_circ_line_buf.size);
-}
-
-void testImplicitNewLine() {
-  // #define TERMINAL_BUFFER_SIZE 167
-
-  // 81 + 81 + 4 + 1 = 167
-  for (size_t i = 0; i < 2 * width + 3; i++) {
-    terminal_putchar('a');
-  }
-  terminal_putchar('\n');
-
-  struct circ_buf_ptr line_ptr;
-  circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
-  for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
-    line_ptr.ptr = terminal_buf_read_line(i);
-    terminal_writestring_s("\n------\n");
-    while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
-      circ_buf_ptr_increment(&line_ptr);
-    }
-  }
-  terminal_writestring_s("\n------\n");
-
-  terminal_putchar_s('\n');
-  terminal_writestring_s("Size: "); // 4
-  terminal_putchar_s('0' + terminal_circ_line_buf.size);
-}
-
-void testImplicitNewLineAndPerfectFitCondition() {
-  // #define TERMINAL_BUFFER_SIZE 166
-
-  // 81 + 81 + 4 = 166
-  for (size_t i = 0; i < 2 * width + 3; i++) {
-    terminal_putchar('a');
-  }
-
-  struct circ_buf_ptr line_ptr;
-  circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
-  for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
-    line_ptr.ptr = terminal_buf_read_line(i);
-    terminal_writestring_s("\n------\n");
-    while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
-      circ_buf_ptr_increment(&line_ptr);
-    }
-  }
-  terminal_writestring_s("\n------\n");
-
-  terminal_putchar_s('\n');
-  terminal_writestring_s("Size: "); // 3
-  terminal_putchar_s('0' + terminal_circ_line_buf.size);
-}
-
-void testImplicitNewLineAndOverflow() {
-  // #define TERMINAL_BUFFER_SIZE 165
-
-  // 81 + 81 + 4 = 166
-  for (size_t i = 0; i < 2 * width + 3; i++) {
-    terminal_putchar('a');
-  }
-  terminal_putchar('\n');
-
-  struct circ_buf_ptr line_ptr;
-  circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
-  for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
-    line_ptr.ptr = terminal_buf_read_line(i);
-    terminal_writestring_s("\n------\n");
-    while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
-      circ_buf_ptr_increment(&line_ptr);
-    }
-  }
-  terminal_writestring_s("\n------\n");
-
-  terminal_putchar_s('\n');
-  terminal_writestring_s("Size: "); // 3
-  terminal_putchar_s('0' + terminal_circ_line_buf.size);
-}
-
-void testCursorIntoTerminalBuffer() {
-  terminal_writestring("Hello \t World!\n"); // Hello     World!
-  terminal_writestring("Hello \b World!\n"); // Hello World!
-
-  struct circ_buf_ptr line_ptr;
-  circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
-  for (size_t i = 0; i < terminal_circ_line_buf.size; i++) {
-    line_ptr.ptr = terminal_buf_read_line(i);
-    terminal_writestring_s("\n------\n");
-    while (*line_ptr.ptr != '\0') {
-      terminal_putchar_s(*line_ptr.ptr);
-      circ_buf_ptr_increment(&line_ptr);
-    }
-  }
-  terminal_writestring_s("\n------\n");
-
-  terminal_putchar_s('\n');
-  terminal_writestring_s("Size: "); // 3
-  terminal_putchar_s('0' + terminal_circ_line_buf.size);
-}
-
-void test() {
-  // testOverflowByOneNullTerminator(); // pass
-  // testOverflowAndStringWrapAround(); // pass
-  // testOverflowAndStringWrapAroundAndLineLimit(); // pass
-  // testImplicitNewLine(); // pass
-  // testImplicitNewLineAndPerfectFitCondition(); // pass
-  // testImplicitNewLineAndOverflow(); // pass
-  testCursorIntoTerminalBuffer();
+void terminal_writestring_raw(const char* data) {
+  terminal_write_raw(data, strlen(data));
 }
