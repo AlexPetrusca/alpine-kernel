@@ -76,11 +76,17 @@ sh_command* find_command(char* name) {
   return NULL;
 }
 
-void printCommands() {
+void print_commands() {
   for (sh_command* cmd = commands; cmd->run != NULL; cmd++) {
     printf("%s ", cmd->name);
   }
   printf("\n");
+}
+
+void print_history() {
+  for (int i = 1; i < history_circ_buf.size; i++) {
+    printf("%d: %s\n", i, (char*) circ_buf_peekn(&history_circ_buf, i));
+  }
 }
 
 bool shell_execute() {
@@ -91,13 +97,11 @@ bool shell_execute() {
   // todo: instead, check if input contains only whitespace
   if (command_idx > 0) {
     if (strequ(command, "history")) {
-      for (size_t i = 1; i < history_circ_buf.size; i++) {
-        printf("%d: %s\n", i, (char*) circ_buf_peekn(&history_circ_buf, i));
-      }
+      print_history();
     } else if (strequ(command, "clear")) {
       terminal_clear();
     } else if (strequ(command, "help")) {
-      printCommands();
+      print_commands();
     } else if (strequ(command, "exit")) {
       printf("Alpine shell terminated.");
       return false;
