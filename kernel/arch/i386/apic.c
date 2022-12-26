@@ -2,11 +2,11 @@
 #include <kernel/cpu.h>
 #include <stdio.h>
 
-uint32_t readApicReg(APIC_REG reg, uint64_t apic_base_addr) {
+uint32_t readApicReg(ApicReg reg, uint64_t apic_base_addr) {
   return *((uint32_t*) (apic_base_addr + reg));
 }
 
-void writeApicReg(APIC_REG reg, uint32_t value, uint64_t apic_base_addr) {
+void writeApicReg(ApicReg reg, uint32_t value, uint64_t apic_base_addr) {
   *((uint32_t*) (apic_base_addr + reg)) = value;
 }
 

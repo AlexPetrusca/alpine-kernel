@@ -2,24 +2,24 @@
 #include <stdio.h>
 #include <kernel/acpi.h>
 
-EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER* rsdp;
+Acpi2Rsdp* rsdp;
 
 void print_rsdt_info() {
-  Rsdt* rsdt = (Rsdt*) (uint64_t) rsdp->RsdtAddress;
-  int entry_count = (rsdt->header.Length - sizeof(EFI_ACPI_DESCRIPTION_HEADER)) / 4;
+  Rsdt* rsdt = (Rsdt*) rsdp->RsdtAddress;
+  int entry_count = (rsdt->header.Length - sizeof(AcpiDescriptionHeader)) / 4;
   printf("Signature: %.4s\n", (char*) rsdt);
   printf("ACPI table count: %d\n", entry_count);
   for (int i = 0; i < entry_count; i++) {
-    EFI_ACPI_DESCRIPTION_HEADER* table = (EFI_ACPI_DESCRIPTION_HEADER*) (uint64_t) rsdt->pointer_to_other_sdt[i];
+    AcpiDescriptionHeader* table = (AcpiDescriptionHeader*) rsdt->pointer_to_other_sdt[i];
     printf("Table %d: %.4s, %d bytes\n", i + 1, (char*) table, table->Length);
   }
 }
 
-EFI_ACPI_DESCRIPTION_HEADER* find_acpi_table(char* name) {
-  Rsdt* rsdt = (Rsdt*) (uint64_t) rsdp->RsdtAddress;
-  int entry_count = (rsdt->header.Length - sizeof(EFI_ACPI_DESCRIPTION_HEADER)) / 4;
+AcpiDescriptionHeader* find_acpi_table(char* name) {
+  Rsdt* rsdt = (Rsdt*) rsdp->RsdtAddress;
+  int entry_count = (rsdt->header.Length - sizeof(AcpiDescriptionHeader)) / 4;
   for (int i = 0; i < entry_count; i++) {
-    EFI_ACPI_DESCRIPTION_HEADER* table = (EFI_ACPI_DESCRIPTION_HEADER*) (uint64_t) rsdt->pointer_to_other_sdt[i];
+    AcpiDescriptionHeader* table = (AcpiDescriptionHeader*) rsdt->pointer_to_other_sdt[i];
     if (strnequ(name, (char*) table, 4)) {
       return table;
     }
@@ -27,12 +27,12 @@ EFI_ACPI_DESCRIPTION_HEADER* find_acpi_table(char* name) {
   return NULL;
 }
 
-EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER* find_apic_table() {
-  return (EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER*) find_acpi_table("APIC");
+Acpi2MultipleApicTableHeader* find_apic_table() {
+  return (Acpi2MultipleApicTableHeader*) find_acpi_table("APIC");
 }
 
 void print_apic_info() {
-  EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER* apic = find_apic_table();
+  Acpi2MultipleApicTableHeader* apic = find_apic_table();
 
   printf("Signature: %.4s\n", (char*) &(apic->Header.Signature));
   printf("OEM Id: %.6s\n", (char*) &(apic->Header.OemId));
@@ -41,7 +41,7 @@ void print_apic_info() {
   printf("Length: %d\n", apic->Header.Length);
   printf("Local APIC Address: 0x%x\n", apic->LocalApicAddress);
 
-  uint8_t* ptr = (uint8_t*) apic + sizeof(EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER);
+  uint8_t* ptr = (uint8_t*) apic + sizeof(Acpi2MultipleApicTableHeader);
   while (ptr < (uint8_t*) apic + apic->Header.Length) {
     ApicEntryHeader* header = (ApicEntryHeader*) ptr;
     if (header->entry_type == LOCAL_APIC) {
@@ -57,7 +57,10 @@ void print_apic_info() {
              entry->bus_source, entry->irq_source, entry->global_system_interrupt, entry->flags);
     } else if (header->entry_type == LOCAL_APIC_NON_MASKABLE_INTERRUPTS) {
       LocalApicNMIEntry* entry = (LocalApicNMIEntry*) header;
-      printf("Local APIC NMI, processor: %d, LINT: %d, flags: %b\n", entry->acpi_processor_id, entry->lint, entry->flags);
+      printf("Local APIC NMI, processor: %d, LINT: %d, flags: %b\n",
+             entry->acpi_processor_id,
+             entry->lint,
+             entry->flags);
     } else {
       printf("Unsupported Entry Type: %d\n", header->entry_type);
     }
