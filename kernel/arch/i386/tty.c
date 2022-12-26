@@ -103,9 +103,7 @@ void terminal_delete(size_t n) {
     uint16_t pos = terminal_get_cursor_pos();
     terminal_set_cursor_pos(pos - 1);
     device->put_char(cursor_x, cursor_y, ' ', terminal_color);
-
     *terminal_buf_wptr.ptr = '\0';
-    circ_buf_ptr_decrement(&terminal_buf_wptr);
   }
 }
 
