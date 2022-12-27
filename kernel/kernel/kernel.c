@@ -7,6 +7,7 @@
 #include <stdio_tests.h>
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
+#include <kernel/pci.h>
 
 char* mem_type[] = {"Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad"};
 
@@ -128,13 +129,18 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
     return;
   }
 
+  kernel_addr = _kernel_addr;
+
   parse_mbi(false);
+  pci_enumerate();
 
   sh_command commands[] = {
     {"cpu", print_cpu_info},
     {"test", PrintfTestSuite},
     {"acpi", print_rsdt_info},
     {"apic", print_apic_info},
+    {"mcfg", pci_PrintMcfg},
+    {"pci", pci_PrintDevices},
     {"", NULL}
   };
   shell_start(commands);

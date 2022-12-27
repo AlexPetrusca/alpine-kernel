@@ -10,16 +10,16 @@
 #define STRINGIZE(A) STRINGIZE_NX(A)
 
 #define suitedecl(name) void PPCAT(name, TestSuite)();
-#define suite(name) \
+#define SUITE(name) \
   void PPCAT(name, TestSuite)() {      \
     printf("%s:\n", STRINGIZE(PPCAT(name, TestSuite)));
-#define suite_end() }
+#define ENDS }
 
-#define test(test_name) \
+#define TEST(test_name) \
   do {                  \
     char* name = STRINGIZE(test_name);
 
-#define test_end()  \
+#define ENDT  \
     printf("  %s: OK\n", name); \
   } while (0);
 
