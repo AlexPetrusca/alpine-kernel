@@ -116,18 +116,18 @@ void parse_mbi(bool print) {
 }
 
 void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
+  kernel_addr = _kernel_addr;
+  terminal_initialize(&vga_tty_device);
   if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
     printf("Invalid magic number: 0x%x\n", (unsigned) magic);
     return;
   }
 
   if (kernel_addr & 7) {
-    printf("Unaligned parse_mbi: 0x%x\n", _kernel_addr);
+    printf("Unaligned parse_mbi: 0x%x\n", kernel_addr);
     return;
   }
 
-  kernel_addr = _kernel_addr;
-  terminal_initialize(&vga_tty_device);
   parse_mbi(false);
 
   sh_command commands[] = {

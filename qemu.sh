@@ -2,7 +2,7 @@
 set -e
 . ./iso.sh
 
-qemu-system-$(./target-triplet-to-arch.sh $HOST) \
+qemu-system-x86_64 \
 		-machine q35 \
 		-smp 2 \
 		-m 256M  \

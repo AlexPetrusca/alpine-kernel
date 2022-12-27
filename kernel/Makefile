@@ -55,7 +55,7 @@ all: alpine.kernel
 
 alpine.kernel: $(OBJS) $(ARCHDIR)/linker.ld
 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
-	i686-elf-grub-file --is-x86-multiboot2 alpine.kernel
+	${HOST}-grub-file --is-x86-multiboot2 alpine.kernel
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
