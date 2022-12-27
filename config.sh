@@ -17,7 +17,7 @@ export INCLUDEDIR=$PREFIX/include
 
 export CFLAGS='-O2 -g'
 export CPPFLAGS=''
-export ASMFLAGS='-felf32'
+export ASMFLAGS=''
 
 # Configure the cross-compiler to use the desired system root.
 export SYSROOT="$(pwd)/build/sysroot"

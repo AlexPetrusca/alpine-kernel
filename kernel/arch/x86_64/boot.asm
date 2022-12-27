@@ -1,15 +1,18 @@
+; multiboot2 constants
 MAGIC       equ 0xe85250d6
 ARCH        equ 0
 HEADER_SIZE equ header_end - header_start
 CHECKSUM    equ -(MAGIC + ARCH + HEADER_SIZE)
 
+; Page access bits
 PAGE_PRESENT    equ (1 << 0)
 PAGE_WRITE      equ (1 << 1)
 
+; GDT segment constants
 CODE_SEG    equ 0x0008
 DATA_SEG    equ 0x0010
 
-; GDT Access bits
+; GDT access bits
 PRESENT        equ 1 << 7
 NOT_SYS        equ 1 << 4
 EXEC           equ 1 << 3
@@ -17,11 +20,12 @@ DC             equ 1 << 2
 RW             equ 1 << 1
 ACCESSED       equ 1 << 0
 
-; GDT Flags bits
+; GDT flag bits
 GRAN_4K       equ 1 << 7
 SZ_32         equ 1 << 6
 LONG_MODE     equ 1 << 5
 
+; Stack constants
 STACK_SIZE  equ 0x4000
 
 section .multiboot
@@ -71,7 +75,8 @@ GDT:
         dd 0xFFFF                                   ; Limit & Base (low, bits 0-15)
         db 0                                        ; Base (mid, bits 16-23)
         db PRESENT | NOT_SYS | EXEC | RW            ; Access
-        db GRAN_4K | LONG_MODE | 0xF                ; Flags & Limit (high, bits 16-19)
+        db GRAN_4K | LONG_MODE | 0xF                ; Flags & Limit (high, bits 16-19) (64-bit long mode)
+;        db GRAN_4K | SZ_32 | 0xF                    ; Flags & Limit (high, bits 16-19) (32-bit compatibility mode)
         db 0                                        ; Base (high, bits 24-31)
     .Data:
         dd 0xFFFF                                   ; Limit & Base (low, bits 0-15)
@@ -83,6 +88,7 @@ GDT:
         dw $ - GDT - 1
         dq GDT
 
+[BITS 32]
 section .text
 global _start:function (_end - _start)
 _start:
@@ -96,16 +102,8 @@ _start:
 
     jmp SwitchToLongMode
 
-    extern kernel_main  ; Now enter the C main function...
-    call kernel_main
-;
-;loop:
-;    hlt
-;    jmp loop
-
 ; Function to switch directly to long mode from real mode.
 ; Identity maps the first 2MiB.
-; Uses Intel syntax.
 SwitchToLongMode:
     ; Zero out the 16KiB buffer.
     ; Since we are doing a rep stosd, count should be bytes/4.
@@ -170,12 +168,12 @@ SwitchToLongMode:
     wrmsr
 
     mov ebx, cr0                      ; Activate long mode -
-    or ebx, 0x80000001                 ; - by enabling paging and protection simultaneously.
+    or ebx, 0x80000001                ; - by enabling paging and protection simultaneously.
     mov cr0, ebx
 
     lgdt [GDT.Pointer]                ; Load GDT.Pointer defined below.
 
-    jmp CODE_SEG:LongMode             ; Load CS with 64 bit segment and flush the instruction cache
+    jmp CODE_SEG:LongMode             ; Load CS with 64 bit segment (CS selects the submode of long mode)
 
 [BITS 64]
 LongMode:
@@ -204,10 +202,8 @@ LongMode:
     mov rax, 0x1F211F641F6C1F72
     mov [edi + 16], rax
 
-    spin: jmp spin
+    pause: jmp pause
 
-    push rbx  ; Push the pointer to the Multiboot information structure.
-    push rax  ; Push the magic value.
     extern kernel_main  ; Now enter the C main function...
     call kernel_main
 

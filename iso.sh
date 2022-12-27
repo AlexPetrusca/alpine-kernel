@@ -10,4 +10,4 @@ menuentry "Alpine Kernel" {
 	multiboot2 /boot/alpine.kernel
 }
 EOF
-${HOST}-grub-mkrescue -o build/myos.iso build/isodir
+grub-mkrescue -o build/myos.iso build/isodir
