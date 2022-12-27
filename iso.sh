@@ -4,10 +4,10 @@ set -e
 
 mkdir -p build/isodir/boot/grub
 
-cp build/sysroot/boot/myos.kernel build/isodir/boot/myos.kernel
+cp build/sysroot/boot/alpine.kernel build/isodir/boot/alpine.kernel
 cat > build/isodir/boot/grub/grub.cfg << EOF
 menuentry "Alpine Kernel" {
-	multiboot2 /boot/myos.kernel
+	multiboot2 /boot/alpine.kernel
 }
 EOF
 i686-elf-grub-mkrescue -o build/myos.iso build/isodir
