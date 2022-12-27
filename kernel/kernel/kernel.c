@@ -132,7 +132,7 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
   kernel_addr = _kernel_addr;
 
   parse_mbi(false);
-  pci_enumerate();
+//  pci_enumerate();
 
   sh_command commands[] = {
     {"cpu", print_cpu_info},
