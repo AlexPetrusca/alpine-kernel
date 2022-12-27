@@ -63,7 +63,7 @@ void print_cpu_info() {
 
   __cpuid(1, eax, ebx, ecx, edx);
   printf("Processor Version Info: %b\n", eax);
-  printf("Hyper Treading Enabled: %d, Core Count: %d\n", (edx & CPU_FEATURE_HTT) != 0, (ebx >> 16) & 0xFF);
+  printf("Hyper Threading Enabled: %d, Core Count: %d\n", (edx & CPU_FEATURE_HTT) != 0, (ebx >> 16) & 0xFF);
   printf("Onboard APIC Feature: %d, Local APIC ID: %d\n", (edx & CPU_FEATURE_APIC) != 0, (ebx >> 24) & 0xFF);
   printf("Model-specific registers Feature: %d\n", (edx & CPU_FEATURE_MSR) != 0);
   printf("Page Size Extension Feature: %d\n", (edx & CPU_FEATURE_PSE) != 0);

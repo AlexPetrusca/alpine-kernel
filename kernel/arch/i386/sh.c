@@ -96,7 +96,7 @@ bool shell_execute() {
       }
     } else if (strequ(command, "clear")) {
       terminal_clear();
-    } else if (strequ(command, "cmd")) {
+    } else if (strequ(command, "help")) {
       printCommands();
     } else if (strequ(command, "exit")) {
       printf("Alpine shell terminated.");

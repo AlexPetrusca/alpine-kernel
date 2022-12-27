@@ -87,7 +87,7 @@
 # define CPU_FEATURE_PGE 1 << 13
 // 36-bit page size extension
 # define CPU_FEATURE_PSE36 1 << 17
-// Hyper Treading
+// Hyper Threading
 # define CPU_FEATURE_HTT 1 << 28
 
 void print_cpu_info();
