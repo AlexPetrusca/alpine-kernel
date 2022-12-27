@@ -244,12 +244,12 @@ void terminal_putchar_raw(char c) {
       cursor_x = 0;
       break;
     default:
-      device->put_char(cursor_x, cursor_y, c, terminal_color);
-      cursor_x++;
       if (cursor_x == width) {
         cursor_x = 0;
         cursor_y++;
       }
+      device->put_char(cursor_x, cursor_y, c, terminal_color);
+      cursor_x++;
   }
   if (cursor_y >= height) {
     cursor_y--;
