@@ -49,7 +49,7 @@ $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o \
 
 .PHONY: all clean install install-headers install-kernel
-.SUFFIXES: .o .c .S
+.SUFFIXES: .o .c .S .asm
 
 all: alpine.kernel
 
@@ -65,6 +65,9 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 
 .S.o:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+
+.asm.o:
+	$(ASM) $< -o $@ $(ASMFLAGS)
 
 clean:
 	rm -f alpine.kernel

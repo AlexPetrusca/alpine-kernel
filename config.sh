@@ -7,6 +7,7 @@ export HOST=${HOST:-$(./default-host.sh)}
 export AR=${HOST}-ar
 export AS=${HOST}-as
 export CC=${HOST}-gcc
+export ASM=nasm
 
 export PREFIX=/usr
 export EXEC_PREFIX=$PREFIX
@@ -16,6 +17,7 @@ export INCLUDEDIR=$PREFIX/include
 
 export CFLAGS='-O2 -g'
 export CPPFLAGS=''
+export ASMFLAGS='-felf32'
 
 # Configure the cross-compiler to use the desired system root.
 export SYSROOT="$(pwd)/build/sysroot"

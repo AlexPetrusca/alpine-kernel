@@ -68,7 +68,7 @@ LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
 BINARIES=libk.a
 
 .PHONY: all clean install install-headers install-libs
-.SUFFIXES: .o .libk.o .c .S
+.SUFFIXES: .o .libk.o .c .S .asm
 
 all: $(BINARIES)
 
@@ -84,11 +84,17 @@ libk.a: $(LIBK_OBJS)
 .c.S:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
+.c.asm:
+	$(ASM) $< -o $@ $(ASMFLAGS)
+
 .c.libk.o:
 	$(CC) -MD -c $< -o $@ -std=gnu17 $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 .S.libk.o:
 	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+
+.asm.libk.o:
+	$(ASM) $< -o $@ $(ASMFLAGS)
 
 clean:
 	rm -f $(BINARIES) *.a
