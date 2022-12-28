@@ -133,13 +133,13 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
 //  pci_enumerate();
 
   sh_command commands[] = {
-    {"cpu", print_cpu_info},
-    {"test", PrintfTestSuite},
-    {"acpi", print_rsdt_info},
-    {"apic", print_apic_info},
-//    {"mcfg", pci_PrintMcfg},
-//    {"pci", pci_PrintDevices},
-    {"", NULL}
+      {"cpu",  print_cpu_info},
+      {"test", PrintfTestSuite},
+      {"acpi", print_rsdt_info},
+      {"apic", print_apic_info},
+//      {"mcfg", pci_PrintMcfg},
+//      {"pci",  pci_PrintDevices},
+      {"", NULL}
   };
   shell_start(commands);
 }

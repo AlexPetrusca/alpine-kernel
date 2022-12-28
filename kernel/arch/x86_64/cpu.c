@@ -73,11 +73,11 @@ void print_cpu_info() {
 
   __cpuid(0x80000006, eax, ebx, ecx, edx);
   printf("L2 Cache Line size: %dB, Associativity Type: %d; Cache Size: %dKB\n",
-         ecx & 0xff, (ecx >> 12) & 0x07, (ecx >> 16) & 0xffff);
+      ecx & 0xff, (ecx >> 12) & 0x07, (ecx >> 16) & 0xffff);
 
   __cpuid(0x80000008, eax, ebx, ecx, edx);
   printf("Physical Address Bits: %d, Linear Address Bits: %d, Physical Cores: %d\n", eax & 0xff,
-         (eax >> 8) & 0xff, ecx + 1);
+      (eax >> 8) & 0xff, ecx + 1);
 
   uint32_t cr0, cr2, cr3, cr4;
   __cr(cr0, cr2, cr3, cr4);

@@ -17,7 +17,7 @@
 #include "Acpi10.h"
 
 //
-// Define for Desriptor
+// Define for Descriptor
 //
 #define ACPI_LARGE_GENERIC_REGISTER_DESCRIPTOR_NAME          0x02
 

@@ -7,8 +7,6 @@
 
 #define EOF -1
 
-__BEGIN_DECLS
-
 /**
   The print functions provide a simple means to produce formatted output
   strings. The format of argument descriptors is described below:
@@ -108,6 +106,9 @@ __BEGIN_DECLS
           If COUNT_ONLY_NO_PRINT was set returns the same, but without any
           modification to Buffer.
 **/
+
+__BEGIN_DECLS
+
 int printf(const char* format, ...);
 int sprintf(char* str, const char* format, ...);
 int _sprintf(char* buffer, const char* format, ...);

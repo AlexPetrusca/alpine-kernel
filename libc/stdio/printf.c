@@ -378,13 +378,11 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
     if ((flags & ARGUMENT_REVERSED) == 0) {
       // Compute the number of characters in ArgumentString and store it in Count
       // ArgumentString is either null-terminated, or it contains Precision characters
-      for (count = 0;
-           (argument_string[count * argument_string_step] != '\0' ||
-             (argument_string_step > 1 && argument_string[count * argument_string_step + 1] != '\0')) &&
-             (count < precision || ((flags & PRECISION) == 0));
-           count++) {
-        argument_character = ((argument_string[count * argument_string_step])
-          | ((argument_string[count * argument_string_step + 1]) << 8));
+      for (count = 0; (argument_string[count * argument_string_step] != '\0' ||
+          (argument_string_step > 1 && argument_string[count * argument_string_step + 1] != '\0')) &&
+          (count < precision || ((flags & PRECISION) == 0)); count++) {
+        argument_character = ((argument_string[count * argument_string_step]) |
+            ((argument_string[count * argument_string_step + 1]) << 8));
         if (argument_character == 0) {
           break;
         }
@@ -436,8 +434,7 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
     }
 
     // Copy the string into the output buffer performing the required type conversions
-    while (index < count &&
-      (argument_string[0] != '\0' || (argument_string_step > 1 && argument_string[1] != '\0'))) {
+    while (index < count && (argument_string[0] != '\0' || (argument_string_step > 1 && argument_string[1] != '\0'))) {
       argument_character = (*argument_string) | (((uint8_t) *(argument_string + 1)) << 8);
 
       length_to_return++;

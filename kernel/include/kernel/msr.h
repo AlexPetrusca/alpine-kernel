@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define IA32_EFER_MSR               0xc0000080
+#define IA32_EFER_MSR             0xc0000080
 // System Call Extensions (SCE)
 #define IA32_EFER_MSR_SCE         1 << 0
 // Long Mode Enable (LME)
@@ -13,11 +13,11 @@
 // No-Execute Enable (NXE)
 #define IA32_EFER_MSR_NXE         1 << 11
 // Secure Virtual Machine Enable (SVME)
-#define IA32_EFER_MSR_SVME         1 << 12
+#define IA32_EFER_MSR_SVME        1 << 12
 // Long Mode Segment Limit Enable (LMSLE)
-#define IA32_EFER_MSR_LMSLE         1 << 13
+#define IA32_EFER_MSR_LMSLE       1 << 13
 // Fast FXSAVE/FXSTOR (FFXSR)
-#define IA32_EFER_MSR_FFXSR         1 << 14
+#define IA32_EFER_MSR_FFXSR       1 << 14
 // Translation Cache Extension (TCE)
 #define IA32_EFER_MSR_TCE         1 << 15
 

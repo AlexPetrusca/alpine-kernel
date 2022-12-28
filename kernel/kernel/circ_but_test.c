@@ -108,7 +108,9 @@ void test_kb() {
 
 void kernel_main() {
   terminal_initialize(&vga_tty_device);
-  sh_command commands[] = {{"cpu", print_cpu_info}, {"test", printf_tests}, {"", NULL}};
+  sh_command commands[] = {{"cpu",  print_cpu_info},
+                           {"test", printf_tests},
+                           {"", NULL}};
   shell_start(commands);
   // test(); // todo: remove me
 

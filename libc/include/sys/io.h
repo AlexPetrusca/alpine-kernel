@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-//__BEGIN_DECLS  //todo dp Had to comment out cause it does not compile in mingw
+__BEGIN_DECLS
 
 static inline uint8_t inb(uint16_t port) {
   uint8_t ret;
@@ -35,6 +35,16 @@ static inline void outl(uint16_t port, uint32_t val) {
   asm volatile ( "outl %0, %1" : : "a"(val), "Nd"(port));
 }
 
-//__END_DECLS
+static inline uint64_t inq(uint16_t port) {
+  uint64_t ret;
+  asm volatile ( "inq %1, %0" : "=a"(ret) : "Nd"(port));
+  return ret;
+}
+
+static inline void outq(uint16_t port, uint64_t val) {
+  asm volatile ( "outq %0, %1" : : "a"(val), "Nd"(port));
+}
+
+__END_DECLS
 
 #endif

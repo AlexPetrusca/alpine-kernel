@@ -50,17 +50,17 @@ void print_apic_info() {
     } else if (header->entry_type == IO_APIC) {
       IOApicEntry* entry = (IOApicEntry*) header;
       printf("IO APIC, Id: %d, address: 0x%x, GlobalSystemInterruptBase: %d\n",
-             entry->apic_id, entry->ioapic_address, entry->global_system_interrupt_base);
+          entry->apic_id, entry->ioapic_address, entry->global_system_interrupt_base);
     } else if (header->entry_type == IO_APIC_INTERRUPTS_SOURCE_OVERRIDE) {
       IOApicISREntry* entry = (IOApicISREntry*) header;
       printf("IO APIC ISO, bus: %d, irq: %d, global interrupt: %d, flags: %b\n",
-             entry->bus_source, entry->irq_source, entry->global_system_interrupt, entry->flags);
+          entry->bus_source, entry->irq_source, entry->global_system_interrupt, entry->flags);
     } else if (header->entry_type == LOCAL_APIC_NON_MASKABLE_INTERRUPTS) {
       LocalApicNMIEntry* entry = (LocalApicNMIEntry*) header;
       printf("Local APIC NMI, processor: %d, LINT: %d, flags: %b\n",
-             entry->acpi_processor_id,
-             entry->lint,
-             entry->flags);
+          entry->acpi_processor_id,
+          entry->lint,
+          entry->flags);
     } else {
       printf("Unsupported Entry Type: %d\n", header->entry_type);
     }
