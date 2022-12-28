@@ -11,11 +11,11 @@
 
 char* mem_type[] = {"Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad"};
 
-unsigned long kernel_addr;
+uint64_t kernel_addr;
 
 char* bootloader_name;
 char* kernel_cmd_line;
-uint32_t kernel_base_addr;
+uint64_t kernel_base_addr;
 struct multiboot_tag_bootdev* boot_dev;
 struct multiboot_tag_elf_sections* elf_sections;
 struct multiboot_tag_basic_meminfo* mem_info;
@@ -112,8 +112,6 @@ void parse_mbi(bool print) {
         if (print) printf("Unknown\n");
     }
   }
-  tag = (struct multiboot_tag*) ((multiboot_uint8_t*) tag + ((tag->size + 7) & ~7));
-  if (print) printf("Total parse_mbi size %d bytes\n", (unsigned) tag - kernel_addr);
 }
 
 void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
@@ -125,7 +123,7 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
   }
 
   if (kernel_addr & 7) {
-    printf("Unaligned parse_mbi: 0x%x\n", kernel_addr);
+    printf("Unaligned parse_mbi: 0x%lx\n", kernel_addr);
     return;
   }
 
@@ -139,16 +137,9 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
     {"test", PrintfTestSuite},
     {"acpi", print_rsdt_info},
     {"apic", print_apic_info},
-    {"mcfg", pci_PrintMcfg},
-    {"pci", pci_PrintDevices},
+//    {"mcfg", pci_PrintMcfg},
+//    {"pci", pci_PrintDevices},
     {"", NULL}
   };
   shell_start(commands);
 }
-
-/* alternative kernel_main to test long mode entry */
-//void kernel_main() {
-//  terminal_initialize(&vga_tty_device);
-//  printf("We're in!");
-//  while (true);
-//}

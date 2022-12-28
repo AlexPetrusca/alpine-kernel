@@ -5,21 +5,21 @@
 Acpi2Rsdp* rsdp;
 
 void print_rsdt_info() {
-  Rsdt* rsdt = (Rsdt*) rsdp->RsdtAddress;
+  Rsdt* rsdt = (Rsdt*) (uint64_t) rsdp->RsdtAddress;
   int entry_count = (rsdt->header.Length - sizeof(AcpiDescriptionHeader)) / 4;
   printf("Signature: %.4s\n", (char*) rsdt);
   printf("ACPI table count: %d\n", entry_count);
   for (int i = 0; i < entry_count; i++) {
-    AcpiDescriptionHeader* table = (AcpiDescriptionHeader*) rsdt->pointer_to_other_sdt[i];
+    AcpiDescriptionHeader* table = (AcpiDescriptionHeader*) (uint64_t) rsdt->pointer_to_other_sdt[i];
     printf("Table %d: %.4s, %d bytes\n", i + 1, (char*) table, table->Length);
   }
 }
 
 AcpiDescriptionHeader* find_acpi_table(char* name) {
-  Rsdt* rsdt = (Rsdt*) rsdp->RsdtAddress;
+  Rsdt* rsdt = (Rsdt*) (uint64_t) rsdp->RsdtAddress;
   int entry_count = (rsdt->header.Length - sizeof(AcpiDescriptionHeader)) / 4;
   for (int i = 0; i < entry_count; i++) {
-    AcpiDescriptionHeader* table = (AcpiDescriptionHeader*) rsdt->pointer_to_other_sdt[i];
+    AcpiDescriptionHeader* table = (AcpiDescriptionHeader*) (uint64_t) rsdt->pointer_to_other_sdt[i];
     if (strnequ(name, (char*) table, 4)) {
       return table;
     }

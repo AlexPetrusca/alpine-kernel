@@ -40,7 +40,6 @@ add_executable(alpine_kernel
         libc/stdio/printf.c
         libc/stdio/putchar.c
         libc/stdio/puts.c
-        libc/stdio/sprintf.c
         libc/stdlib/abort.c
         libc/stdlib/itoa.c
         libc/string/memchr.c
