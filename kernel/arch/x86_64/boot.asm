@@ -12,6 +12,22 @@ PAGE_WRITE      equ (1 << 1)
 CODE_SEG    equ 0x0008
 DATA_SEG    equ 0x0010
 
+; CR4 bits
+CR4_PAE         equ 1 << 5
+CR4_MCE         equ 1 << 6
+CR4_PGE         equ 1 << 7
+CR4_OSFXSR      equ 1 << 9
+CR4_OSXMMEXCPT  equ 1 << 10
+
+; CR0 bits
+CR0_PG equ 1 << 31
+CR0_PE equ 1 << 0
+
+IA32_EFER_MSR      equ  0xc0000080
+IA32_EFER_MSR_LME  equ  1 << 8
+
+PAGE_SIZE  equ  4096
+
 ; GDT access bits
 PRESENT        equ 1 << 7
 NOT_SYS        equ 1 << 4
@@ -27,6 +43,11 @@ LONG_MODE     equ 1 << 5
 
 ; Stack constants
 STACK_SIZE  equ 0x4000
+
+PML4T_START equ 0x1000
+PDPT_START equ 0x2000
+PDT_START equ 0x3000
+PT_START equ 0x4000
 
 section .multiboot
 
@@ -97,78 +118,62 @@ _start:
     push 0    ; Reset EFLAGS.
     popf
 
-    push ebx  ; Push the pointer to the Multiboot information structure.
-    push eax  ; Push the magic value.
+    push 0 ; Push the 64-bit pointer to the Multiboot information structure.
+    push ebx
+    push 0 ; Push the 64-bit magic value.
+    push eax
 
-    jmp SwitchToLongMode
+    ; Switch to long mode
 
-; Function to switch directly to long mode from real mode.
-; Identity maps the first 2MiB.
-SwitchToLongMode:
     ; Zero out the 16KiB buffer.
-    ; Since we are doing a rep stosd, count should be bytes/4.
-    push di                           ; REP STOSD alters DI.
-    mov ecx, 0x1000
+    mov edi, PML4T_START
     xor eax, eax
+    mov ecx, 4096           ; 4096 * 4 = 16k
     cld
-    rep stosd
-    pop di                            ; Get DI back.
+    rep stosd               ; Clear the memory.
 
-    ; Build the Page Map Level 4.
-    ; es:di points to the Page Map Level 4 table.
-    lea eax, [es:di + 0x1000]         ; Put the address of the Page Directory Pointer Table in to EAX.
-    or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writable flag.
-    mov [es:di], eax                  ; Store the value of EAX as the first PML4E.
+    ; Build the PML4T, PDPT and PDT
+    mov edi, PML4T_START
+    mov DWORD [edi], PDPT_START | PAGE_PRESENT | PAGE_WRITE   ; PML4T points to PDPT
+    mov edi, PDPT_START
+    mov DWORD [edi], PDT_START | PAGE_PRESENT | PAGE_WRITE    ; PDPT points to PDT
+    mov edi, PDT_START
+    mov DWORD [edi], PT_START | PAGE_PRESENT | PAGE_WRITE     ; PDT points to PT
 
-    ; Build the Page Directory Pointer Table.
-    lea eax, [es:di + 0x2000]         ; Put the address of the Page Directory in to EAX.
-    or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writable flag.
-    mov [es:di + 0x1000], eax         ; Store the value of EAX as the first PDPTE.
-
-    ; Build the Page Directory.
-    lea eax, [es:di + 0x3000]         ; Put the address of the Page Table in to EAX.
-    or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writeable flag.
-    mov [es:di + 0x2000], eax         ; Store to value of EAX as the first PDE.
-
-    push di                           ; Save DI for the time being.
-    lea di, [di + 0x3000]             ; Point DI to the page table.
-    mov eax, PAGE_PRESENT | PAGE_WRITE    ; Move the flags into EAX - and point it to 0x0000.
-
-; Build the Page Table.
-.LoopPageTable:
-    mov [es:di], eax
-    add eax, 0x1000
-    add di, 8
-    cmp eax, 0x200000                 ; If we did all 2MiB, end.
-    jb .LoopPageTable
-
-    pop di                            ; Restore DI.
+    ; Build the PT table identify mapping the first 2Mb
+    mov edi, PT_START
+    mov ebx, PAGE_PRESENT | PAGE_WRITE
+    mov ecx, 512                 ; map 512 4k pages = 2Mb
+.SetEntry:
+    mov DWORD [edi], ebx
+    add ebx, PAGE_SIZE           ; move to the next 4k page
+    add edi, 8
+    loop .SetEntry
 
     ; Disable IRQs
-    mov al, 0xFF                      ; Out 0xFF to 0xA1 and 0x21 to disable all IRQs.
+    mov al, 0xFF                 ; Out 0xFF to 0xA1 and 0x21 to disable all IRQs.
     out 0xA1, al
     out 0x21, al
 
     nop
     nop
 
-    lidt [IDT]                        ; Load a zero length IDT so that any NMI causes a triple fault.
+    lidt [IDT]                   ; Load a zero length IDT so that any NMI causes a triple fault.
 
     ; Enter long mode.
-    mov eax, 10100000b                ; Set the PAE and PGE bit.
-    mov cr4, eax
-
-    mov edx, edi                      ; Point CR3 at the PML4.
-    mov cr3, edx
-
-    mov ecx, 0xC0000080               ; Read from the EFER MSR.
+    mov ecx, IA32_EFER_MSR            ; Set the LME bit in the EFER MSR.
     rdmsr
-
-    or eax, 0x00000100                ; Set the LME bit.
+    or eax, IA32_EFER_MSR_LME
     wrmsr
 
+    mov eax, CR4_PAE | CR4_PGE | CR4_MCE | CR4_OSFXSR | CR4_OSXMMEXCPT
+    mov cr4, eax
+
+    mov edi, PML4T_START              ; Point CR3 at the PML4.
+    mov cr3, edi
+
     mov ebx, cr0                      ; Activate long mode -
-    or ebx, 0x80000001                ; - by enabling paging and protection simultaneously.
+    or ebx, CR0_PE | CR0_PG           ; - by enabling paging and protection simultaneously.
     mov cr0, ebx
 
     lgdt [GDT.Pointer]                ; Load GDT.Pointer defined below.
@@ -184,28 +189,11 @@ LongMode:
     mov gs, ax
     mov ss, ax
 
-    ; Blank out the screen to a blue color.
-    mov edi, 0xB8000
-    mov rcx, 500                      ; Since we are clearing uint64_t over here, we put the count as Count/4.
-    mov rax, 0x1F201F201F201F20       ; Set the value to set the screen to: Blue background, white foreground, blank spaces.
-    rep stosq                         ; Clear the entire screen.
+    pop rdi  ; pop the magic value.
+    pop rsi  ; pop the pointer to the Multiboot information structure.
 
-    ; Display "Hello World!"
-    mov edi, 0x00b8000
-
-    mov rax, 0x1F6C1F6C1F651F48
-    mov [edi], rax
-
-    mov rax, 0x1F6F1F571F201F6F
-    mov [edi + 8], rax
-
-    mov rax, 0x1F211F641F6C1F72
-    mov [edi + 16], rax
-
-    pause: jmp pause
-
-    extern kernel_main  ; Now enter the C main function...
-    call kernel_main
+    extern kernel_main
+    call kernel_main   ; Now enter the C main function...
 
 loop:
     hlt

@@ -143,10 +143,3 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
   };
   shell_start(commands);
 }
-
-/* alternative kernel_main to test long mode entry */
-//void kernel_main() {
-//  terminal_initialize(&vga_tty_device);
-//  printf("We're in!");
-//  while (true);
-//}
