@@ -13,3 +13,12 @@ A minimal x86 kernel
 6. Configure GRUB for x86_64-elf: `../grub/configure --disable-werror TARGET_CC=x86_64-elf-gcc TARGET_OBJCOPY=x86_64-elf-objcopy
    TARGET_STRIP=x86_64-elf-strip TARGET_NM=x86_64-elf-nm TARGET_RANLIB=x86_64-elf-ranlib --target=x86_64-elf --program-prefix=x86_64-elf-`
 7. Build and install x86_64-elf-grub tools: `make && make install`
+
+## Debug
+
+* Get a disassembly of the kernel 
+  * `x86_64-elf-objdump -D kernel/alpine.kernel > kernel.dump`
+* Get debug logs and cpu traces from Qemu
+  * Enable logs: `-D qemu.log`
+  * Log interrupts/exceptions: `-d int`
+  * Get list of supported logs: `qemu-system-x86_64 -d --help`

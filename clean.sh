@@ -7,3 +7,4 @@ for PROJECT in $PROJECTS; do
 done
 
 rm -rf build
+rm qemu.log

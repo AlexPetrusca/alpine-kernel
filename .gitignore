@@ -5,6 +5,7 @@ iso
 edk2
 .vscode
 .idea
+.DS_Store
 **/*.iso
 **/*.o
 **/*.so
