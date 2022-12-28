@@ -534,7 +534,7 @@ void pci_enumerate() {
     for (int bus = bridge.StartBusNumber; bus <= bridge.EndBusNumber; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {
         for (int fun = 0; fun <= PCI_MAX_FUNCTION; fun++) {
-          uint32_t addr = bridge.BaseAddress + ((bus - bridge.StartBusNumber) << 20) + (dev << 15) + (fun << 12);
+          uint64_t addr = bridge.BaseAddress + ((bus - bridge.StartBusNumber) << 20) + (dev << 15) + (fun << 12);
           PciHeader* header = (PciHeader*) addr;
           if (header->VendorId != 0xffff) { // 0xffff means there is no device
             PciDevice* device = &pci_devices[pci_device_count++];
