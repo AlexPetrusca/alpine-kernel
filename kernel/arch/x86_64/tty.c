@@ -160,17 +160,10 @@ void terminal_flush() {
   struct circ_buf_ptr line_ptr;
   circ_buf_ptr_init(&line_ptr, terminal_buf, terminal_buf, TERMINAL_BUFFER_SIZE, sizeof(char));
   for (size_t i = 0; i < height; i++) {
-
     line_ptr.ptr = *((char**) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, i));
-    uint32_t written_chars = 0;
     while (*line_ptr.ptr != '\0') {
       terminal_putchar_raw(*line_ptr.ptr);
       circ_buf_ptr_increment(&line_ptr);
-      written_chars++;
-    }
-    while (written_chars < width) {
-      terminal_putchar_raw(' ');
-      written_chars++;
     }
     if (i != height - 1) {
       terminal_putchar_raw('\n');
@@ -215,14 +208,13 @@ void terminal_buf_write(char c) {
     circ_buf_ptr_increment(&terminal_buf_wptr);
     terminal_buf_enqueue_line(terminal_buf_wptr.ptr);
   } else {
-    *terminal_buf_wptr.ptr = c;
-    circ_buf_ptr_increment(&terminal_buf_wptr);
-    terminal_buf_write_null_terminator();
-    if (cursor_x == width - 1) {
-      terminal_buf_write_null_terminator();
+    if (cursor_x == width) {
       circ_buf_ptr_increment(&terminal_buf_wptr);
       terminal_buf_enqueue_line(terminal_buf_wptr.ptr);
     }
+    *terminal_buf_wptr.ptr = c;
+    circ_buf_ptr_increment(&terminal_buf_wptr);
+    terminal_buf_write_null_terminator();
   }
 }
 
