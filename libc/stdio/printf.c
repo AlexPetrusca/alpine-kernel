@@ -8,8 +8,8 @@
 typedef __builtin_va_list VA_LIST;
 #define VA_START(Marker, Parameter)  __builtin_va_start (Marker, Parameter)
 #define VA_ARG(Marker, TYPE)  \
-        ((sizeof (TYPE) < sizeof (uint32_t)) ? \
-        (TYPE)(__builtin_va_arg (Marker, uint32_t)) : \
+        ((sizeof (TYPE) < sizeof (uint64_t)) ? \
+        (TYPE)(__builtin_va_arg (Marker, uint64_t)) : \
         (TYPE)(__builtin_va_arg (Marker, TYPE)))
 #define VA_END(Marker)  __builtin_va_end (Marker)
 
@@ -187,12 +187,11 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
               }
               break;
 
-            case '0':
-              if ((flags & PRECISION) == 0) {
+            case '0'...'9':
+              if (format_char == '0' && (flags & PRECISION) == 0) {
                 flags |= PREFIX_ZERO;
               }
 
-            case '1'...'9':
               for (count = 0; ((format_char >= '0') && (format_char <= '9'));) {
                 count = (count * 10) + format_char - '0';
                 format++;
@@ -213,7 +212,9 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
               // looking up for flag, width, precision and type.
               format -= 1;
               precision = 0;
-              // break skipped on purpose.
+              done = true;
+              break;
+
             default:
               done = true;
               break;

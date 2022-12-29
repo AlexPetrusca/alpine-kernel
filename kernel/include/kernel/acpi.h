@@ -54,7 +54,7 @@ typedef struct {
 
 AcpiDescriptionHeader* find_acpi_table(char* name);
 Acpi2MultipleApicTableHeader* find_apic_table();
-void print_rsdt_info();
+void print_acpi_info();
 void print_apic_info();
 
 #endif //_ACPI_H_
