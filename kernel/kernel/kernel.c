@@ -131,11 +131,18 @@ void validate_boot_info(unsigned long magic, unsigned long _kernel_addr) {
 void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
   terminal_initialize(&vga_tty_device);
   validate_boot_info(magic, _kernel_addr);
-  parse_mbi(true);
+  parse_mbi(false);
 
-  mem_identity_map_range(0xFFDD000, 0x10000000);
+  mem_identity_map_range(  // The ACPI table range
+    0x0FFDD000,
+    0x10000000
+  );
+  mem_identity_map_range(  // The PCIe config range
+    0xB0000000,  // 256M
+    0xC0000000   // 256 busses, 32 devices/bus, 8 functions/device, 4096 bytes/function = 256M
+  );
 
-//  pci_enumerate();
+  pci_enumerate();
 
   sh_command commands[] = {
     {"cpu", print_cpu_info},
@@ -143,7 +150,8 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
     {"acpi", print_acpi_info},
     {"apic", print_apic_info},
     {"mcfg", pci_PrintMcfg},
-//      {"pci",  pci_PrintDevices},
+    {"enum", pci_enumerate},
+    {"pci", pci_PrintDevices},
     {"", NULL}
   };
   shell_start(commands);
