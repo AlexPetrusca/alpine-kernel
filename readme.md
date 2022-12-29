@@ -13,9 +13,12 @@ A minimal x86 kernel
 
 ## Live USB
 
-1. Download and install [Etcher](https://etcher.io/)
-2. Run `./iso.sh` to create an iso image under `build`
-3. Run Etcher and flash `alpine.iso` to usb device
+1. Prerequisite: Download and install [Etcher](https://etcher.io/)
+2. Insert the usb device
+3. Run `diskutil list` to find the device location (`/dev/diskX`)
+4. Run `sudo diskutil erasedisk fat32 ALPINE MBR /dev/diskX` to erase the device
+5. Run `./iso.sh` to create an iso image of AlpineOS under `build`
+6. Run Etcher and flash `alpine.iso` to usb device
 
 ## Debug
 
