@@ -6,6 +6,7 @@ Acpi2Rsdp* rsdp;
 
 void print_acpi_info() {
   Rsdt* rsdt = (Rsdt*) (uint64_t) rsdp->RsdtAddress;
+  printf("ADDR: %x\n",  rsdp->RsdtAddress);
   int entry_count = (rsdt->header.Length - sizeof(AcpiDescriptionHeader)) / 4;
   printf("Signature: %.4s\n", (char*) rsdt);
   printf("ACPI table count: %d\n", entry_count);
@@ -34,6 +35,7 @@ Acpi2MultipleApicTableHeader* find_apic_table() {
 void print_apic_info() {
   Acpi2MultipleApicTableHeader* apic = find_apic_table();
 
+  printf("APIC Addr: 0x%lx\n", (uint64_t) apic);
   printf("Signature: %.4s\n", (char*) &(apic->Header.Signature));
   printf("OEM Id: %.6s\n", (char*) &(apic->Header.OemId));
   printf("OEM Table Id: %.8s\n", (char*) &(apic->Header.OemTableId));

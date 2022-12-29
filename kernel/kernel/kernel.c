@@ -8,8 +8,9 @@
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
 #include <kernel/pci.h>
+#include <kernel/mem.h>
 
-char* mem_type[] = {"Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad"};
+char* mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad"};
 
 uint64_t kernel_addr;
 
@@ -30,7 +31,7 @@ void parse_mbi(bool print) {
 
   for (tag = (struct multiboot_tag*) (kernel_addr + 8);
        tag->type != MULTIBOOT_TAG_TYPE_END;
-       tag = (struct multiboot_tag*) ((multiboot_uint8_t*) tag + ((tag->size + 7) & ~7))) {
+       tag = (struct multiboot_tag*) ((uint8_t*) tag + ((tag->size + 7) & ~7))) {
     if (print) printf("Tag 0x%x, Size %d: ", tag->type, tag->size);
     switch (tag->type) {
       case MULTIBOOT_TAG_TYPE_CMDLINE:
@@ -65,13 +66,12 @@ void parse_mbi(bool print) {
         mem_map = (struct multiboot_tag_mmap*) tag;
         if (print) printf("mmap\n");
         for (multiboot_memory_map_t* mmap = mem_map->entries;
-             (multiboot_uint8_t*) mmap < (multiboot_uint8_t*) tag + tag->size;
-             mmap = (multiboot_memory_map_t*) ((unsigned long) mmap + mem_map->entry_size))
+             (uint8_t*) mmap < (uint8_t*) tag + tag->size;
+             mmap = (multiboot_memory_map_t*) ((uint64_t) mmap + mem_map->entry_size))
           if (print)
-            printf(" base_addr = 0x%x%x, length = 0x%x%x, type = %s\n",
-                   (unsigned) (mmap->addr >> 32), (unsigned) (mmap->addr & 0xffffffff),
-                   (unsigned) (mmap->len >> 32), (unsigned) (mmap->len & 0xffffffff),
-                   mem_type[(unsigned) mmap->type]);
+            printf(" %0.12lx - %0.12lx (%,ld): %s\n",
+                   mmap->addr, mmap->addr + mmap->len, mmap->len,
+                   mem_type[mmap->type]);
         break;
       }
 
@@ -104,7 +104,7 @@ void parse_mbi(bool print) {
 
       case MULTIBOOT_TAG_TYPE_ACPI_OLD: {
         rsdp = (Acpi2Rsdp*) &(((struct multiboot_tag_old_acpi*) tag)->rsdp);
-        if (print) printf("RSDP Sig: '%.8s', address, 0x%x\n", (char*) rsdp, rsdp->RsdtAddress);
+        if (print) printf("RSDP Sig: '%.8s', RSDT Address: 0x%x\n", (char*) rsdp, rsdp->RsdtAddress);
         break;
       }
 
@@ -131,17 +131,20 @@ void validate_boot_info(unsigned long magic, unsigned long _kernel_addr) {
 void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
   terminal_initialize(&vga_tty_device);
   validate_boot_info(magic, _kernel_addr);
-  parse_mbi(false);
+  parse_mbi(true);
+
+  mem_identity_map_range(0xFFDD000, 0x10000000);
+
 //  pci_enumerate();
 
   sh_command commands[] = {
-      {"cpu",  print_cpu_info},
-      {"test", PrintfTestSuite},
+    {"cpu", print_cpu_info},
+    {"test", PrintfTestSuite},
     {"acpi", print_acpi_info},
-      {"apic", print_apic_info},
+    {"apic", print_apic_info},
     {"mcfg", pci_PrintMcfg},
 //      {"pci",  pci_PrintDevices},
-      {"", NULL}
+    {"", NULL}
   };
   shell_start(commands);
 }

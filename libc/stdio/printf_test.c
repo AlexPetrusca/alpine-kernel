@@ -55,6 +55,10 @@ SUITE(Printf)
   TEST(hex_format)
     sprintf(_str, "The size is %x bytes", 255);
     ASSERT_EQUAL_STR(_str, "The size is FF bytes");
+    sprintf(_str, "The size is %x bytes", 0xFFFFFFFF);
+    ASSERT_EQUAL_STR(_str, "The size is FFFFFFFF bytes");
+    sprintf(_str, "The size is %lx bytes", 0xFFFFFFFFFFFFFFFF);
+    ASSERT_EQUAL_STR(_str, "The size is FFFFFFFFFFFFFFFF bytes");
   ENDT
 
   TEST(binary_format)

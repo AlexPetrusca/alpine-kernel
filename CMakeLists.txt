@@ -65,4 +65,4 @@ add_executable(alpine_kernel
         kernel/include/test.h
         libc/stdio/printf_test.c
         libc/include/stdio_tests.h
-        kernel/include/kernel/multiboot2.h)
+        kernel/include/kernel/multiboot2.h kernel/arch/x86_64/mem.c kernel/include/kernel/mem.h)
