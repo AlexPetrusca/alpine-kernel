@@ -1,12 +1,23 @@
 #include <string.h>
 #include <stdio.h>
 #include <kernel/acpi.h>
+#include <kernel/mem.h>
 
-Acpi2Rsdp* rsdp;
+Acpi2Rsdp* _acpi_rsdp;
+
+void acpi_init(Acpi2Rsdp* rsdp) {
+  _acpi_rsdp = rsdp;
+  MemRange range;
+  if (!mem_find_range(rsdp->RsdtAddress, &range)) {
+    printf("Error: cannot find ACPI memory range\n");
+    return;
+  }
+  mem_identity_map_range(range.address, range.address + range.size);
+}
 
 void print_acpi_info() {
-  Rsdt* rsdt = (Rsdt*) (uint64_t) rsdp->RsdtAddress;
-  printf("ADDR: %x\n",  rsdp->RsdtAddress);
+  Rsdt* rsdt = (Rsdt*) (uint64_t) _acpi_rsdp->RsdtAddress;
+  printf("ADDR: %x\n", _acpi_rsdp->RsdtAddress);
   int entry_count = (rsdt->header.Length - sizeof(AcpiDescriptionHeader)) / 4;
   printf("Signature: %.4s\n", (char*) rsdt);
   printf("ACPI table count: %d\n", entry_count);
@@ -17,7 +28,7 @@ void print_acpi_info() {
 }
 
 AcpiDescriptionHeader* find_acpi_table(char* name) {
-  Rsdt* rsdt = (Rsdt*) (uint64_t) rsdp->RsdtAddress;
+  Rsdt* rsdt = (Rsdt*) (uint64_t) _acpi_rsdp->RsdtAddress;
   int entry_count = (rsdt->header.Length - sizeof(AcpiDescriptionHeader)) / 4;
   for (int i = 0; i < entry_count; i++) {
     AcpiDescriptionHeader* table = (AcpiDescriptionHeader*) (uint64_t) rsdt->pointer_to_other_sdt[i];
@@ -52,17 +63,17 @@ void print_apic_info() {
     } else if (header->entry_type == IO_APIC) {
       IOApicEntry* entry = (IOApicEntry*) header;
       printf("IO APIC, Id: %d, address: 0x%x, GlobalSystemInterruptBase: %d\n",
-          entry->apic_id, entry->ioapic_address, entry->global_system_interrupt_base);
+             entry->apic_id, entry->ioapic_address, entry->global_system_interrupt_base);
     } else if (header->entry_type == IO_APIC_INTERRUPTS_SOURCE_OVERRIDE) {
       IOApicISREntry* entry = (IOApicISREntry*) header;
       printf("IO APIC ISO, bus: %d, irq: %d, global interrupt: %d, flags: %b\n",
-          entry->bus_source, entry->irq_source, entry->global_system_interrupt, entry->flags);
+             entry->bus_source, entry->irq_source, entry->global_system_interrupt, entry->flags);
     } else if (header->entry_type == LOCAL_APIC_NON_MASKABLE_INTERRUPTS) {
       LocalApicNMIEntry* entry = (LocalApicNMIEntry*) header;
       printf("Local APIC NMI, processor: %d, LINT: %d, flags: %b\n",
-          entry->acpi_processor_id,
-          entry->lint,
-          entry->flags);
+             entry->acpi_processor_id,
+             entry->lint,
+             entry->flags);
     } else {
       printf("Unsupported Entry Type: %d\n", header->entry_type);
     }

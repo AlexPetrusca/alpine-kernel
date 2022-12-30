@@ -5,8 +5,6 @@
 #include <string.h>
 #include <stdint.h>
 
-extern Acpi2Rsdp* rsdp;
-
 typedef struct {
   AcpiDescriptionHeader header;
   uint32_t pointer_to_other_sdt[];
@@ -52,6 +50,7 @@ typedef struct {
   uint8_t lint; // 0 or 1
 } LocalApicNMIEntry; // NMI = NON_MASKABLE_INTERRUPTS
 
+void acpi_init(Acpi2Rsdp* rsdp);
 AcpiDescriptionHeader* find_acpi_table(char* name);
 Acpi2MultipleApicTableHeader* find_apic_table();
 void print_acpi_info();

@@ -177,7 +177,7 @@ struct multiboot_mmap_entry {
   uint32_t type;
   uint32_t zero;
 };
-typedef struct multiboot_mmap_entry multiboot_memory_map_t;
+typedef struct multiboot_mmap_entry multiboot_mmap_entry_t;
 
 struct multiboot_tag {
   uint32_t type;
