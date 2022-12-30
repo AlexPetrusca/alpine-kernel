@@ -179,10 +179,10 @@ struct mb2_mmap_entry {
 };
 typedef struct mb2_mmap_entry mb2_mmap_entry_t;
 
-struct mb2_tag {
+typedef struct {
   uint32_t type;
   uint32_t size;
-};
+} mb2_tag;
 
 struct mb2_tag_string {
   uint32_t type;
@@ -198,12 +198,12 @@ struct mb2_tag_module {
   char cmdline[0];
 };
 
-struct mb2_tag_basic_meminfo {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t mem_lower;
   uint32_t mem_upper;
-};
+} mb2_tag_basic_meminfo;
 
 struct mb2_tag_bootdev {
   uint32_t type;
@@ -213,13 +213,13 @@ struct mb2_tag_bootdev {
   uint32_t part;
 };
 
-struct mb2_tag_mmap {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t entry_size;
   uint32_t entry_version;
   struct mb2_mmap_entry entries[0];
-};
+} mb2_tag_mmap;
 
 struct mb2_vbe_info_block {
   uint8_t external_specification[512];
@@ -327,11 +327,11 @@ struct mb2_tag_old_acpi {
   uint8_t rsdp[0];
 };
 
-struct mb2_tag_new_acpi {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint8_t rsdp[0];
-};
+} mb2_tag_new_acpi;
 
 struct mb2_tag_network {
   uint32_t type;

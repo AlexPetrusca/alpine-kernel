@@ -1,6 +1,7 @@
 #include <kernel/pci.h>
 #include <stdio.h>
 #include <kernel/mem.h>
+#include <kernel/panic.h>
 
 #define MAX_PCI_DEVICES 32
 
@@ -534,10 +535,11 @@ void pci_init() {
     pci_host_bridge bridge = mcfg->host_bridge[i];
     mem_range range;
     if (!mem_find_range(bridge.base_address, &range)) {
-      printf("Error: cannot find PCI bridge memory range\n");
-      return;
+      panic("Cannot find PCI bridge memory range\n");
     }
-    mem_identity_map_range(range.address, range.address + range.size);
+    mem_identity_map_range(&range);
+    range.type = MEMORY_PCI_ECAM;
+    mem_update_range(&range);
 
     for (int bus = bridge.start_bus_number; bus <= bridge.end_bus_number; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {
@@ -547,7 +549,7 @@ void pci_init() {
           if (header->vendor_id != 0xffff) { // 0xffff means there is no device
             pci_device* device = &_pci_devices[_pci_device_count++];
             if (_pci_device_count == MAX_PCI_DEVICES) {
-              printf("Error: Too many PCI devices, aborting enumeration.\n");
+              panic("Too many PCI devices, aborting enumeration.\n");
             }
             device->bus_number = bus;
             device->device_number = dev;

@@ -10,8 +10,8 @@
 #include <kernel/apic.h>
 #include <kernel/pci.h>
 #include <kernel/mem.h>
+#include <kernel/panic.h>
 
-uint64_t kernel_addr;
 char* bootloader_name;
 char* kernel_cmd_line;
 uint64_t kernel_base_addr;
@@ -20,10 +20,27 @@ struct mb2_tag_elf_sections* elf_sections;
 struct mb2_tag_framebuffer* frame_buffer;
 struct mb2_tag_apm* apm;
 
-void parse_mbi() {
-  for (struct mb2_tag* tag = (struct mb2_tag*) (kernel_addr + 8);
+void validate_boot_info(unsigned long magic, unsigned long kernel_addr) {
+  if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
+    panic("Invalid magic number: 0x%x\n", (unsigned) magic);
+  }
+
+  if (kernel_addr & 7) {
+    panic("Unaligned kernel_init: 0x%lx\n", kernel_addr);
+  }
+}
+
+void kernel_init(unsigned long magic, unsigned long kernel_addr) {
+  terminal_initialize(&vga_tty_device);
+  validate_boot_info(magic, kernel_addr);
+
+  mb2_tag_basic_meminfo* basic_meminfo_tag = NULL;
+  mb2_tag_mmap* mem_map_tag = NULL;
+  mb2_tag_new_acpi* rsdp_tag = NULL;
+
+  for (mb2_tag* tag = (mb2_tag*) (kernel_addr + 8);
        tag->type != MB2_TAG_TYPE_END;
-       tag = (struct mb2_tag*) ((uint8_t*) tag + ((tag->size + 7) & ~7))) {
+       tag = (mb2_tag*) ((uint8_t*) tag + ((tag->size + 7) & ~7))) {
     switch (tag->type) {
       case MB2_TAG_TYPE_CMDLINE:
         kernel_cmd_line = ((struct mb2_tag_string*) tag)->string;
@@ -34,12 +51,11 @@ void parse_mbi() {
         break;
 
       case MB2_TAG_TYPE_BASIC_MEMINFO:
-        _mem_lower = ((struct mb2_tag_basic_meminfo*) tag)->mem_lower;
-        _mem_upper = ((struct mb2_tag_basic_meminfo*) tag)->mem_upper;
+        basic_meminfo_tag = (mb2_tag_basic_meminfo*) tag;
         break;
 
       case MB2_TAG_TYPE_MMAP:
-        _mem_map = (struct mb2_tag_mmap*) tag;
+        mem_map_tag = (mb2_tag_mmap*) tag;
         break;
 
       case MB2_TAG_TYPE_BOOTDEV:
@@ -65,31 +81,18 @@ void parse_mbi() {
       }
 
       case MB2_TAG_TYPE_ACPI_OLD:
-        acpi_init((acpi_rsdp*) &(((struct mb2_tag_old_acpi*) tag)->rsdp));
-        break;
-
       case MB2_TAG_TYPE_ACPI_NEW:
-        acpi_init((acpi_rsdp*) &(((struct mb2_tag_new_acpi*) tag)->rsdp));
+        rsdp_tag = (mb2_tag_new_acpi*) tag;
         break;
 
       default:
         printf("Error: Unknown tag %d\n", tag->type);
     }
   }
-}
 
-void validate_boot_info(unsigned long magic, unsigned long _kernel_addr) {
-  if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
-    printf("Invalid magic number: 0x%x\n", (unsigned) magic);
-    return;
-  }
-
-  if (kernel_addr & 7) {
-    printf("Unaligned parse_mbi: 0x%lx\n", _kernel_addr);
-    return;
-  }
-
-  kernel_addr = _kernel_addr;
+  mem_init(basic_meminfo_tag, mem_map_tag);
+  acpi_init(rsdp_tag);
+  pci_init();
 }
 
 void mbi_print_info() {
@@ -103,10 +106,7 @@ void mbi_print_info() {
 }
 
 void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
-  terminal_initialize(&vga_tty_device);
-  validate_boot_info(magic, _kernel_addr);
-  parse_mbi();
-  pci_init();
+  kernel_init(magic, _kernel_addr);
 
   sh_command commands[] = {
     {"cpu", cpu_print_info},
