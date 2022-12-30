@@ -1,5 +1,6 @@
 #include <kernel/pci.h>
 #include <stdio.h>
+#include <kernel/mem.h>
 
 #define MAX_PCI_DEVICES 32
 
@@ -526,11 +527,18 @@ void pci_GetClassStrings(PciDevice* device, PciClassNames* names) {
   }
 }
 
-void pci_enumerate() {
+void pci_init() {
   McfgTable* mcfg = find_mcfg_table();
   int bridge_count = (mcfg->Header.Length - (sizeof(AcpiDescriptionHeader) + 8)) / sizeof(PciHostBridge);
   for (int i = 0; i < bridge_count; i++) {
     PciHostBridge bridge = mcfg->HostBridge[i];
+    MemRange range;
+    if (!mem_find_range(bridge.BaseAddress, &range)) {
+      printf("Error: cannot find PCI bridge memory range\n");
+      return;
+    }
+    mem_identity_map_range(range.address, range.address + range.size);
+
     for (int bus = bridge.StartBusNumber; bus <= bridge.EndBusNumber; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {
         for (int fun = 0; fun <= PCI_MAX_FUNCTION; fun++) {

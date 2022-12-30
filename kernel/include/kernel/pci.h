@@ -60,7 +60,7 @@ typedef struct {
   uint32_t EcamAdress;
 } PciDevice;
 
-void pci_enumerate();
+void pci_init();
 void pci_GetClassStrings(PciDevice* device, PciClassNames* names);
 void pci_PrintMcfg();
 void pci_PrintDevices();

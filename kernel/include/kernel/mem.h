@@ -2,6 +2,7 @@
 #define KERNEL_INCLUDE_KERNEL_MEM_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define PAGE_SIZE     4096
 
@@ -95,6 +96,18 @@ typedef union _PTEntry {
   };
 }  __attribute__((packed)) PTEntry;
 
+typedef struct {
+  uint64_t address;
+  uint64_t size;
+  uint32_t type;
+} MemRange;
+
 void mem_identity_map_range(uint64_t start_addr, uint64_t end_addr);
+bool mem_find_range(uint64_t addr, MemRange* range);
+void mem_print_map();
+
+extern uint32_t _mem_lower;
+extern uint32_t _mem_upper;
+extern struct multiboot_tag_mmap* _mem_map;
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_

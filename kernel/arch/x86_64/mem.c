@@ -1,4 +1,7 @@
 #include <kernel/mem.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <kernel/multiboot2.h>
 
 #define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
 #define PAGE_PRESENT    (1 << 0)
@@ -10,6 +13,11 @@
 #define PT_START      0x4000
 
 uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
+
+uint32_t _mem_lower;
+uint32_t _mem_upper;
+struct multiboot_tag_mmap* _mem_map;
+char* mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad"};
 
 uint64_t allocate_page() {
   uint64_t page_ptr = _next_page_pointer;
@@ -42,5 +50,30 @@ void identity_map(uint64_t addr) {
 void mem_identity_map_range(uint64_t start_addr, uint64_t end_addr) {
   for (uint64_t addr = start_addr; addr < end_addr; addr += PAGE_SIZE) {
     identity_map(addr);
+  }
+}
+
+bool mem_find_range(uint64_t addr, MemRange* range) {
+  for (multiboot_mmap_entry_t* mmap = _mem_map->entries;
+       (uint8_t*) mmap < (uint8_t*) _mem_map + _mem_map->size;
+       mmap = (multiboot_mmap_entry_t*) ((uint64_t) mmap + _mem_map->entry_size)) {
+    if (addr >= mmap->addr && addr < mmap->addr + mmap->len) {
+      range->address = mmap->addr;
+      range->size = mmap->len;
+      range->type = mmap->type;
+      return true;
+    }
+  }
+  return false;
+}
+
+void mem_print_map() {
+  printf("mem_lower = %dKB, mem_upper = %dKB\n", _mem_lower, _mem_upper);
+  for (multiboot_mmap_entry_t* mmap = _mem_map->entries;
+       (uint8_t*) mmap < (uint8_t*) _mem_map + _mem_map->size;
+       mmap = (multiboot_mmap_entry_t * )((uint64_t) mmap + _mem_map->entry_size)) {
+    printf(" %0.12lx - %0.12lx (%,ld): %s\n",
+           mmap->addr, mmap->addr + mmap->len, mmap->len,
+           mem_type[mmap->type]);
   }
 }
