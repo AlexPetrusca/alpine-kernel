@@ -13,12 +13,11 @@ A minimal x86 kernel
 
 ## Live USB
 
-1. Prerequisite: Download and install [Etcher](https://etcher.io/)
+1. Prerequisites: `brew install balena-cli`
 2. Insert the usb device
-3. Run `diskutil list` to find the device location (`/dev/diskX`)
-4. Run `sudo diskutil erasedisk fat32 ALPINE MBR /dev/diskX` to erase the device
-5. Run `./iso.sh` to create an iso image of AlpineOS under `build`
-6. Run Etcher and flash `alpine.iso` to usb device
+3. Run `./flashusb.sh`
+4. Select the usb device to flash and hit Enter
+5. Enter 'y' when prompted (pass `-y` to `./flashusb.sh` to skip this step)
 
 ## Debug
 

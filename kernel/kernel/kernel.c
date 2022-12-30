@@ -67,6 +67,10 @@ void parse_mbi() {
         acpi_init((Acpi2Rsdp*) &(((struct multiboot_tag_old_acpi*) tag)->rsdp));
         break;
 
+      case MULTIBOOT_TAG_TYPE_ACPI_NEW:
+        acpi_init((Acpi2Rsdp*) &(((struct multiboot_tag_new_acpi*) tag)->rsdp));
+        break;
+
       default:
         printf("Error: Unknown tag %d\n", tag->type);
     }
