@@ -4,11 +4,11 @@
 
 #define MAX_PCI_DEVICES 32
 
-PciDevice pci_devices[MAX_PCI_DEVICES] = {0};
-int pci_device_count = 0;
+pci_device _pci_devices[MAX_PCI_DEVICES] = {0};
+int _pci_device_count = 0;
 
-McfgTable* find_mcfg_table() {
-  return (McfgTable*) find_acpi_table("MCFG");
+pci_mcfg_table* find_mcfg_table() {
+  return (pci_mcfg_table*) acpi_find_table("MCFG");
 }
 
 typedef struct _PciClassEntry {
@@ -508,58 +508,58 @@ PciClassEntry* FindClassEntry(uint8_t class, PciClassEntry* entries) {
   return NULL;
 }
 
-void pci_GetClassStrings(PciDevice* device, PciClassNames* names) {
-  names->BaseClass = "?";
-  names->SubClass = "?";
-  names->PIFClass = "?";
+void pci_get_class_names(pci_device* device, pci_class_cames* names) {
+  names->base_class = "?";
+  names->sub_class = "?";
+  names->pif_class = "?";
 
-  PciClassEntry* base_entry = FindClassEntry(device->BaseClassCode, gClassStringList);
+  PciClassEntry* base_entry = FindClassEntry(device->base_class_code, gClassStringList);
   if (base_entry != NULL) {
-    names->BaseClass = base_entry->Description;
-    PciClassEntry* sub_entry = FindClassEntry(device->SubClassCode, base_entry->LowerLevelClass);
+    names->base_class = base_entry->Description;
+    PciClassEntry* sub_entry = FindClassEntry(device->sub_class_code, base_entry->LowerLevelClass);
     if (sub_entry != NULL) {
-      names->SubClass = sub_entry->Description;
-      PciClassEntry* pi_entry = FindClassEntry(device->PIClassCode, sub_entry->LowerLevelClass);
+      names->sub_class = sub_entry->Description;
+      PciClassEntry* pi_entry = FindClassEntry(device->pi_class_code, sub_entry->LowerLevelClass);
       if (pi_entry != NULL) {
-        names->PIFClass = pi_entry->Description;
+        names->pif_class = pi_entry->Description;
       }
     }
   }
 }
 
 void pci_init() {
-  McfgTable* mcfg = find_mcfg_table();
-  int bridge_count = (mcfg->Header.Length - (sizeof(AcpiDescriptionHeader) + 8)) / sizeof(PciHostBridge);
+  pci_mcfg_table* mcfg = find_mcfg_table();
+  int bridge_count = (mcfg->header.length - (sizeof(acpi_header) + 8)) / sizeof(pci_host_bridge);
   for (int i = 0; i < bridge_count; i++) {
-    PciHostBridge bridge = mcfg->HostBridge[i];
-    MemRange range;
-    if (!mem_find_range(bridge.BaseAddress, &range)) {
+    pci_host_bridge bridge = mcfg->host_bridge[i];
+    mem_range range;
+    if (!mem_find_range(bridge.base_address, &range)) {
       printf("Error: cannot find PCI bridge memory range\n");
       return;
     }
     mem_identity_map_range(range.address, range.address + range.size);
 
-    for (int bus = bridge.StartBusNumber; bus <= bridge.EndBusNumber; bus++) {
+    for (int bus = bridge.start_bus_number; bus <= bridge.end_bus_number; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {
         for (int fun = 0; fun <= PCI_MAX_FUNCTION; fun++) {
-          uint64_t addr = bridge.BaseAddress + ((bus - bridge.StartBusNumber) << 20) + (dev << 15) + (fun << 12);
-          PciHeader* header = (PciHeader*) addr;
-          if (header->VendorId != 0xffff) { // 0xffff means there is no device
-            PciDevice* device = &pci_devices[pci_device_count++];
-            if (pci_device_count == MAX_PCI_DEVICES) {
+          uint64_t addr = bridge.base_address + ((bus - bridge.start_bus_number) << 20) + (dev << 15) + (fun << 12);
+          pci_header* header = (pci_header*) addr;
+          if (header->vendor_id != 0xffff) { // 0xffff means there is no device
+            pci_device* device = &_pci_devices[_pci_device_count++];
+            if (_pci_device_count == MAX_PCI_DEVICES) {
               printf("Error: Too many PCI devices, aborting enumeration.\n");
             }
-            device->BusNumber = bus;
-            device->DeviceNumber = dev;
-            device->FunctionNumber = fun;
-            device->HeaderType = header->HeaderType;
-            device->VendorId = header->VendorId;
-            device->DeviceId = header->DeviceId;
-            device->BaseClassCode = header->BaseClassCode;
-            device->SubClassCode = header->SubClassCode;
-            device->PIClassCode = header->PIClassCode;
-            device->EcamAdress = addr;
-            if ((fun == 0) && ((header->HeaderType & HEADER_TYPE_MULTI_FUNCTION) == 0x00)) {
+            device->bus_number = bus;
+            device->device_number = dev;
+            device->function_number = fun;
+            device->header_type = header->header_type;
+            device->vendor_id = header->vendor_id;
+            device->device_id = header->device_id;
+            device->base_class_code = header->base_class_code;
+            device->sub_class_code = header->sub_class_code;
+            device->pi_class_code = header->pi_class_code;
+            device->ecam_adress = addr;
+            if ((fun == 0) && ((header->header_type & PCI_HEADER_TYPE_MULTI_FUNCTION) == 0x00)) {
               break;
             }
           }
@@ -569,35 +569,35 @@ void pci_init() {
   }
 }
 
-void pci_PrintMcfg() {
-  McfgTable* mcfg = find_mcfg_table();
-  int bridge_count = (mcfg->Header.Length - (sizeof(AcpiDescriptionHeader) + 8)) / sizeof(PciHostBridge);
+void pci_print_mcfg() {
+  pci_mcfg_table* mcfg = find_mcfg_table();
+  int bridge_count = (mcfg->header.length - (sizeof(acpi_header) + 8)) / sizeof(pci_host_bridge);
 
   printf("MCFG Addr: 0x%lx\n", (uint64_t) mcfg);
-  printf("Signature: %.4s\n", (char*) &(mcfg->Header.Signature));
-  printf("OEM Id: %.6s\n", (char*) &(mcfg->Header.OemId));
-  printf("OEM Table Id: %.8s\n", (char*) &(mcfg->Header.OemTableId));
-  printf("OEM Revision: %d\n", mcfg->Header.OemRevision);
-  printf("Length: %d\n", mcfg->Header.Length);
+  printf("Signature: %.4s\n", (char*) &(mcfg->header.signature));
+  printf("OEM Id: %.6s\n", (char*) &(mcfg->header.oem_id));
+  printf("OEM Table Id: %.8s\n", (char*) &(mcfg->header.oem_table_id));
+  printf("OEM Revision: %d\n", mcfg->header.oem_revision);
+  printf("Length: %d\n", mcfg->header.length);
   printf("PCI Host Bridge Count: %d\n", bridge_count);
 
   for (int i = 0; i < bridge_count; i++) {
-    PciHostBridge bridge = mcfg->HostBridge[i];
+    pci_host_bridge bridge = mcfg->host_bridge[i];
     printf("\nPCI Host Bridge %d\n", i + 1);
-    printf("Base Address: 0x%lx\n", bridge.BaseAddress);
-    printf("Segment Group Number: %d\n", bridge.SegmentGroupNumber);
-    printf("Start Bus Number: %d\n", bridge.StartBusNumber);
-    printf("End Bus Number: %d\n", bridge.EndBusNumber);
+    printf("Base Address: 0x%lx\n", bridge.base_address);
+    printf("Segment Group Number: %d\n", bridge.segment_group_number);
+    printf("Start Bus Number: %d\n", bridge.start_bus_number);
+    printf("End Bus Number: %d\n", bridge.end_bus_number);
   }
 }
 
-void pci_PrintDevices() {
-  for (int i = 0; i < pci_device_count; i++) {
-    PciDevice* device = &pci_devices[i];
-    PciClassNames strings;
-    pci_GetClassStrings(device, &strings);
+void pci_print_devices() {
+  for (int i = 0; i < _pci_device_count; i++) {
+    pci_device* device = &_pci_devices[i];
+    pci_class_cames strings;
+    pci_get_class_names(device, &strings);
     printf("%.2x:%.2x.%d: %x:%.4x %s, %s, %s\n",
-           device->BusNumber, device->DeviceNumber, device->FunctionNumber, device->VendorId, device->DeviceId,
-           strings.BaseClass, strings.SubClass, strings.PIFClass);
+           device->bus_number, device->device_number, device->function_number, device->vendor_id, device->device_id,
+           strings.base_class, strings.sub_class, strings.pif_class);
   }
 }

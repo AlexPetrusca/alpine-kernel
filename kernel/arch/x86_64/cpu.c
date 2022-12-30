@@ -46,7 +46,7 @@
       )
 #endif
 
-void print_cpu_info() {
+void cpu_print_info() {
   uint32_t id[13];
   id[12] = 0;  // to create a zero-terminated string
   __cpuid(0x80000002, id[0], id[1], id[2], id[3]);
@@ -89,7 +89,7 @@ void print_cpu_info() {
   printf("Physical Address Extension: %d\n", (cr4 & CR4_PAE) != 0);
   printf("Page Global Enabled: %d\n", (cr4 & CR4_PGE) != 0);
 
-  uint64_t efer = readMSR64(IA32_EFER_MSR);
+  uint64_t efer = msr_read64(IA32_EFER_MSR);
   printf("Long Mode Enable: %d\n", (efer & IA32_EFER_MSR_LME) != 0);
   printf("Long Mode Active: %d\n", (efer & IA32_EFER_MSR_LMA) != 0);
   printf("Long Mode Segment Limit Enable: %d\n", (efer & IA32_EFER_MSR_LMSLE) != 0);

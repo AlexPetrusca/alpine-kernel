@@ -6,13 +6,15 @@
 
 #define PPCAT_NX(A, B) A ## B
 #define PPCAT(A, B) PPCAT_NX(A, B)
+#define PPCAT3_NX(A, B, C) A ## B ## C
+#define PPCAT3(A, B, C) PPCAT3_NX(A, B, C)
 #define STRINGIZE_NX(A) #A
 #define STRINGIZE(A) STRINGIZE_NX(A)
 
-#define suitedecl(name) void PPCAT(name, TestSuite)();
-#define SUITE(name) \
-  void PPCAT(name, TestSuite)() {      \
-    printf("%s:\n", STRINGIZE(PPCAT(name, TestSuite)));
+#define SUITEDECL(name) void PPCAT3(test_, name, _suite)()
+#define SUITE(name)     \
+  SUITEDECL(name) {     \
+    printf("%s:\n", STRINGIZE(name));
 #define ENDS }
 
 #define TEST(test_name) \

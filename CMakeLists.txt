@@ -27,8 +27,6 @@ add_executable(alpine_kernel
         kernel/include/kernel/msr.h
         kernel/include/kernel/cpu.h
         kernel/include/kernel/acpi.h
-        kernel/include/kernel/Acpi10.h
-        kernel/include/kernel/Acpi20.h
         kernel/include/kernel/apic.h
         kernel/include/kernel/pci.h
         kernel/kernel/kernel.c
@@ -65,4 +63,6 @@ add_executable(alpine_kernel
         kernel/include/test.h
         libc/stdio/printf_test.c
         libc/include/stdio_tests.h
-        kernel/include/kernel/multiboot2.h kernel/arch/x86_64/mem.c kernel/include/kernel/mem.h)
+        kernel/include/kernel/multiboot2.h
+        kernel/arch/x86_64/mem.c
+        kernel/include/kernel/mem.h)

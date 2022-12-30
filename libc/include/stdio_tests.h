@@ -3,6 +3,7 @@
 
 #include "test.h"
 
-suitedecl(Printf)
+SUITEDECL(sprintf);
+//void test_printf_suite();
 
 #endif //LIBC_STDIO_STDIO_TESTS_H_

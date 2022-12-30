@@ -31,17 +31,17 @@
 #define IA32_APIC_BASE_MSR_BSP      (1 << 8)
 #define IA32_APIC_BASE_MSR_ENABLE   (1 << 11)
 
-#define IS_BSP(apicBaseMSR)                        ((apicBaseMSR & IA32_APIC_BASE_MSR_BSP) != 0)
-#define IS_APIC_GLOBAL_ENABLE(apicBaseMSR)         (apicBaseMSR & IA32_APIC_BASE_MSR_ENABLE)
-#define SET_APIC_GLOBAL_ENABLE(apicBaseMSR)        (apicBaseMSR |= IA32_APIC_BASE_MSR_ENABLE)
-#define GET_APIC_BASE(apicBaseMSR)                 ((apicBaseMSR >> 12) << 12)
+#define IS_BSP(apic_base_msr)                        ((apic_base_msr & IA32_APIC_BASE_MSR_BSP) != 0)
+#define IS_APIC_GLOBAL_ENABLE(apic_base_msr)         (apic_base_msr & IA32_APIC_BASE_MSR_ENABLE)
+#define SET_APIC_GLOBAL_ENABLE(apic_base_msr)        (apic_base_msr |= IA32_APIC_BASE_MSR_ENABLE)
+#define GET_APIC_BASE(apic_base_msr)                 ((apic_base_msr >> 12) << 12)
 
-#define GET_APIC_BASE(apicBaseMSR)                 ((apicBaseMSR >> 12) << 12)
+#define GET_APIC_BASE(apic_base_msr)                 ((apic_base_msr >> 12) << 12)
 
-void readMSR(uint32_t msr, uint32_t* lo, uint32_t* hi);
-uint64_t readMSR64(uint32_t msr);
+void msr_read(uint32_t msr, uint32_t* lo, uint32_t* hi);
+uint64_t msr_read64(uint32_t msr);
 
-void writeMSR(uint32_t msr, uint32_t lo, uint32_t hi);
-void writeMSR64(uint32_t msr, uint64_t value);
+void msr_write(uint32_t msr, uint32_t lo, uint32_t hi);
+void msr_write64(uint32_t msr, uint64_t value);
 
 #endif //_MSR_H_
