@@ -64,8 +64,8 @@ header_start:
 
 ; framebuffer_tag:
 ;     align  8
-;     dw MULTIBOOT_HEADER_TAG_FRAMEBUFFER
-;     dw MULTIBOOT_HEADER_TAG_OPTIONAL
+;     dw MB2_HEADER_TAG_FRAMEBUFFER
+;     dw MB2_HEADER_TAG_OPTIONAL
 ;     dd framebuffer_tag_end - framebuffer_tag_start
 ;     dd 1024
 ;     dd 768

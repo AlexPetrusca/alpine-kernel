@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "test.h"
 
-SUITE(Printf)
+SUITE(sprintf)
   char _str[128];
 
   TEST(no_format)

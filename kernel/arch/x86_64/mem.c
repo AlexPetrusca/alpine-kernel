@@ -16,8 +16,8 @@ uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
 
 uint32_t _mem_lower;
 uint32_t _mem_upper;
-struct multiboot_tag_mmap* _mem_map;
-char* mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad"};
+struct mb2_tag_mmap* _mem_map;
+char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad"};
 
 uint64_t allocate_page() {
   uint64_t page_ptr = _next_page_pointer;
@@ -53,10 +53,10 @@ void mem_identity_map_range(uint64_t start_addr, uint64_t end_addr) {
   }
 }
 
-bool mem_find_range(uint64_t addr, MemRange* range) {
-  for (multiboot_mmap_entry_t* mmap = _mem_map->entries;
+bool mem_find_range(uint64_t addr, mem_range* range) {
+  for (mb2_mmap_entry_t* mmap = _mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) _mem_map + _mem_map->size;
-       mmap = (multiboot_mmap_entry_t*) ((uint64_t) mmap + _mem_map->entry_size)) {
+       mmap = (mb2_mmap_entry_t*) ((uint64_t) mmap + _mem_map->entry_size)) {
     if (addr >= mmap->addr && addr < mmap->addr + mmap->len) {
       range->address = mmap->addr;
       range->size = mmap->len;
@@ -69,11 +69,11 @@ bool mem_find_range(uint64_t addr, MemRange* range) {
 
 void mem_print_map() {
   printf("mem_lower = %dKB, mem_upper = %dKB\n", _mem_lower, _mem_upper);
-  for (multiboot_mmap_entry_t* mmap = _mem_map->entries;
+  for (mb2_mmap_entry_t* mmap = _mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) _mem_map + _mem_map->size;
-       mmap = (multiboot_mmap_entry_t * )((uint64_t) mmap + _mem_map->entry_size)) {
-    printf(" %0.12lx - %0.12lx (%,ld): %s\n",
+       mmap = (mb2_mmap_entry_t * )((uint64_t) mmap + _mem_map->entry_size)) {
+    printf(" %0.12lx - %0.12lx (%ld): %s\n",
            mmap->addr, mmap->addr + mmap->len, mmap->len,
-           mem_type[mmap->type]);
+           _mem_type[mmap->type]);
   }
 }
