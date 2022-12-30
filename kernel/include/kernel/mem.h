@@ -95,6 +95,6 @@ typedef union _PTEntry {
   };
 }  __attribute__((packed)) PTEntry;
 
-void mem_identity_map_range(uint64_t startAddr, uint64_t endAddr);
+void mem_identity_map_range(uint64_t start_addr, uint64_t end_addr);
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_

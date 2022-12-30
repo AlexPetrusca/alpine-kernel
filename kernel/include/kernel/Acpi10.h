@@ -39,8 +39,7 @@ typedef struct {
   uint32_t OemRevision;
   uint32_t CreatorId;
   uint32_t CreatorRevision;
-} AcpiDescriptionHeader;
-#pragma pack()
+} __attribute__((packed)) AcpiDescriptionHeader;
 
 //
 // Define for Desriptor

@@ -18,13 +18,13 @@ typedef struct {
   uint8_t StartBusNumber;
   uint8_t EndBusNumber;
   uint32_t Reserved;
-} PciHostBridge;
+} __attribute__((packed)) PciHostBridge;
 
 typedef struct {
   AcpiDescriptionHeader Header;
   uint64_t Reserved;
   PciHostBridge HostBridge[0];
-} McfgTable;
+} __attribute__((packed)) McfgTable;
 
 typedef struct {
   uint16_t VendorId;
