@@ -126,6 +126,20 @@ void mbi_print_info() {
   printf("Command line = %s\n", kernel_cmd_line);
 }
 
+void fb_print_info() {
+  if (frame_buffer->common.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
+    printf("Type: VBE RGB Mode\n");
+    printf("VBE Mode: 0x%x\n", vbe->vbe_mode);
+    printf("VBE Control Info: %s\n", vbe->vbe_control_info.external_specification);
+  } else {
+    printf("Type: VGA Text Mode\n");
+  }
+  printf("FB Address: 0x%x\n", frame_buffer->common.framebuffer_addr);
+  printf("Width: %d\n", frame_buffer->common.framebuffer_width);
+  printf("Height: %d\n", frame_buffer->common.framebuffer_height);
+  printf("Bits Per Pixel: %d\n", frame_buffer->common.framebuffer_bpp);
+}
+
 void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
   kernel_init(magic, _kernel_addr);
 
@@ -138,6 +152,7 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
     {"pci", pci_print_devices},
     {"mmap", mem_print_map},
     {"mbi", mbi_print_info},
+    {"fb", fb_print_info},
     {"", NULL}
   };
   shell_start(commands);

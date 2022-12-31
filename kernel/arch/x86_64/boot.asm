@@ -58,8 +58,8 @@ PAGE_WRITE      equ (1 << 1)
 STACK_SIZE      equ 16384   ; 16 KB
 
 ; Screen constants
-SCREEN_WIDTH    equ 1280
-SCREEN_HEIGHT   equ 720
+SCREEN_WIDTH    equ 1024
+SCREEN_HEIGHT   equ 768
 SCREEN_DEPTH    equ 32
 
 section .multiboot
