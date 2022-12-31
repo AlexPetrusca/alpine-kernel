@@ -16,11 +16,9 @@ char* terminal_line_buf[TERMINAL_LINE_LIMIT];
 struct circ_buf terminal_circ_line_buf;
 struct circ_buf_ptr terminal_line_buf_rptr;
 
-uint8_t cursor_x;
-uint8_t cursor_y;
-uint8_t terminal_color;
-uint16_t terminal_line;
 tty_device* device;
+uint16_t terminal_line;
+uint8_t cursor_x, cursor_y;
 uint32_t width, height;
 
 void terminal_writestring_raw(const char* data);
@@ -38,17 +36,14 @@ static inline char* terminal_cursor_to_buf_wptr(uint16_t pos) {
   return terminal_cursorxy_to_buf_wptr(pos % width, pos / width);
 }
 
-// todo: move this somewhere else
 static inline char* terminal_buf_dequeue_line() {
   return *((char**) circ_buf_dequeue(&terminal_circ_line_buf));
 }
 
-// todo: move this somewhere else
 static inline char* terminal_buf_read_line(size_t n) {
   return *((char**) circ_buf_peekn(&terminal_circ_line_buf, n));
 }
 
-// todo: move this somewhere else
 void terminal_buf_write_null_terminator() {
   if (terminal_circ_line_buf.size > 1 && terminal_buf_wptr.ptr == terminal_buf_read_line(0)) {
     terminal_buf_dequeue_line();
@@ -56,7 +51,6 @@ void terminal_buf_write_null_terminator() {
   *terminal_buf_wptr.ptr = '\0';
 }
 
-// todo: move this somewhere else
 void terminal_buf_enqueue_line(char* line) {
   circ_buf_enqueue(&terminal_circ_line_buf, &line);
   terminal_buf_write_null_terminator();
@@ -199,7 +193,6 @@ void terminal_scroll_down() {
   }
 }
 
-// todo: move this somewhere else
 void terminal_buf_write(char c) {
   if (terminal_circ_line_buf.size > 1 && terminal_buf_wptr.ptr == terminal_buf_read_line(0)) {
     terminal_buf_dequeue_line();
@@ -219,6 +212,15 @@ void terminal_buf_write(char c) {
   }
 }
 
+static inline void terminal_new_line() {
+  cursor_x = 0;
+  if (cursor_y == height - 1) {
+    terminal_scroll_down_force();
+  } else {
+    cursor_y++;
+  }
+}
+
 void terminal_putchar_raw(char c) {
   switch (c) {
     case '\t':
@@ -233,20 +235,14 @@ void terminal_putchar_raw(char c) {
       cursor_x -= (cursor_x == 0) ? 0 : 1;
       break;
     case '\n':
-      cursor_y++;
-      cursor_x = 0;
+      terminal_new_line();
       break;
     default:
       if (cursor_x == width) {
-        cursor_x = 0;
-        cursor_y++;
+        terminal_new_line();
       }
       device->put_char(cursor_x, cursor_y, c);
       cursor_x++;
-  }
-  if (cursor_y >= height) {
-    cursor_y--;
-    terminal_scroll_down_force();
   }
   terminal_set_cursor_pos_xy(cursor_x, cursor_y);
 }
@@ -266,15 +262,6 @@ void terminal_writestring(const char* data) {
   terminal_write(data, strlen(data));
 }
 
-// manual tests:
-// buffer limit: TERMINAL_BUFFER_SIZE = 300 --> a, b, c, d, ... until DEQUEUE (check validity)
-// line limit: TERMINAL_LINE_LIMIT = 30 --> a, b, c, d, ... until DEQUEUE (check validity + only scroll by 5)
-
-// test writing multi-line commands
-// test recalling multi-line commands from history
-// test scrolling after writing a multi-line command (2 lines) and then deleting down to 1 line
-// test scrolling after recalling multi-line command (4+ lines) then recalling small command (1 line)
-
 void terminal_write_raw(const char* data, size_t size) {
   for (size_t i = 0; i < size; i++) {
     terminal_putchar_raw(data[i]);
@@ -284,3 +271,12 @@ void terminal_write_raw(const char* data, size_t size) {
 void terminal_writestring_raw(const char* data) {
   terminal_write_raw(data, strlen(data));
 }
+
+// manual tests:
+// buffer limit: TERMINAL_BUFFER_SIZE = 300 --> a, b, c, d, ... until DEQUEUE (check validity)
+// line limit: TERMINAL_LINE_LIMIT = 30 --> a, b, c, d, ... until DEQUEUE (check validity + only scroll by 5)
+
+// test writing multi-line commands
+// test recalling multi-line commands from history
+// test scrolling after writing a multi-line command (2 lines) and then deleting down to 1 line
+// test scrolling after recalling multi-line command (4+ lines) then recalling small command (1 line)
