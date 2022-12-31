@@ -50,7 +50,7 @@ $(ARCHDIR)/crtend.o \
 $(ARCHDIR)/crtn.o \
 
 .PHONY: all clean install install-headers install-kernel
-.SUFFIXES: .o .c .S .asm
+.SUFFIXES: .o .c .S .asm .psf
 
 all: alpine.kernel
 
@@ -66,6 +66,9 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 
 .S.o:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+
+.psf.o:
+	x86_64-elf-objcopy -O elf64-x86-64 -B i386 -I binary --prefix-sections=abc $< $@
 
 .asm.o:
 	$(ASM) $< -o $@ $(ASMFLAGS)

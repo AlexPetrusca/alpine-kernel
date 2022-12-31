@@ -2,7 +2,8 @@
 #include <string.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
-#include <kernel/vga.h>
+#include <kernel/vga_ttyd.h>
+#include <kernel/vbe_ttyd.h>
 #include <kernel/cpu.h>
 #include <stdio_tests.h>
 #include <kernel/multiboot2.h>
@@ -15,9 +16,11 @@
 char* bootloader_name;
 char* kernel_cmd_line;
 uint64_t kernel_base_addr;
+tty_device kernel_tty_device;
 struct mb2_tag_bootdev* boot_dev;
 struct mb2_tag_elf_sections* elf_sections;
 struct mb2_tag_framebuffer* frame_buffer;
+struct mb2_tag_vbe* vbe;
 struct mb2_tag_apm* apm;
 
 void validate_boot_info(unsigned long magic, unsigned long kernel_addr) {
@@ -30,8 +33,19 @@ void validate_boot_info(unsigned long magic, unsigned long kernel_addr) {
   }
 }
 
+void tty_device_init() {
+  struct mb2_tag_framebuffer_common fb_info = frame_buffer->common;
+  if (fb_info.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
+    size_t fb_size = (fb_info.framebuffer_width * fb_info.framebuffer_height) * sizeof(uint32_t);
+    mem_range fb_range = {.phys_addr = fb_info.framebuffer_addr, .size = fb_size};
+    mem_identity_map_range(&fb_range);
+    kernel_tty_device = vbe_ttyd_init(fb_info.framebuffer_addr, fb_info.framebuffer_width, fb_info.framebuffer_height);
+  } else {
+    kernel_tty_device = vga_ttyd_init(VGA_TEXT_MODE_PHYS_ADDR);
+  }
+}
+
 void kernel_init(unsigned long magic, unsigned long kernel_addr) {
-  terminal_initialize(&vga_tty_device);
   validate_boot_info(magic, kernel_addr);
 
   mb2_tag_basic_meminfo* basic_meminfo_tag = NULL;
@@ -56,6 +70,10 @@ void kernel_init(unsigned long magic, unsigned long kernel_addr) {
 
       case MB2_TAG_TYPE_MMAP:
         mem_map_tag = (mb2_tag_mmap*) tag;
+        break;
+
+      case MB2_TAG_TYPE_VBE:
+        vbe = (struct mb2_tag_vbe*) tag;
         break;
 
       case MB2_TAG_TYPE_BOOTDEV:
@@ -86,9 +104,12 @@ void kernel_init(unsigned long magic, unsigned long kernel_addr) {
         break;
 
       default:
-        printf("Error: Unknown tag %d\n", tag->type);
+//        printf("Error: Unknown tag %d\n", tag->type);
     }
   }
+
+  tty_device_init();
+  terminal_initialize(&kernel_tty_device);
 
   mem_init(basic_meminfo_tag, mem_map_tag);
   acpi_init(rsdp_tag);

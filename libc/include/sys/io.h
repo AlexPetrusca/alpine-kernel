@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 
 static inline uint8_t inb(uint16_t port) {

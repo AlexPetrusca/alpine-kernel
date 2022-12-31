@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <kernel/multiboot2.h>
 
-#define PAGE_SIZE     4096
+#define PAGE_SIZE 4096
 
 typedef union _VirtualAddress {
   uint64_t value;

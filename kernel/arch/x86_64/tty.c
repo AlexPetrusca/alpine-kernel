@@ -66,16 +66,16 @@ void terminal_initialize(tty_device* _device) {
   device = _device;
   width = device->get_width();
   height = device->get_height();
-  terminal_color = attributes(COLOR_LIGHT_GREEN, COLOR_BLACK);
+  terminal_setcolor(COLOR_LIGHT_GREEN, COLOR_BLACK);
   terminal_clear();
 }
 
 uint32_t terminal_get_width() {
-  return device->get_width();
+  return width;
 }
 
 uint32_t terminal_get_height() {
-  return device->get_height();
+  return height;
 }
 
 void terminal_clear() {
@@ -98,32 +98,33 @@ void terminal_delete(size_t n) {
     }
     uint16_t pos = terminal_get_cursor_pos();
     terminal_set_cursor_pos(pos - 1);
-    device->put_char(cursor_x, cursor_y, ' ', terminal_color);
+    device->put_char(cursor_x, cursor_y, ' ');
     *terminal_buf_wptr.ptr = '\0';
   }
 }
 
-void terminal_setcolor(uint8_t color) {
-  terminal_color = color;
+void terminal_setcolor(tty_color fg, tty_color bg) {
+  device->set_fg(fg);
+  device->set_bg(bg);
 }
 
 uint16_t terminal_getline() {
   return terminal_line;
 }
 
-void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
-  device->enable_cursor(cursor_start, cursor_end);
+void terminal_enable_cursor() {
+  device->enable_cursor();
 }
 
 void terminal_disable_cursor() {
   device->disable_cursor();
 }
 
-void terminal_set_cursor_pos(uint16_t pos) {
+void terminal_set_cursor_pos(uint64_t pos) {
   terminal_set_cursor_pos_xy(pos % width, pos / width);
 }
 
-void terminal_set_cursor_pos_xy(uint8_t x, uint8_t y) {
+void terminal_set_cursor_pos_xy(uint32_t x, uint32_t y) {
   cursor_x = x;
   cursor_y = y;
   terminal_buf_wptr.ptr = terminal_cursorxy_to_buf_wptr(x, y);
@@ -240,7 +241,7 @@ void terminal_putchar_raw(char c) {
         cursor_x = 0;
         cursor_y++;
       }
-      device->put_char(cursor_x, cursor_y, c, terminal_color);
+      device->put_char(cursor_x, cursor_y, c);
       cursor_x++;
   }
   if (cursor_y >= height) {
