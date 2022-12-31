@@ -68,7 +68,7 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 .psf.o:
-	x86_64-elf-objcopy -O elf64-x86-64 -B i386 -I binary --prefix-sections=abc $< $@
+	x86_64-elf-objcopy -O elf64-x86-64 -B i386 -I binary $< $@
 
 .asm.o:
 	$(ASM) $< -o $@ $(ASMFLAGS)
