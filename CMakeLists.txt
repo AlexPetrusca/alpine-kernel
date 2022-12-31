@@ -65,4 +65,4 @@ add_executable(alpine_kernel
         libc/include/stdio_tests.h
         kernel/include/kernel/multiboot2.h
         kernel/arch/x86_64/mem.c
-        kernel/include/kernel/mem.h)
+        kernel/include/kernel/mem.h kernel/arch/x86_64/panic.c kernel/include/kernel/panic.h)

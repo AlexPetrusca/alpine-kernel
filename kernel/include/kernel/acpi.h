@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <kernel/multiboot2.h>
 
 // The common ACPI description table header.  This structure prefaces most ACPI tables.
 typedef struct {
@@ -35,7 +36,7 @@ typedef struct {
   uint32_t pointer_to_other_sdt[];
 } __attribute__((packed)) acpi_rsdt;
 
-void acpi_init(acpi_rsdp* rsdp);
+void acpi_init(mb2_tag_new_acpi* rsdp_tag);
 acpi_header* acpi_find_table(char* name);
 void acpi_print_info();
 

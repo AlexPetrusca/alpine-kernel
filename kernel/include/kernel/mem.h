@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <kernel/multiboot2.h>
 
 #define PAGE_SIZE     4096
 
@@ -18,18 +19,26 @@ typedef union _VirtualAddress {
   };
 } __attribute__((packed)) VirtualAddress;
 
+typedef enum {
+  MEMORY_AVAILABLE = 1,
+  MEMORY_RESERVED = 2,
+  MEMORY_ACPI_RECLAIMABLE = 3,
+  MEMORY_NVS = 4,
+  MEMORY_BADRAM = 5,
+  MEMORY_PCI_ECAM = 6
+} mem_type;
+
 typedef struct {
-  uint64_t address;
+  uint64_t phys_addr;
+  uint64_t virt_addr;
   uint64_t size;
-  uint32_t type;
+  mem_type type;
 } mem_range;
 
-void mem_identity_map_range(uint64_t start_addr, uint64_t end_addr);
+void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
+void mem_identity_map_range(mem_range* range);
 bool mem_find_range(uint64_t addr, mem_range* range);
+bool mem_update_range(mem_range* range);
 void mem_print_map();
-
-extern uint32_t _mem_lower;
-extern uint32_t _mem_upper;
-extern struct mb2_tag_mmap* _mem_map;
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_
