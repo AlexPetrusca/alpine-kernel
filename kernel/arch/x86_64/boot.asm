@@ -1,8 +1,12 @@
 ; multiboot2 constants
 MAGIC       equ 0xe85250d6
-ARCH        equ 0
-HEADER_SIZE equ header_end - header_start
+ARCH        equ 0   ; x86 arch
+HEADER_SIZE equ multiboot_header_end - multiboot_header
 CHECKSUM    equ -(MAGIC + ARCH + HEADER_SIZE)
+
+; multiboot2 tag constants
+FRAMEBUFFER_TAG         equ 5
+FRAMEBUFFER_TAG_SIZE    equ 20
 
 ; CR0 bits
 CR0_PG   equ 1 << 31
@@ -24,15 +28,15 @@ CODE_SEG    equ 0x0008
 DATA_SEG    equ 0x0010
 
 ; GDT access bits
-ACCESSED       equ 1 << 0
-RW             equ 1 << 1
-DC             equ 1 << 2
-EXEC           equ 1 << 3
-NOT_SYS        equ 1 << 4
-RING1          equ 1 << 5
-RING2          equ 1 << 6
-RING3          equ (1 << 5) | (1 << 6)
-PRESENT        equ 1 << 7
+ACCESSED      equ 1 << 0
+RW            equ 1 << 1
+DC            equ 1 << 2
+EXEC          equ 1 << 3
+NOT_SYS       equ 1 << 4
+RING1         equ 1 << 5
+RING2         equ 1 << 6
+RING3         equ (1 << 5) | (1 << 6)
+PRESENT       equ 1 << 7
 
 ; GDT flag bits
 LONG_MODE     equ 1 << 5
@@ -40,44 +44,47 @@ SZ_32         equ 1 << 6
 GRAN_4K       equ 1 << 7
 
 ; Paging constants
-PAGE_SIZE    equ 4096   ; 4 KB
-PML4T_START  equ 0x1000
-PDPT_START   equ 0x2000
-PDT_START    equ 0x3000
-PT_START     equ 0x4000
+PAGE_SIZE     equ 4096   ; 4 KB
+PML4T_START   equ 0x1000
+PDPT_START    equ 0x2000
+PDT_START     equ 0x3000
+PT_START      equ 0x4000
 
 ; Page access bits
 PAGE_PRESENT    equ (1 << 0)
 PAGE_WRITE      equ (1 << 1)
 
 ; Stack constants
-STACK_SIZE   equ 16384   ; 16 KB
+STACK_SIZE      equ 16384   ; 16 KB
+
+; Screen constants
+SCREEN_WIDTH    equ 1280
+SCREEN_HEIGHT   equ 720
+SCREEN_DEPTH    equ 32
 
 section .multiboot
-
-header_start:
+multiboot_header:
     align 8
     dd MAGIC
     dd ARCH
     dd HEADER_SIZE
     dd CHECKSUM
 
-; framebuffer_tag:
-;     align  8
-;     dw MB2_HEADER_TAG_FRAMEBUFFER
-;     dw MB2_HEADER_TAG_OPTIONAL
-;     dd framebuffer_tag_end - framebuffer_tag_start
-;     dd 1024
-;     dd 768
-;     dd 32
+framebuffer_tag:
+    align 8
+    dw FRAMEBUFFER_TAG
+    dw 0
+    dd FRAMEBUFFER_TAG_SIZE
+    dd SCREEN_WIDTH
+    dd SCREEN_HEIGHT
+    dd SCREEN_DEPTH
 
 end_tag:
     align 8
     dw 0
     dw 0
     dd 8
-
-header_end:
+multiboot_header_end:
 
 section .bss
 align 16
@@ -131,7 +138,7 @@ _start:
     ; Zero out the 16KiB buffer.
     mov edi, PML4T_START
     xor eax, eax
-    mov ecx, 4096           ; 4096 * 4 = 16k
+    mov ecx, PAGE_SIZE      ; 4096 * 4 = 16k
     cld
     rep stosd               ; Clear the memory.
 
@@ -192,8 +199,8 @@ LongMode:
     mov gs, ax
     mov ss, ax
 
-    pop rdi  ; pop the magic value.
-    pop rsi  ; pop the pointer to the Multiboot information structure.
+    pop rdi  ; pop the magic value
+    pop rsi  ; pop the pointer to the Multiboot information structure
 
     extern kernel_main
     call kernel_main   ; Now enter the C main function...

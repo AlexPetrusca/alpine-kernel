@@ -214,7 +214,7 @@ void shell_initialize(sh_command _commands[]) {
   history_circ_buf.granularity = MAX_COMMAND;
   circ_buf_push(&history_circ_buf, "\0");
 
-  terminal_enable_cursor(14, 15);
+  terminal_enable_cursor();
   printf("Welcome to alpine shell!\n\n");
   shell_prompt();
 }

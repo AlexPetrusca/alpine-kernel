@@ -5,7 +5,7 @@
 #include <kernel/kb.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
-#include <kernel/vga.h>
+#include <kernel/vga_ttyd.h>
 #include <kernel/cpu.h>
 #include <stdio_tests.h>
 

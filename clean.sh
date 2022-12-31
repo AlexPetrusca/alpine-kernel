@@ -7,4 +7,4 @@ for PROJECT in $PROJECTS; do
 done
 
 rm -rf build
-rm -f qemu.log
+rm -f qemu.log kernel.dump

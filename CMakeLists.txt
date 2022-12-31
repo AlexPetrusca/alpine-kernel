@@ -23,7 +23,7 @@ add_executable(alpine_kernel
         kernel/include/kernel/kb.h
         kernel/include/kernel/sh.h
         kernel/include/kernel/tty.h
-        kernel/include/kernel/vga.h
+        kernel/include/kernel/vga_ttyd.h
         kernel/include/kernel/msr.h
         kernel/include/kernel/cpu.h
         kernel/include/kernel/acpi.h
@@ -65,4 +65,8 @@ add_executable(alpine_kernel
         libc/include/stdio_tests.h
         kernel/include/kernel/multiboot2.h
         kernel/arch/x86_64/mem.c
-        kernel/include/kernel/mem.h)
+        kernel/include/kernel/mem.h
+        kernel/include/kernel/vbe_ttyd.h
+        kernel/arch/x86_64/vga_ttyd.c
+        kernel/arch/x86_64/vbe_ttyd.c
+        kernel/include/kernel/psf_font.h)

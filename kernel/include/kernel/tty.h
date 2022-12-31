@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <kernel/td.h>
+#include <kernel/ttyd.h>
 
 void terminal_initialize(tty_device* _device);
 uint32_t terminal_get_width();
@@ -12,14 +12,14 @@ uint32_t terminal_get_height();
 
 void terminal_scroll_up();
 void terminal_scroll_down();
-void terminal_setcolor(uint8_t color);
+void terminal_setcolor(tty_color fg, tty_color bg);
 uint16_t terminal_getline();
 
-void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+void terminal_enable_cursor();
 void terminal_disable_cursor();
 uint16_t terminal_get_cursor_pos();
-void terminal_set_cursor_pos(uint16_t pos);
-void terminal_set_cursor_pos_xy(uint8_t x, uint8_t y);
+void terminal_set_cursor_pos(uint64_t pos);
+void terminal_set_cursor_pos_xy(uint32_t x, uint32_t y);
 
 void terminal_putchar(char c);
 void terminal_write(const char* data, size_t size);

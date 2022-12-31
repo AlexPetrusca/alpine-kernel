@@ -54,13 +54,13 @@ void mem_identity_map_range(uint64_t start_addr, uint64_t end_addr) {
 }
 
 bool mem_find_range(uint64_t addr, mem_range* range) {
-  for (mb2_mmap_entry_t* mmap = _mem_map->entries;
-       (uint8_t*) mmap < (uint8_t*) _mem_map + _mem_map->size;
-       mmap = (mb2_mmap_entry_t*) ((uint64_t) mmap + _mem_map->entry_size)) {
-    if (addr >= mmap->addr && addr < mmap->addr + mmap->len) {
-      range->address = mmap->addr;
-      range->size = mmap->len;
-      range->type = mmap->type;
+  for (mb2_mmap_entry_t* entry = _mem_map->entries;
+       (uint8_t*) entry < (uint8_t*) _mem_map + _mem_map->size;
+       entry = (mb2_mmap_entry_t*) ((uint64_t) entry + _mem_map->entry_size)) {
+    if (addr >= entry->addr && addr < entry->addr + entry->len) {
+      range->address = entry->addr;
+      range->size = entry->len;
+      range->type = entry->type;
       return true;
     }
   }

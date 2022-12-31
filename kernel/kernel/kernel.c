@@ -2,7 +2,8 @@
 #include <string.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
-#include <kernel/vga.h>
+#include <kernel/vga_ttyd.h>
+#include <kernel/vbe_ttyd.h>
 #include <kernel/cpu.h>
 #include <stdio_tests.h>
 #include <kernel/multiboot2.h>
@@ -15,6 +16,7 @@ uint64_t kernel_addr;
 char* bootloader_name;
 char* kernel_cmd_line;
 uint64_t kernel_base_addr;
+tty_device kernel_tty_device;
 struct mb2_tag_bootdev* boot_dev;
 struct mb2_tag_elf_sections* elf_sections;
 struct mb2_tag_framebuffer* frame_buffer;
@@ -73,7 +75,7 @@ void parse_mbi() {
         break;
 
       default:
-        printf("Error: Unknown tag %d\n", tag->type);
+//        printf("Error: Unknown tag %d\n", tag->type);
     }
   }
 }
@@ -102,10 +104,22 @@ void mbi_print_info() {
   printf("Command line = %s\n", kernel_cmd_line);
 }
 
+void tty_device_init() {
+  struct mb2_tag_framebuffer_common fb_info = frame_buffer->common;
+  if (fb_info.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
+    mem_identity_map_range(fb_info.framebuffer_addr,
+        fb_info.framebuffer_addr + (fb_info.framebuffer_width * fb_info.framebuffer_height) * sizeof(uint32_t));
+    kernel_tty_device = vbe_ttyd_init(fb_info.framebuffer_addr, fb_info.framebuffer_width, fb_info.framebuffer_height);
+  } else {
+    kernel_tty_device = vga_ttyd_init(VGA_TEXT_MODE_PHYS_ADDR);
+  }
+}
+
 void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
-  terminal_initialize(&vga_tty_device);
   validate_boot_info(magic, _kernel_addr);
   parse_mbi();
+  tty_device_init();
+  terminal_initialize(&kernel_tty_device);
   pci_init();
 
   sh_command commands[] = {
