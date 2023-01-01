@@ -4,11 +4,73 @@
 #include <kernel/mem.h>
 #include <kernel/heap.h>
 
+#define MEM_START 0x100000 // todo: define known ranges in mem.h
+#define NUM_SIZES 32
+#define ALIGN 4
+#define MIN_SIZE sizeof(dlist)
+#define HEADER_SIZE OFFSETOF(heap_chunk, data)
+
+#define CONTAINER(C, l, v) ((C*)(((char*)v) - (intptr_t)&(((C*)0)->l)))
+#define OFFSETOF(TYPE, MEMBER)  __builtin_offsetof (TYPE, MEMBER)
+
+#define DLIST_INIT(v, l) dlist_init(&v->l)
+
+#define DLIST_REMOVE_FROM(h, d, l)             \
+{                                             \
+  typeof(**h) **h_ = h, *d_ = d;              \
+  dlist *head = &(*h_)->l;                    \
+  dlist_remove_from(&head, &d_->l);           \
+  if (head == NULL) {                         \
+      *h_ = NULL;                             \
+  } else {                                    \
+      *h_ = CONTAINER(typeof(**h), l, head);  \
+  }                                           \
+}
+
+#define DLIST_PUSH(h, v, l)                    \
+{                                             \
+  typeof(*v) **h_ = h, *v_ = v;               \
+  dlist *head = &(*h_)->l;                    \
+  if (*h_ == NULL) head = NULL;               \
+  dlist_push(&head, &v_->l);                  \
+  *h_ = CONTAINER(typeof(*v), l, head);       \
+}
+
+#define DLIST_POP(h, l)                        \
+({                                            \
+  typeof(**h) **h_ = h;                       \
+  dlist *head = &(*h_)->l;                    \
+  dlist *res = dlist_pop(&head);              \
+  if (head == NULL) {                         \
+      *h_ = NULL;                             \
+  } else {                                    \
+      *h_ = CONTAINER(typeof(**h), l, head);  \
+  }                                           \
+  CONTAINER(typeof(**h), l, res);             \
+})
+
 typedef struct dlist dlist;
 struct dlist {
   dlist* next;
   dlist* prev;
 };
+
+typedef struct {
+  dlist all;
+  int used;
+  union {
+    char data[0];
+    dlist free;
+  };
+} heap_chunk;
+
+heap_chunk* free_chunk[NUM_SIZES] = {NULL};
+size_t mem_free = 0;
+size_t mem_used = 0;
+size_t mem_meta = 0;
+heap_chunk* head = NULL;
+heap_chunk* tail = NULL;
+
 
 // initialize a one element dlist
 static inline void dlist_init(dlist* dlist) {
@@ -75,84 +137,6 @@ static inline void dlist_remove_from(dlist** d1p, dlist* d2) {
     dlist_remove(d2);
   }
 }
-
-#define CONTAINER(C, l, v) ((C*)(((char*)v) - (intptr_t)&(((C*)0)->l)))
-#define OFFSETOF(TYPE, MEMBER)  __builtin_offsetof (TYPE, MEMBER)
-
-#define DLIST_INIT(v, l) dlist_init(&v->l)
-
-#define DLIST_REMOVE_FROM(h, d, l) {                           \
-  typeof(**h) **h_ = h, *d_ = d;          \
-  dlist *head = &(*h_)->l;          \
-  dlist_remove_from(&head, &d_->l);          \
-  if (head == NULL) {            \
-      *h_ = NULL;              \
-  } else {              \
-      *h_ = CONTAINER(typeof(**h), l, head);      \
-  }                \
-}
-
-#define DLIST_PUSH(h, v, l) {                  \
-  typeof(*v) **h_ = h, *v_ = v;          \
-  dlist *head = &(*h_)->l;          \
-  if (*h_ == NULL) head = NULL;          \
-  dlist_push(&head, &v_->l);          \
-  *h_ = CONTAINER(typeof(*v), l, head);        \
-}
-
-#define DLIST_POP(h, l)              \
-    ({                  \
-  typeof(**h) **h_ = h;            \
-  dlist *head = &(*h_)->l;          \
-  dlist *res = dlist_pop(&head);          \
-  if (head == NULL) {            \
-      *h_ = NULL;              \
-  } else {              \
-      *h_ = CONTAINER(typeof(**h), l, head);      \
-  }                \
-  CONTAINER(typeof(**h), l, res);          \
-    })
-
-#define DLIST_ITERATOR_BEGIN(h, l, it)          \
-    {                  \
-        typeof(*h) *h_ = h;            \
-  DList *last_##it = h_->l.prev, *iter_##it = &h_->l, *next_##it;  \
-  do {                \
-      if (iter_##it == last_##it) {        \
-    next_##it = NULL;          \
-      } else {              \
-    next_##it = iter_##it->next;        \
-      }                \
-      typeof(*h)* it = CONTAINER(typeof(*h), l, iter_##it);
-
-#define DLIST_ITERATOR_END(it)            \
-  } while((iter_##it = next_##it));        \
-    }
-
-#define DLIST_ITERATOR_REMOVE_FROM(h, it, l) DLIST_REMOVE_FROM(h, iter_##it, l)
-
-typedef struct {
-  dlist all;
-  int used;
-  union {
-    char data[0];
-    dlist free;
-  };
-} heap_chunk;
-
-enum {
-  NUM_SIZES = 32,
-  ALIGN = 4,
-  MIN_SIZE = sizeof(dlist),
-  HEADER_SIZE = OFFSETOF(heap_chunk, data),
-};
-
-heap_chunk* free_chunk[NUM_SIZES] = {NULL};
-size_t mem_free = 0;
-size_t mem_used = 0;
-size_t mem_meta = 0;
-heap_chunk* head = NULL;
-heap_chunk* tail = NULL;
 
 static void heap_chunk_init(heap_chunk* chunk) {
   DLIST_INIT(chunk, all);
@@ -243,8 +227,8 @@ void* kmalloc(size_t size) {
 static void heap_remove_free(heap_chunk* chunk) {
   size_t len = heap_chunk_size(chunk);
   int n = heap_chunk_slot(len);
-  DLIST_REMOVE_FROM(&free_chunk[n], chunk, free);
-  mem_free -= len - HEADER_SIZE;
+DLIST_REMOVE_FROM(&free_chunk[n], chunk, free);
+mem_free -= len - HEADER_SIZE;
 }
 
 static void heap_push_free(heap_chunk* chunk) {
@@ -318,8 +302,6 @@ void* krealloc(void* ptr, size_t size) {
     }
   }
 }
-
-#define MEM_START 0x100000 // todo: define known ranges in mem.h
 
 void heap_init(size_t size) {
   mem_range available_mem_range;
