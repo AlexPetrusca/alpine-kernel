@@ -13,6 +13,7 @@
 #include <kernel/mem.h>
 #include <kernel/heap.h>
 #include <kernel/panic.h>
+#include <kernel/usb.h>
 
 char* bootloader_name;
 char* kernel_cmd_line;
@@ -116,6 +117,7 @@ void kernel_init(unsigned long magic, unsigned long kernel_addr) {
   heap_init(512 * PAGE_SIZE);
   acpi_init(rsdp_tag);
   pci_init();
+  usb_init();
 }
 
 void mbi_print_info() {
@@ -155,6 +157,7 @@ void kernel_main(unsigned long magic, unsigned long _kernel_addr) {
     {"mmap", mem_print_map},
     {"mbi", mbi_print_info},
     {"fb", fb_print_info},
+    {"usb", usb_print_info},
     {"", NULL}
   };
   shell_start(commands);
