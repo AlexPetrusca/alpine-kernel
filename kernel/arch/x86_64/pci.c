@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <kernel/mem.h>
 #include <kernel/panic.h>
-#include <kernel/status.h>
+#include <kernel/kerr.h>
 
 #define MAX_PCI_DEVICES 32
 
@@ -536,7 +536,7 @@ void pci_init() {
     pci_host_bridge bridge = mcfg->host_bridge[brideg_id];
     mem_range range;
     if (!mem_find_range(bridge.base_address, &range)) {
-      panic("Cannot find PCI bridge memory range\n");
+      RAISE(NOT_FOUND, "Cannot find PCI bridge memory range\n");
     }
     mem_identity_map_range(&range);
     range.type = MEMORY_PCI_ECAM;
@@ -550,7 +550,7 @@ void pci_init() {
           if (header->vendor_id != 0xffff) { // 0xffff means there is no device
             pci_device* device = &_pci_devices[_pci_device_count++];
             if (_pci_device_count == MAX_PCI_DEVICES) {
-              panic("Too many PCI devices, aborting enumeration.\n");
+              RAISE(LIMIT_EXCEEDED, "Too many PCI devices, aborting enumeration.\n");
             }
             device->bus_number = bus;
             device->device_number = dev;
@@ -586,16 +586,16 @@ void pci_init() {
   }
 }
 
-status pci_get_device(pci_device* device) {
+void pci_get_device(pci_device* device) {
   for (int i = 0; i < _pci_device_count; i++) {
     pci_device* d = &_pci_devices[i];
     if (device->base_class_code == d->base_class_code && device->sub_class_code == d->sub_class_code
       && device->pi_class_code == d->pi_class_code) {
       *device = *d;
-      return OK;
+      return;
     }
   }
-  return NOT_FOUND;
+  RAISE(NOT_FOUND, "PCI device not found");
 }
 
 uint64_t pci_bar_addr_32(pci_device* device, int bar_index) {

@@ -7,6 +7,7 @@
 #include <kernel/kb.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
+#include <kernel/kerr.h>
 
 #include <kernel/cpu.h>
 #include <kernel/acpi.h>
@@ -130,7 +131,7 @@ bool shell_execute() {
       printf("Alpine shell terminated.");
       return false;
     } else if ((cmd = find_command(command))) {
-      cmd->run();
+      WARN(cmd->run(), "Error running command");
     } else {
       printf("ash: command not found: %s", command);
     }

@@ -477,11 +477,11 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
   return buffer - original_buffer;
 }
 
-int vprintf(const char* format, va_list ap) {
+int vprintf(const char* format, VA_LIST ap) {
   return sprintf_impl(NULL, INT16_MAX, format, ap, &terminal_putchar);
 }
 
-int vsprintf(char* str, const char* format, va_list ap) {
+int vsprintf(char* str, const char* format, VA_LIST ap) {
   int written = sprintf_impl(str, INT16_MAX, format, ap, NULL);
   str[written] = '\0';
   return written;

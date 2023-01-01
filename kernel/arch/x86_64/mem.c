@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <kernel/mb2_type.h>
 #include <kernel/panic.h>
+#include <kernel/kerr.h>
 
 #define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
 #define PAGE_PRESENT    (1 << 0)
@@ -25,10 +26,10 @@ char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Ba
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   if (mem_map == NULL) {
-    panic("Memory map not provided.");
+    RAISE(MISSING_INFO, "Memory map not provided.");
   }
   if (basic_meminfo == NULL) {
-    panic("Basic memory info not provided.");
+    RAISE(MISSING_INFO, "Basic memory info not provided.");
   }
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
