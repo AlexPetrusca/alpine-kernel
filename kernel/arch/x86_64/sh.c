@@ -8,12 +8,38 @@
 #include <kernel/tty.h>
 #include <kernel/sh.h>
 
+#include <kernel/cpu.h>
+#include <kernel/acpi.h>
+#include <kernel/apic.h>
+#include <kernel/pci.h>
+#include <kernel/mem.h>
+#include <stdio_tests.h>
+#include <kernel/mb2_info.h>
+
 #define MAX_HISTORY 5
 #define MAX_COMMAND 4096
 
+typedef struct {
+  char* name;
+  void (* run)();
+//  void (* run)(va_list args);
+} sh_command;
+
+sh_command commands[] = {
+    {"cpu",  cpu_print_info},
+    {"test", test_sprintf_suite},
+    {"acpi", acpi_print_info},
+    {"apic", apic_print_info},
+    {"mcfg", pci_print_mcfg},
+    {"pci",  pci_print_devices},
+    {"mmap", mem_print_map},
+    {"mbi",  mb2_info_print},
+    {"fb",   mb2_fb_info_print},
+    {"", NULL}
+};;
+
 char history_buf[(MAX_HISTORY + 1) * (MAX_COMMAND + 1)];
 struct circ_buf history_circ_buf;
-sh_command* commands;
 
 int16_t prompt_limit;
 size_t history_idx;
@@ -207,8 +233,7 @@ bool shell_handle_input(int ch) {
   return true;
 }
 
-void shell_initialize(sh_command _commands[]) {
-  commands = _commands;
+void shell_initialize() {
   history_circ_buf.buf = history_buf;
   history_circ_buf.capacity = MAX_HISTORY + 1;
   history_circ_buf.granularity = MAX_COMMAND;
@@ -219,7 +244,7 @@ void shell_initialize(sh_command _commands[]) {
   shell_prompt();
 }
 
-void shell_start(sh_command cmd[]) {
-  shell_initialize(cmd);
+void shell_start() {
+  shell_initialize();
   while (shell_handle_input(keyboard_getchar()));
 }

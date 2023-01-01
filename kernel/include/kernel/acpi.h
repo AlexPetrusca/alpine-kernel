@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <stdint.h>
-#include <kernel/multiboot2.h>
+#include <kernel/mb2_type.h>
 
 // The common ACPI description table header.  This structure prefaces most ACPI tables.
 typedef struct {

@@ -29,10 +29,10 @@
 #define MB2_HEADER_ALIGN                  8
 
 /*  The magic field should contain this. */
-#define MULTIBOOT2_HEADER_MAGIC                 0xe85250d6
+#define MB2_HEADER_MAGIC                  0xe85250d6
 
 /*  This should be in %eax. */
-#define MULTIBOOT2_BOOTLOADER_MAGIC             0x36d76289
+#define MB2_BOOTLOADER_MAGIC              0x36d76289
 
 /*  Alignment of multiboot modules. */
 #define MB2_MOD_ALIGN                     0x00001000
@@ -91,27 +91,27 @@
 
 #ifndef ASM_FILE
 
-struct mb2_header {
+typedef struct {
   uint32_t magic;
   uint32_t architecture;
   uint32_t header_length;
   uint32_t checksum;
-};
+} mb2_header;
 
-struct mb2_header_tag {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
-};
+} mb2_header_tag;
 
-struct mb2_header_tag_information_request {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
   uint32_t requests[0];
-};
+} mb2_header_tag_information_request;
 
-struct mb2_header_tag_address {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
@@ -119,38 +119,38 @@ struct mb2_header_tag_address {
   uint32_t load_addr;
   uint32_t load_end_addr;
   uint32_t bss_end_addr;
-};
+} mb2_header_tag_address;
 
-struct mb2_header_tag_entry_address {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
   uint32_t entry_addr;
-};
+} mb2_header_tag_entry_address;
 
-struct mb2_header_tag_console_flags {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
   uint32_t console_flags;
-};
+} mb2_header_tag_console_flags;
 
-struct mb2_header_tag_framebuffer {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
   uint32_t width;
   uint32_t height;
   uint32_t depth;
-};
+} mb2_header_tag_framebuffer;
 
-struct mb2_header_tag_module_align {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
-};
+} mb2_header_tag_module_align;
 
-struct mb2_header_tag_relocatable {
+typedef struct {
   uint16_t type;
   uint16_t flags;
   uint32_t size;
@@ -158,15 +158,15 @@ struct mb2_header_tag_relocatable {
   uint32_t max_addr;
   uint32_t align;
   uint32_t preference;
-};
+} mb2_header_tag_relocatable;
 
-struct mb2_color {
+typedef struct {
   uint8_t red;
   uint8_t green;
   uint8_t blue;
-};
+} mb2_color;
 
-struct mb2_mmap_entry {
+typedef struct {
   uint64_t addr;
   uint64_t len;
 #define MB2_MEMORY_AVAILABLE              1
@@ -176,27 +176,26 @@ struct mb2_mmap_entry {
 #define MB2_MEMORY_BADRAM                 5
   uint32_t type;
   uint32_t zero;
-};
-typedef struct mb2_mmap_entry mb2_mmap_entry_t;
+} mb2_mmap_entry;
 
 typedef struct {
   uint32_t type;
   uint32_t size;
 } mb2_tag;
 
-struct mb2_tag_string {
+typedef struct {
   uint32_t type;
   uint32_t size;
   char string[0];
-};
+} mb2_tag_string;
 
-struct mb2_tag_module {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t mod_start;
   uint32_t mod_end;
   char cmdline[0];
-};
+} mb2_tag_module;
 
 typedef struct {
   uint32_t type;
@@ -205,45 +204,45 @@ typedef struct {
   uint32_t mem_upper;
 } mb2_tag_basic_meminfo;
 
-struct mb2_tag_bootdev {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t biosdev;
   uint32_t slice;
   uint32_t part;
-};
+} mb2_tag_bootdev;
 
 typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t entry_size;
   uint32_t entry_version;
-  struct mb2_mmap_entry entries[0];
+  mb2_mmap_entry entries[0];
 } mb2_tag_mmap;
 
-struct mb2_vbe_info_block {
+typedef struct {
   uint8_t external_specification[512];
-};
+} mb2_vbe_info_block;
 
-struct mb2_vbe_mode_info_block {
+typedef struct {
   uint16_t attributes;		// deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
-  uint8_t window_a;			// deprecated
-  uint8_t window_b;			// deprecated
+  uint8_t window_a;			  // deprecated
+  uint8_t window_b;			  // deprecated
   uint16_t granularity;		// deprecated; used while calculating bank numbers
   uint16_t window_size;
   uint16_t segment_a;
   uint16_t segment_b;
-  uint32_t win_func_ptr;		// deprecated; used to switch banks from protected mode without returning to real mode
-  uint16_t pitch;			// number of bytes per horizontal line
-  uint16_t width;			// width in pixels
-  uint16_t height;			// height in pixels
-  uint8_t w_char;			// unused...
-  uint8_t y_char;			// ...
+  uint32_t win_func_ptr;	// deprecated; used to switch banks from protected mode without returning to real mode
+  uint16_t pitch;			    // number of bytes per horizontal line
+  uint16_t width;			    // width in pixels
+  uint16_t height;			  // height in pixels
+  uint8_t w_char;			    // unused...
+  uint8_t y_char;			    // ...
   uint8_t planes;
-  uint8_t bpp;			// bits per pixel in this mode
-  uint8_t banks;			// deprecated; total number of banks in this mode
+  uint8_t bpp;			      // bits per pixel in this mode
+  uint8_t banks;		     	// deprecated; total number of banks in this mode
   uint8_t memory_model;
-  uint8_t bank_size;		// deprecated; size of a bank, almost always 64 KB but may be 16 KB...
+  uint8_t bank_size;	  	// deprecated; size of a bank, almost always 64 KB but may be 16 KB...
   uint8_t image_pages;
   uint8_t reserved0;
 
@@ -259,11 +258,11 @@ struct mb2_vbe_mode_info_block {
 
   uint32_t framebuffer;		// physical address of the linear frame buffer; write here to draw to the screen
   uint32_t off_screen_mem_off;
-  uint16_t off_screen_mem_size;	// size of memory in the framebuffer but not being displayed on the screen
+  uint16_t off_screen_mem_size; // size of memory in the framebuffer but not being displayed on the screen
   uint8_t reserved1[206];
-} __attribute__ ((packed));
+} __attribute__ ((packed)) mb2_vbe_mode_info_block;
 
-struct mb2_tag_vbe {
+typedef struct {
   uint32_t type;
   uint32_t size;
 
@@ -273,11 +272,11 @@ struct mb2_tag_vbe {
   uint16_t vbe_interface_off;
   uint16_t vbe_interface_len;
 
-  struct mb2_vbe_info_block vbe_control_info;
-  struct mb2_vbe_mode_info_block vbe_mode_info;
-};
+  mb2_vbe_info_block vbe_control_info;
+  mb2_vbe_mode_info_block vbe_mode_info;
+} mb2_tag_vbe;
 
-struct mb2_tag_framebuffer_common {
+typedef struct {
   uint32_t type;
   uint32_t size;
 
@@ -291,15 +290,14 @@ struct mb2_tag_framebuffer_common {
 #define MB2_FRAMEBUFFER_TYPE_EGA_TEXT     2
   uint8_t framebuffer_type;
   uint16_t reserved;
-};
+} mb2_tag_framebuffer_common;
 
-struct mb2_tag_framebuffer {
-  struct mb2_tag_framebuffer_common common;
-
+typedef struct {
+  mb2_tag_framebuffer_common common;
   union {
     struct {
       uint16_t framebuffer_palette_num_colors;
-      struct mb2_color framebuffer_palette[0];
+      mb2_color framebuffer_palette[0];
     };
     struct {
       uint8_t framebuffer_red_field_position;
@@ -310,18 +308,18 @@ struct mb2_tag_framebuffer {
       uint8_t framebuffer_blue_mask_size;
     };
   };
-};
+} mb2_tag_framebuffer;
 
-struct mb2_tag_elf_sections {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t num;
   uint32_t entsize;
   uint32_t shndx;
   char sections[0];
-};
+} mb2_tag_elf_sections;
 
-struct mb2_tag_apm {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint16_t version;
@@ -333,34 +331,34 @@ struct mb2_tag_apm {
   uint16_t cseg_len;
   uint16_t cseg_16_len;
   uint16_t dseg_len;
-};
+} mb2_tag_apm;
 
-struct mb2_tag_efi32 {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t pointer;
-};
+} mb2_tag_efi32;
 
-struct mb2_tag_efi64 {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint64_t pointer;
-};
+} mb2_tag_efi64;
 
-struct mb2_tag_smbios {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint8_t major;
   uint8_t minor;
   uint8_t reserved[6];
   uint8_t tables[0];
-};
+} mb2_tag_smbios;
 
-struct mb2_tag_old_acpi {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint8_t rsdp[0];
-};
+} mb2_tag_old_acpi;
 
 typedef struct {
   uint32_t type;
@@ -368,37 +366,37 @@ typedef struct {
   uint8_t rsdp[0];
 } mb2_tag_new_acpi;
 
-struct mb2_tag_network {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint8_t dhcpack[0];
-};
+} mb2_tag_network;
 
-struct mb2_tag_efi_mmap {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t descr_size;
   uint32_t descr_vers;
   uint8_t efi_mmap[0];
-};
+} mb2_tag_efi_mmap;
 
-struct mb2_tag_efi32_ih {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t pointer;
-};
+} mb2_tag_efi32_ih;
 
-struct mb2_tag_efi64_ih {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint64_t pointer;
-};
+} mb2_tag_efi64_ih;
 
-struct mb2_tag_load_base_addr {
+typedef struct {
   uint32_t type;
   uint32_t size;
   uint32_t load_base_addr;
-};
+} mb2_tag_load_base_addr;
 
 #endif /*  ! ASM_FILE */
 

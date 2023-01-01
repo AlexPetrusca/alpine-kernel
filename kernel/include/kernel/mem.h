@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <kernel/multiboot2.h>
+#include <kernel/mb2_type.h>
 
 #define PAGE_SIZE 4096
 

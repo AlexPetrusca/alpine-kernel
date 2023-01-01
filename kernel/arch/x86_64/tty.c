@@ -3,6 +3,11 @@
 
 #include <sys/circ_buf.h>
 #include <sys/circ_buf_ptr.h>
+#include <kernel/mb2_type.h>
+#include <kernel/mb2_info.h>
+#include <kernel/mem.h>
+#include <kernel/vbe_ttyd.h>
+#include <kernel/vga_ttyd.h>
 #include <kernel/tty.h>
 
 #define TERMINAL_BUFFER_SIZE 65535
@@ -56,8 +61,20 @@ void terminal_buf_enqueue_line(char* line) {
   terminal_buf_write_null_terminator();
 }
 
-void terminal_initialize(tty_device* _device) {
-  device = _device;
+void tty_device_init(mb2_tag_framebuffer* framebuffer_tag) {
+  mb2_tag_framebuffer_common fb_info = framebuffer_tag->common;
+  if (fb_info.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
+    size_t fb_size = (fb_info.framebuffer_width * fb_info.framebuffer_height) * sizeof(uint32_t);
+    mem_range fb_range = {.phys_addr = fb_info.framebuffer_addr, .size = fb_size};
+    mem_identity_map_range(&fb_range);
+    *device = vbe_ttyd_init(fb_info.framebuffer_addr, fb_info.framebuffer_width, fb_info.framebuffer_height);
+  } else {
+    *device = vga_ttyd_init(VGA_TEXT_MODE_PHYS_ADDR);
+  }
+}
+
+void terminal_init(mb2_tag_framebuffer* fb_tag) {
+  tty_device_init(fb_tag);
   width = device->get_width();
   height = device->get_height();
   terminal_setcolor(COLOR_LIGHT_GREEN, COLOR_BLACK);

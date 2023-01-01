@@ -1,7 +1,7 @@
 #include <kernel/mem.h>
 #include <stdio.h>
 #include <stddef.h>
-#include <kernel/multiboot2.h>
+#include <kernel/mb2_type.h>
 #include <kernel/panic.h>
 
 #define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
@@ -33,9 +33,9 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
 
-  for (mb2_mmap_entry_t* mmap = mem_map->entries;
+  for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
-       mmap = (mb2_mmap_entry_t*) ((uint64_t) mmap + mem_map->entry_size)) {
+       mmap = (mb2_mmap_entry*) ((uint64_t) mmap + mem_map->entry_size)) {
     mem_range* range = &_mem_map[_mem_map_next++];
     range->phys_addr = mmap->addr;
     range->virt_addr = MAX_VIRTUAL_ADDR;

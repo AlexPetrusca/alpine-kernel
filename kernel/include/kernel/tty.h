@@ -4,9 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <kernel/mb2_type.h>
 #include <kernel/ttyd.h>
 
-void terminal_initialize(tty_device* _device);
+void terminal_init(mb2_tag_framebuffer* fb_tag);
 uint32_t terminal_get_width();
 uint32_t terminal_get_height();
 
@@ -26,7 +27,5 @@ void terminal_write(const char* data, size_t size);
 void terminal_writestring(const char* data);
 void terminal_clear();
 void terminal_delete(size_t n);
-
-void test(); // todo: remove
 
 #endif
