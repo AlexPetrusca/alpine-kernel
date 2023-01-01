@@ -150,7 +150,7 @@ _start:
     mov edi, PDT_START
     mov DWORD [edi], PT_START | PAGE_PRESENT | PAGE_WRITE     ; PDT points to PT
 
-    ; Build the PT table identify mapping the first 2Mb
+    ; Build the PT table identify mapping the head 2Mb
     mov edi, PT_START
     mov ebx, PAGE_PRESENT | PAGE_WRITE
     mov ecx, 512                 ; map 512 4k pages = 2Mb

@@ -11,6 +11,7 @@
 #include <kernel/apic.h>
 #include <kernel/pci.h>
 #include <kernel/mem.h>
+#include <kernel/heap.h>
 #include <kernel/panic.h>
 
 char* bootloader_name;
@@ -112,6 +113,7 @@ void kernel_init(unsigned long magic, unsigned long kernel_addr) {
   terminal_initialize(&kernel_tty_device);
 
   mem_init(basic_meminfo_tag, mem_map_tag);
+  heap_init(512 * PAGE_SIZE);
   acpi_init(rsdp_tag);
   pci_init();
 }

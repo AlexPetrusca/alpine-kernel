@@ -121,7 +121,7 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
     end_buffer = buffer + buffer_size;
   }
 
-  // Get the first character from the format string
+  // Get the head character from the format string
   format_char = *format;
 
   // Loop until the end of the format string is reached or the output buffer is full

@@ -1,0 +1,11 @@
+#ifndef ALPINE_KERNEL_HEAP_H
+#define ALPINE_KERNEL_HEAP_H
+
+void heap_init(size_t size);
+
+void* kmalloc(size_t size);
+void kfree(void* ptr);
+void* kcalloc(size_t nmemb, size_t size);
+void* krealloc(void* ptr, size_t size);
+
+#endif //ALPINE_KERNEL_HEAP_H

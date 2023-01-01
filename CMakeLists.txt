@@ -71,4 +71,4 @@ add_executable(alpine_kernel
         kernel/include/kernel/mem.h
         kernel/include/kernel/psf_font.h
         kernel/arch/x86_64/panic.c
-        kernel/include/kernel/panic.h)
+        kernel/include/kernel/panic.h kernel/arch/x86_64/heap.c kernel/include/kernel/heap.h libc/stdlib/malloc.c)
