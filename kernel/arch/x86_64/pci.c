@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <kernel/mem.h>
 #include <kernel/panic.h>
+#include <kernel/status.h>
 
 #define MAX_PCI_DEVICES 32
 
@@ -531,8 +532,8 @@ void pci_get_class_names(pci_device* device, pci_class_cames* names) {
 void pci_init() {
   pci_mcfg_table* mcfg = find_mcfg_table();
   int bridge_count = (mcfg->header.length - (sizeof(acpi_header) + 8)) / sizeof(pci_host_bridge);
-  for (int i = 0; i < bridge_count; i++) {
-    pci_host_bridge bridge = mcfg->host_bridge[i];
+  for (int brideg_id = 0; brideg_id < bridge_count; brideg_id++) {
+    pci_host_bridge bridge = mcfg->host_bridge[brideg_id];
     mem_range range;
     if (!mem_find_range(bridge.base_address, &range)) {
       panic("Cannot find PCI bridge memory range\n");
@@ -561,6 +562,20 @@ void pci_init() {
             device->sub_class_code = header->sub_class_code;
             device->pi_class_code = header->pi_class_code;
             device->ecam_adress = addr;
+            if (header->header_type & PCI_HEADER_TYPE_DEVICE) {
+              pci_type0_config* config = (pci_type0_config*) header;
+              for (int i = 0; i < 6; i++) {
+                device->bar[i] = config->bar[i];
+              }
+            } else {
+              pci_type1_config* config = (pci_type1_config*) header;
+              device->bar[0] = config->bar[0];
+              device->bar[1] = config->bar[1];
+              device->bar[2].value = 0;
+              device->bar[3].value = 0;
+              device->bar[4].value = 0;
+              device->bar[5].value = 0;
+            }
             if ((fun == 0) && ((header->header_type & PCI_HEADER_TYPE_MULTI_FUNCTION) == 0x00)) {
               break;
             }
@@ -569,6 +584,29 @@ void pci_init() {
       }
     }
   }
+}
+
+status pci_get_device(pci_device* device) {
+  for (int i = 0; i < _pci_device_count; i++) {
+    pci_device* d = &_pci_devices[i];
+    if (device->base_class_code == d->base_class_code && device->sub_class_code == d->sub_class_code
+      && device->pi_class_code == d->pi_class_code) {
+      *device = *d;
+      return OK;
+    }
+  }
+  return NOT_FOUND;
+}
+
+uint64_t pci_bar_addr_32(pci_device* device, int bar_index) {
+  uint32_t bar = device->bar[bar_index].value;
+  return (bar & BAR_TYPE_MASK) == BAR_TYPE_MEMORY ?
+         bar & BAR_MEMORY_ADDRESS_MASK :
+         bar & BAR_IO_ADDRESS_MASK;
+}
+
+uint64_t pci_bar_addr_64(pci_device* device, int bar_index) {
+  return (pci_bar_addr_32(device, bar_index + 1) << 32) + pci_bar_addr_32(device, bar_index);
 }
 
 void pci_print_mcfg() {
@@ -598,8 +636,18 @@ void pci_print_devices() {
     pci_device* device = &_pci_devices[i];
     pci_class_cames strings;
     pci_get_class_names(device, &strings);
-    printf("%.2x:%.2x.%d: %x:%.4x %s, %s, %s\n",
-           device->bus_number, device->device_number, device->function_number, device->vendor_id, device->device_id,
+    printf("%.2x:%.2x.%d: %x:%.4x %d, (%.2x:%.2x:%.2x) %s, %s, %s\n",
+           device->bus_number, device->device_number, device->function_number,
+           device->vendor_id, device->device_id,
+           device->base_class_code, device->sub_class_code, device->pi_class_code,
+           device->header_type,
            strings.base_class, strings.sub_class, strings.pif_class);
+    printf("  BARs: ");
+    for (int j = 0; j < 6; j++) {
+      if (device->bar[j].value != 0) {
+        printf("%x(%d), ", device->bar[j].value, device->bar[j].type);
+      }
+    }
+    printf("\n");
   }
 }

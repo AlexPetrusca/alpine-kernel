@@ -7,6 +7,7 @@
 #include <kernel/heap.h>
 #include <kernel/panic.h>
 #include <kernel/mb2_info.h>
+#include <kernel/usb.h>
 
 void validate_boot(unsigned long magic, unsigned long kernel_addr) {
   if (magic != MB2_BOOTLOADER_MAGIC) {
@@ -25,6 +26,7 @@ void kernel_init(uint64_t kernel_addr) {
   heap_init(512 * PAGE_SIZE);
   acpi_init(mbi->rsdp_tag);
   pci_init();
+  usb_init();
 }
 
 void kernel_main(uint64_t magic, uint64_t kernel_addr) {

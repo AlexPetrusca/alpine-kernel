@@ -76,4 +76,9 @@ add_executable(alpine_kernel
         kernel/include/kernel/heap.h
         kernel/arch/x86_64/panic.c
         kernel/arch/x86_64/heap.c
-        kernel/arch/x86_64/mb2_info.c)
+        kernel/arch/x86_64/mb2_info.c
+        kernel/arch/x86_64/status.c
+        kernel/include/kernel/status.h
+        kernel/arch/x86_64/usb.c
+        kernel/include/kernel/usb.h
+        )
