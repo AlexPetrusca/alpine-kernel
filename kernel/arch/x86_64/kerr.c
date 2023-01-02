@@ -21,8 +21,8 @@ void kerr_clear() {
   kerr_message = NULL;
 }
 
-char* kerr_get_name() {
-  return kerr_error_name[kerr_code];
+char* kerr_get_name(kerr_code_t code) {
+  return kerr_error_name[code];
 }
 
 char* kerr_get_message() {

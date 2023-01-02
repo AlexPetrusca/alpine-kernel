@@ -81,4 +81,4 @@ add_executable(alpine_kernel
         kernel/include/kernel/kerr.h
         kernel/arch/x86_64/usb.c
         kernel/include/kernel/usb.h
-        )
+        kernel/arch/x86_64/queue.c kernel/include/kernel/queue.h kernel/arch/x86_64/tests.c kernel/include/kernel/tests.h)
