@@ -27,6 +27,10 @@ typedef enum {
     if (kerr_get_code() != OK) return; \
   }
 
+#define TRY_GET(code)       \
+    (code);               \
+    if (kerr_get_code() != OK) return; \
+
 #define TRYD(code, def) \
   {                     \
     (code);               \

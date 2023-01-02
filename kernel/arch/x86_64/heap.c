@@ -4,7 +4,6 @@
 #include <kernel/mem.h>
 #include <kernel/heap.h>
 
-#define MEM_START 0x100000 // todo: define known ranges in mem.h
 #define NUM_SIZES 32
 #define ALIGN 4
 #define MIN_SIZE sizeof(dlist)
@@ -303,12 +302,6 @@ void* krealloc(void* ptr, size_t size) {
   }
 }
 
-void heap_init(size_t size) {
-  mem_range available_mem_range;
-  mem_find_range(MEM_START, &available_mem_range);
-
-  uint64_t addr = available_mem_range.phys_addr + available_mem_range.size - size;
-  mem_range heap_mem_range = {.phys_addr = addr, .size=size};
-  mem_identity_map_range(&heap_mem_range); // todo: don't identity map
+void heap_init(uint64_t addr, size_t size) {
   mrvn_heap_init((char*) addr, size);
 }

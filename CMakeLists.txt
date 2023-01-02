@@ -4,12 +4,8 @@ project(alpine_kernel C)
 set(CMAKE_C_STANDARD 17)
 
 include_directories(kernel/include)
-include_directories(kernel/include/kernel)
 include_directories(libc/include)
 include_directories(libc/include/sys)
-include_directories(/usr/include/efi)
-include_directories(/usr/include/efi/x86_64)
-include_directories(/usr/include/efi/protocol)
 
 add_executable(alpine_kernel
         kernel/arch/x86_64/boot.asm

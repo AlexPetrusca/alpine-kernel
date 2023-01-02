@@ -24,7 +24,6 @@ void kernel_init(uint64_t kernel_addr) {
 
   TRY(terminal_init(mbi->framebuffer_tag));
   TRY(mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag));
-  TRY(heap_init(512 * PAGE_SIZE));
   TRY(acpi_init(mbi->rsdp_tag));
   TRY(pci_init());
   WARN(usb_init(), "Could not initialize USB subsystem.");

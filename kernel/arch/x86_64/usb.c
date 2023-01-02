@@ -13,7 +13,7 @@ void usb_init() {
   pci_device device = {.base_class_code = 0x0C, .sub_class_code = 0x03, .pi_class_code = 0x30};
   TRY(pci_get_device(&device));
   uint64_t addr = pci_bar_addr_64(&device, 0);
-  mem_range r = {addr, 0, 2 * 4096, 0};
+  mem_range r = {.phys_addr = addr, .size=2 * 4096};
   mem_identity_map_range(&r);
   usb_caps = *(usb_capability_regs*) addr;
   usb_inited = true;
