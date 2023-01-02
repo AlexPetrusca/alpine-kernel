@@ -2,18 +2,18 @@
 #include <stdio.h>
 #include <kernel/acpi.h>
 #include <kernel/mem.h>
-#include <kernel/panic.h>
+#include <kernel/kerr.h>
 
 acpi_rsdp* _rsdp;
 
 void acpi_init(mb2_tag_new_acpi* rsdp_tag) {
   if (rsdp_tag == NULL) {
-    panic("RSDP does not exist");
+    RAISE(MISSING_INFO, "RSDP does not exist");
   }
   _rsdp = (acpi_rsdp*) &rsdp_tag->rsdp;
   mem_range range;
   if (!mem_find_range(_rsdp->rsdt_address, &range)) {
-    panic("Cannot find ACPI memory range\n");
+    RAISE(NOT_FOUND, "Cannot find ACPI memory range\n");
   }
   mem_identity_map_range(&range);
 }

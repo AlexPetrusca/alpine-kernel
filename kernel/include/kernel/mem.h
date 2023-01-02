@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/mb2_type.h>
+#include "queue.h"
 
 #define PAGE_SIZE 4096
 
@@ -25,10 +26,12 @@ typedef enum {
   MEMORY_ACPI_RECLAIMABLE = 3,
   MEMORY_NVS = 4,
   MEMORY_BADRAM = 5,
-  MEMORY_PCI_ECAM = 6
+  MEMORY_PCI_ECAM = 6,
+  HEAP = 7
 } mem_type;
 
 typedef struct {
+  dq_node node;
   uint64_t phys_addr;
   uint64_t virt_addr;
   uint64_t size;

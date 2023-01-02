@@ -6,7 +6,7 @@ void panic(const char* format, ...) {
 
   VA_LIST marker;
   VA_START (marker, format);
-  printf(format, marker);
+  vprintf(format, marker);
   VA_END (marker);
 
   while (1);

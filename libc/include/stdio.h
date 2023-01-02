@@ -122,8 +122,8 @@ __BEGIN_DECLS
 int printf(const char* format, ...);
 int sprintf(char* str, const char* format, ...);
 int _sprintf(char* buffer, const char* format, ...);
-int vprintf(const char* format, va_list ap);
-int vsprintf(char* str, const char* format, va_list ap);
+int vprintf(const char* format, VA_LIST ap);
+int vsprintf(char* str, const char* format, VA_LIST ap);
 
 int getchar();
 int putchar(int c);
