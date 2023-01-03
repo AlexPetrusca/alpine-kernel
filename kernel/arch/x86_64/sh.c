@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdio_tests.h>
 
 #include <sys/circ_buf.h>
 #include <kernel/kb.h>

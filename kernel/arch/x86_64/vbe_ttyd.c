@@ -70,7 +70,7 @@ void vbe_ttyd_put_char(uint32_t x, uint32_t y, uint8_t ch) {
   uint32_t screen_x = x * vbe_tty_font->glyph_width;
   uint32_t screen_y = y * vbe_tty_font->glyph_height;
   for (uint32_t offset_y = 0; offset_y < vbe_tty_font->glyph_height; offset_y++) {
-    if (vbe_tty_font->psf_version == 1) {
+    if (vbe_tty_font->glyph_width <= PSF1_CHAR_WIDTH) {
       uint8_t mask = 1 << (PSF1_CHAR_WIDTH - 1);
       for (uint32_t offset_x = 0; offset_x < vbe_tty_font->glyph_width; offset_x++) {
         uint32_t screen_pos = (screen_y + offset_y) * vbe_screen_width + screen_x + offset_x;
@@ -120,7 +120,7 @@ tty_device vbe_ttyd_init(uint64_t fb, uint32_t screen_width, uint32_t screen_hei
   vbe_fb = (uint32_t*) fb;
   vbe_screen_width = screen_width;
   vbe_screen_height = screen_height;
-  vbe_tty_font = psf_font_init();
+  vbe_tty_font = psf_init_fonts();
 
   vbe_tty_device.get_width = vbe_ttyd_get_width;
   vbe_tty_device.get_height = vbe_ttyd_get_height;
