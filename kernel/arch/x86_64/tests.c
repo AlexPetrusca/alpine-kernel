@@ -1,8 +1,8 @@
 #include <kernel/tests.h>
 #include "stdio_tests.h"
-#include <kernel/queue.h>
+#include <kernel/dll.h>
 
 void tests_run() {
-  test_dequeue_suite();
+  test_dll_suite();
   test_sprintf_suite();
 }

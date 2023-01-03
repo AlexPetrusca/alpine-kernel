@@ -20,7 +20,7 @@ uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
 
 uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
-dequeue _mem_map;
+dll_list _mem_map;
 char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCI ECAM", "Heap"};
 
 void identity_map(uint64_t addr);
@@ -58,7 +58,7 @@ bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
     range->virt_addr = MAX_VIRTUAL_ADDR;
     range->size = mmap->len;
     range->type = mmap->type;
-    dq_add_tail(&_mem_map, (dq_node*) range);
+    dll_add_tail(&_mem_map, (dll_node*) range);
   }
 
   mem_range heap_mem_range = {.phys_addr = heap_addr, .size = HEAP_SIZE};
@@ -124,20 +124,21 @@ bool mem_update_range(mem_range* range) {
         *nr = *r;
         nr->phys_addr = addr3;
         nr->size = addr4 - addr3;
-        dq_add_after((dq_node*) r, (dq_node*) nr);
+        dll_add_after((dll_node*) r, (dll_node*) nr);
       }
       { // add the main range
         mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
         *nr = *range;
-        dq_add_after((dq_node*) r, (dq_node*) nr);
+        dll_add_after((dll_node*) r, (dll_node*) nr);
       }
       if (addr2 > addr1) { // add the prefix range
         mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
         *nr = *r;
         nr->size = addr2 - addr1;
-        dq_add_after((dq_node*) r, (dq_node*) nr);
+        dll_add_after((dll_node*) r, (dll_node*) nr);
       }
-      dq_remove((dq_node*) r); // remove old range
+      dll_remove((dll_node*) r); // remove old range
+      kfree(r);
       return true;
     }
   }

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/mb2_type.h>
-#include "queue.h"
+#include "dll.h"
 
 #define PAGE_SIZE 4096
 
@@ -32,7 +32,7 @@ typedef enum {
 
 // TODO do not use this in the API
 typedef struct {
-  dq_node node;
+  dll_node node;
   uint64_t phys_addr;
   uint64_t virt_addr;
   uint64_t size;
