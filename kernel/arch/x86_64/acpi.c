@@ -14,7 +14,7 @@ void acpi_init(mb2_tag_new_acpi* rsdp_tag) {
   if (!mem_find_range(_rsdp->rsdt_address, &range)) {
     panic("Cannot find ACPI memory range\n");
   }
-  mem_identity_map_range(&range);
+  mem_identity_map_range(range.phys_addr, range.size, MEMORY_ACPI);
 }
 
 void acpi_print_info() {
