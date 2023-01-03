@@ -8,6 +8,7 @@
 #include <kernel/kb.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
+#include <kernel/kerr.h>
 
 #include <kernel/cpu.h>
 #include <kernel/acpi.h>
@@ -17,6 +18,7 @@
 #include <kernel/mb2_info.h>
 #include <kernel/usb.h>
 #include <kernel/psf_font.h>
+#include <kernel/tests.h>
 
 #define MAX_HISTORY 5
 #define MAX_COMMAND 4096
@@ -29,7 +31,7 @@ typedef struct {
 
 sh_command commands[] = {
     {"cpu",  cpu_print_info},
-    {"test", test_sprintf_suite},
+    {"test", tests_run},
     {"acpi", acpi_print_info},
     {"apic", apic_print_info},
     {"mcfg", pci_print_mcfg},
@@ -132,7 +134,7 @@ bool shell_execute() {
       printf("Alpine shell terminated.");
       return false;
     } else if ((cmd = find_command(command))) {
-      cmd->run();
+      WARN(cmd->run(), "Error running command");
     } else {
       printf("ash: command not found: %s", command);
     }

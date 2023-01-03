@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include <kernel/status.h>
+#include <kernel/kerr.h>
 #include <kernel/pci.h>
 #include <kernel/panic.h>
 #include <kernel/mem.h>
@@ -31,7 +31,7 @@ typedef struct {
   uint32_t HCCPARAMS2;// Capability Parameters 2 5.3.9
 } __attribute__((packed)) usb_capability_regs;
 
-status usb_init();
+void usb_init();
 void usb_print_info();
 
 #endif //KERNEL_ARCH_X86_64_USB_H_

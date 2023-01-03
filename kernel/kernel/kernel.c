@@ -6,6 +6,7 @@
 #include <kernel/mem.h>
 #include <kernel/heap.h>
 #include <kernel/panic.h>
+#include <kernel/kerr.h>
 #include <kernel/mb2_info.h>
 #include <kernel/usb.h>
 
@@ -20,16 +21,15 @@ void validate_boot(unsigned long magic, unsigned long kernel_addr) {
 
 void kernel_init(uint64_t kernel_addr) {
   mb2_info* mbi = mb2_info_init(kernel_addr);
-  terminal_init(mbi->framebuffer_tag);
-  mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag);
-  heap_init(512 * PAGE_SIZE);
-  acpi_init(mbi->rsdp_tag);
-  pci_init();
-  usb_init();
+  TRY(terminal_init(mbi->framebuffer_tag));
+  TRY(mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag));
+  TRY(acpi_init(mbi->rsdp_tag));
+  TRY(pci_init());
+  WARN(usb_init(), "Could not initialize USB subsystem.");
 }
 
 void kernel_main(uint64_t magic, uint64_t kernel_addr) {
   validate_boot(magic, kernel_addr);
-  kernel_init(kernel_addr);
-  shell_start();
+  PANIC(kernel_init(kernel_addr));
+  PANIC(shell_start());
 }

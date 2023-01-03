@@ -1,7 +1,7 @@
 #ifndef ALPINE_KERNEL_HEAP_H
 #define ALPINE_KERNEL_HEAP_H
 
-void heap_init(size_t size);
+void heap_init(uint64_t addr, size_t size);
 
 void* kmalloc(size_t size);
 void kfree(void* ptr);

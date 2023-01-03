@@ -1,8 +1,6 @@
 #include <kernel/mem.h>
 #include <stdio.h>
-#include <stddef.h>
-#include <kernel/mb2_type.h>
-#include <kernel/panic.h>
+#include "kernel/heap.h"
 
 #define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
 #define PAGE_PRESENT    (1 << 0)
@@ -13,35 +11,62 @@
 #define PDT_START     0x3000
 #define PT_START      0x4000
 
-#define MAX_VIRTUAL_ADDR   0xFFFFFFFFFFFFFFFF
+#define MAX_VIRTUAL_ADDR    0xFFFFFFFFFFFFFFFF
+#define MAIN_MEM_START      0x100000 // todo: define known ranges in mem.h
+#define HEAP_SIZE           512 * PAGE_SIZE
 
 uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
 
 uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
-mem_range _mem_map[64] = {{0, 0, 0, 0}};
-int _mem_map_next = 0;
-char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCI ECAM"};
+dequeue _mem_map;
+char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCI ECAM", "Heap"};
+
+void identity_map(uint64_t addr);
+
+mb2_mmap_entry* mem_find_main_mem(mb2_tag_mmap* mem_map) {
+  for (mb2_mmap_entry* mmap = mem_map->entries;
+       (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
+       mmap = (mb2_mmap_entry*) ((uint64_t) mmap + mem_map->entry_size)) {
+    if (mmap->addr == MAIN_MEM_START) {
+      return mmap;
+    }
+  }
+  RAISED(NOT_FOUND, NULL, "Cannot find the main memory range");
+}
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   if (mem_map == NULL) {
-    panic("Memory map not provided.");
+    RAISE(MISSING_INFO, "Memory map not provided.");
   }
   if (basic_meminfo == NULL) {
-    panic("Basic memory info not provided.");
+    RAISE(MISSING_INFO, "Basic memory info not provided.");
   }
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
 
+  mb2_mmap_entry* main_mem = TRY_GET(mem_find_main_mem(mem_map));
+  uint64_t heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
+  for (uint64_t addr = heap_addr; addr < heap_addr + HEAP_SIZE; addr += PAGE_SIZE) {
+    identity_map(addr); // todo: don't identity map
+  }
+  TRY(heap_init(heap_addr, HEAP_SIZE));
+
   for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
        mmap = (mb2_mmap_entry*) ((uint64_t) mmap + mem_map->entry_size)) {
-    mem_range* range = &_mem_map[_mem_map_next++];
+    mem_range* range = (mem_range*) kmalloc(sizeof(mem_range));
     range->phys_addr = mmap->addr;
     range->virt_addr = MAX_VIRTUAL_ADDR;
     range->size = mmap->len;
     range->type = mmap->type;
+    dq_add_tail(&_mem_map, (dq_node*) range);
   }
+
+  mem_range heap_mem_range = {.phys_addr = heap_addr, .size = HEAP_SIZE};
+  heap_mem_range.type = HEAP;
+  heap_mem_range.virt_addr = heap_addr;
+  mem_update_range(&heap_mem_range);
 }
 
 uint64_t allocate_page() {
@@ -81,8 +106,7 @@ void mem_identity_map_range(mem_range* range) {
 }
 
 bool mem_find_range(uint64_t addr, mem_range* range) {
-  for (int i = 0; i < _mem_map_next; i++) {
-    mem_range* r = &_mem_map[i];
+  for (mem_range* r = (mem_range*) _mem_map.head; r != NULL; r = (mem_range*) r->node.next) {
     if (addr >= r->phys_addr && addr < r->phys_addr + r->size) {
       *range = *r;
       return true;
@@ -92,10 +116,29 @@ bool mem_find_range(uint64_t addr, mem_range* range) {
 }
 
 bool mem_update_range(mem_range* range) {
-  for (int i = 0; i < _mem_map_next; i++) {
-    mem_range* r = &_mem_map[i];
-    if (range->phys_addr == r->phys_addr && range->size == r->size) {
-      *r = *range;
+  for (mem_range* r = (mem_range*) _mem_map.head; r != NULL; r = (mem_range*) r->node.next) {
+    if (range->phys_addr >= r->phys_addr && range->phys_addr + range->size <= r->phys_addr + r->size) {
+      uint64_t addr1 = r->phys_addr, addr2 = range->phys_addr, addr3 = range->phys_addr + range->size,
+        addr4 = r->phys_addr + r->size;
+      if (addr4 > addr3) { // add the suffix range
+        mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
+        *nr = *r;
+        nr->phys_addr = addr3;
+        nr->size = addr4 - addr3;
+        dq_add_after((dq_node*) r, (dq_node*) nr);
+      }
+      { // add the main range
+        mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
+        *nr = *range;
+        dq_add_after((dq_node*) r, (dq_node*) nr);
+      }
+      if (addr2 > addr1) { // add the prefix range
+        mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
+        *nr = *r;
+        nr->size = addr2 - addr1;
+        dq_add_after((dq_node*) r, (dq_node*) nr);
+      }
+      dq_remove((dq_node*) r); // remove old range
       return true;
     }
   }
@@ -104,13 +147,12 @@ bool mem_update_range(mem_range* range) {
 
 void mem_print_map() {
   printf(" Phys Start   Phys End     Virtual Addr     Size\n");
-  for (int i = 0; i < _mem_map_next; i++) {
-    mem_range* range = &_mem_map[i];
+  for (mem_range* r = (mem_range*) _mem_map.head; r != NULL; r = (mem_range*) r->node.next) {
     printf(" %0.12lx %0.12lx %0.16lx %.12ld %s\n",
-           range->phys_addr, range->phys_addr + range->size,
-           range->virt_addr,
-           range->size,
-           _mem_type[range->type]);
+           r->phys_addr, r->phys_addr + r->size,
+           r->virt_addr,
+           r->size,
+           _mem_type[r->type]);
   }
   printf(" lower %dKB, upper %dKB\n", _mem_lower, _mem_upper);
 }
