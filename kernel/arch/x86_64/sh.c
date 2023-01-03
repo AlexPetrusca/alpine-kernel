@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdio_tests.h>
 
 #include <sys/circ_buf.h>
 #include <kernel/kb.h>
@@ -16,6 +17,7 @@
 #include <kernel/mem.h>
 #include <kernel/mb2_info.h>
 #include <kernel/usb.h>
+#include <kernel/psf_font.h>
 #include <kernel/tests.h>
 
 #define MAX_HISTORY 5
@@ -37,7 +39,8 @@ sh_command commands[] = {
     {"mmap", mem_print_map},
     {"mbi",  mb2_info_print},
     {"fb",   mb2_fb_info_print},
-    {"usb", usb_print_info},
+    {"usb",  usb_print_info},
+    {"font", psf_font_info_print},
     {"", NULL}
 };;
 
