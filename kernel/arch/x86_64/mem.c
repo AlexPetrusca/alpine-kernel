@@ -1,5 +1,6 @@
 #include <kernel/mem.h>
 #include <stdio.h>
+#include <assert.h>
 #include "kernel/heap.h"
 
 #define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
@@ -19,7 +20,7 @@ uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
 
 uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
-dequeue _mem_map;
+dll_list _mem_map;
 char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCI ECAM", "Heap"};
 
 void identity_map(uint64_t addr);
@@ -32,25 +33,22 @@ mb2_mmap_entry* mem_find_main_mem(mb2_tag_mmap* mem_map) {
       return mmap;
     }
   }
-  RAISED(NOT_FOUND, NULL, "Cannot find the main memory range");
+  return NULL;
 }
 
-void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
-  if (mem_map == NULL) {
-    RAISE(MISSING_INFO, "Memory map not provided.");
-  }
-  if (basic_meminfo == NULL) {
-    RAISE(MISSING_INFO, "Basic memory info not provided.");
-  }
+bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
+  assert(mem_map != NULL, "Memory map not provided.");
+  assert(basic_meminfo != NULL, "Basic memory info not provided.");
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
 
-  mb2_mmap_entry* main_mem = TRY_GET(mem_find_main_mem(mem_map));
+  mb2_mmap_entry* main_mem = mem_find_main_mem(mem_map);
+  assert(main_mem != NULL, "Could not find main memory region.");
   uint64_t heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
   for (uint64_t addr = heap_addr; addr < heap_addr + HEAP_SIZE; addr += PAGE_SIZE) {
     identity_map(addr); // todo: don't identity map
   }
-  TRY(heap_init(heap_addr, HEAP_SIZE));
+  heap_init(heap_addr, HEAP_SIZE);
 
   for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
@@ -60,13 +58,14 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
     range->virt_addr = MAX_VIRTUAL_ADDR;
     range->size = mmap->len;
     range->type = mmap->type;
-    dq_add_tail(&_mem_map, (dq_node*) range);
+    dll_add_tail(&_mem_map, (dll_node*) range);
   }
 
   mem_range heap_mem_range = {.phys_addr = heap_addr, .size = HEAP_SIZE};
   heap_mem_range.type = HEAP;
   heap_mem_range.virt_addr = heap_addr;
   mem_update_range(&heap_mem_range);
+  return  true;
 }
 
 uint64_t allocate_page() {
@@ -125,20 +124,21 @@ bool mem_update_range(mem_range* range) {
         *nr = *r;
         nr->phys_addr = addr3;
         nr->size = addr4 - addr3;
-        dq_add_after((dq_node*) r, (dq_node*) nr);
+        dll_add_after((dll_node*) r, (dll_node*) nr);
       }
       { // add the main range
         mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
         *nr = *range;
-        dq_add_after((dq_node*) r, (dq_node*) nr);
+        dll_add_after((dll_node*) r, (dll_node*) nr);
       }
       if (addr2 > addr1) { // add the prefix range
         mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
         *nr = *r;
         nr->size = addr2 - addr1;
-        dq_add_after((dq_node*) r, (dq_node*) nr);
+        dll_add_after((dll_node*) r, (dll_node*) nr);
       }
-      dq_remove((dq_node*) r); // remove old range
+      dll_remove((dll_node*) r); // remove old range
+      kfree(r);
       return true;
     }
   }

@@ -6,9 +6,9 @@
 // https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html
 
 typedef struct {
-  uint16_t magic;         /* Magic number */
-  uint8_t mode;           /* PSF font mode */
-  uint8_t charsize;       /* Character size */
+  uint16_t magic;             /* Magic number */
+  uint8_t mode;               /* PSF font mode */
+  uint8_t charsize;           /* Character size */
 } psf1_header;
 
 typedef struct {

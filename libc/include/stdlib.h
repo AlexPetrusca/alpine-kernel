@@ -19,6 +19,7 @@ void* realloc(void* ptr, size_t size);
 char* itoa(int value, char* str, int base);
 
 __attribute__((__noreturn__)) void abort();
+__attribute__((__noreturn__)) void panic(const char* format, ...);
 
 __END_DECLS
 

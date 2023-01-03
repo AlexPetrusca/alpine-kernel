@@ -68,18 +68,17 @@ add_executable(alpine_kernel
         kernel/include/kernel/mb2_type.h
         kernel/include/kernel/mem.h
         kernel/include/kernel/psf_font.h
-        kernel/include/kernel/panic.h
         kernel/include/kernel/heap.h
-        kernel/arch/x86_64/panic.c
         kernel/arch/x86_64/heap.c
         kernel/arch/x86_64/mb2_info.c
-        kernel/arch/x86_64/kerr.c
-        kernel/include/kernel/kerr.h
+        kernel/arch/x86_64/error.c
+        kernel/include/kernel/error.h
         kernel/include/kernel/usb.h
         kernel/arch/x86_64/usb.c
         kernel/arch/x86_64/psf_font.c
-        kernel/arch/x86_64/queue.c
-        kernel/include/kernel/queue.h
+        kernel/arch/x86_64/psf_font.c
+        kernel/arch/x86_64/dll.c
+        kernel/include/kernel/dll.h
         kernel/arch/x86_64/tests.c
         kernel/include/kernel/tests.h
         )

@@ -2,12 +2,13 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdio_tests.h>
 
 #include <sys/circ_buf.h>
 #include <kernel/kb.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
-#include <kernel/kerr.h>
+#include <kernel/error.h>
 
 #include <kernel/cpu.h>
 #include <kernel/acpi.h>
@@ -133,7 +134,7 @@ bool shell_execute() {
       printf("Alpine shell terminated.");
       return false;
     } else if ((cmd = find_command(command))) {
-      WARN(cmd->run(), "Error running command");
+      cmd->run();
     } else {
       printf("ash: command not found: %s", command);
     }
