@@ -3,7 +3,7 @@
 
 #include <kernel/acpi.h>
 #include <stdint.h>
-#include <kernel/kerr.h>
+#include <kernel/error.h>
 
 #define PCI_MAX_DEVICE 31
 #define PCI_MAX_FUNCTION 7
@@ -108,7 +108,7 @@ typedef struct {
 
 void pci_init();
 void pci_get_class_names(pci_device* device, pci_class_cames* names);
-void pci_get_device(pci_device* device);
+bool pci_get_device(pci_device* device);
 uint64_t pci_bar_addr_32(pci_device* device, int bar_index);
 uint64_t pci_bar_addr_64(pci_device* device, int bar_index);
 void pci_print_mcfg();

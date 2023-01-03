@@ -2,7 +2,7 @@
 #define KERNEL_ARCH_X86_64_QUEUE_H_
 
 #include <stdint.h>
-#include <kernel/kerr.h>
+#include <kernel/error.h>
 #include "test.h"
 
 typedef struct dequeue dequeue;

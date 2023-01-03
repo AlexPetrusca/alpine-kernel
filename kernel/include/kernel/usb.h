@@ -5,9 +5,8 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include <kernel/kerr.h>
+#include <kernel/error.h>
 #include <kernel/pci.h>
-#include <kernel/panic.h>
 #include <kernel/mem.h>
 
 #define HCSPARAMS1_MAX_SLOTS(reg)           (reg & 0x000000FF)
@@ -31,7 +30,7 @@ typedef struct {
   uint32_t HCCPARAMS2;// Capability Parameters 2 5.3.9
 } __attribute__((packed)) usb_capability_regs;
 
-void usb_init();
+bool usb_init();
 void usb_print_info();
 
 #endif //KERNEL_ARCH_X86_64_USB_H_
