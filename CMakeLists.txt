@@ -73,8 +73,9 @@ add_executable(alpine_kernel
         kernel/arch/x86_64/mb2_info.c
         kernel/arch/x86_64/error.c
         kernel/include/kernel/error.h
-        kernel/arch/x86_64/usb.c
         kernel/include/kernel/usb.h
+        kernel/arch/x86_64/usb.c
+        kernel/arch/x86_64/psf_font.c
         kernel/arch/x86_64/psf_font.c
         kernel/arch/x86_64/dll.c
         kernel/include/kernel/dll.h
