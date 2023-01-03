@@ -3,12 +3,13 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#include <kernel/dll.h>
 #include <kernel/mb2_type.h>
-#include "dll.h"
 
 #define PAGE_SIZE 4096
 
-typedef union _VirtualAddress {
+typedef union {
   uint64_t value;
   struct {
     uint64_t offset: 12;
@@ -43,6 +44,7 @@ typedef struct {
 bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
 void mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type);
 bool mem_find_range(uint64_t addr, mem_range* range);
-void mem_print_map();
+
+void mem_print_map(int argc, char** argv);
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_

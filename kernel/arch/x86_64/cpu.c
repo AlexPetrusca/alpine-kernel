@@ -1,6 +1,7 @@
-#include <kernel/cpu.h>
 #include <cpuid.h>
 #include <stdio.h>
+
+#include <kernel/cpu.h>
 
 // Intel syntax: op dst, src (Intel manuals!)
 // AT&T (gcc/gas) syntax: op src, dst (labs, xv6), uses b, w, l, q suffix on instructions to specify size of operands
@@ -11,42 +12,42 @@
 /* x86-64 uses %rbx as the base register, so preserve it. */
 /* output register a in __eax, etc. */
 #define __cpuid64(__leaf, __eax, __ebx, __ecx, __edx)        \
-  __asm(                                                   \
-      "  xchgq %%rbx,%q1\n"                                \
-      "  cpuid\n"                                          \
-      "  xchgq  %%rbx,%q1"                                 \
-      : "=a"(__eax), "=r"(__ebx), "=c"(__ecx), "=d"(__edx) \
+  __asm(                                                    \
+      "  xchgq %%rbx,%q1\n"                                 \
+      "  cpuid\n"                                           \
+      "  xchgq  %%rbx,%q1"                                  \
+      : "=a"(__eax), "=r"(__ebx), "=c"(__ecx), "=d"(__edx)  \
       : "0"(__leaf))
 
 #ifdef __x86_64__
-#define __cr(_cr0, _cr2, _cr3, _cr4)                    \
-  __asm(                                        \
-      "  mov  %%cr0,%%rax\n"                    \
-      "  mov  %%eax,%0\n"                        \
-      "  mov  %%cr2,%%rax\n"                    \
-      "  mov  %%eax,%1\n"                        \
-      "  mov  %%cr3,%%rax\n"                    \
-      "  mov  %%eax,%2\n"                        \
-      "  mov  %%cr4,%%rax\n"                    \
-      "  mov  %%eax,%3\n"                        \
-      : "=rm"(_cr0), "=rm"(_cr2), "=rm"(_cr3), "=rm"(_cr4)    \
-      : /* no input */                            \
-      : "%rax"                                    \
-      )
+#define __cr(_cr0, _cr2, _cr3, _cr4)                       \
+  __asm(                                                  \
+    "  mov  %%cr0,%%rax\n"                                \
+    "  mov  %%eax,%0\n"                                   \
+    "  mov  %%cr2,%%rax\n"                                \
+    "  mov  %%eax,%1\n"                                   \
+    "  mov  %%cr3,%%rax\n"                                \
+    "  mov  %%eax,%2\n"                                   \
+    "  mov  %%cr4,%%rax\n"                                \
+    "  mov  %%eax,%3\n"                                   \
+    : "=rm"(_cr0), "=rm"(_cr2), "=rm"(_cr3), "=rm"(_cr4)  \
+    : /* no input */                                      \
+    : "%rax"                                              \
+  )
 #else
-#define __cr(_cr0, _cr2, _cr3, _cr4)                    \
-  __asm(                                        \
-      "  mov  %%cr0,%0\n"                        \
-      "  mov  %%cr2,%1\n"                        \
-      "  mov  %%cr3,%2\n"                        \
-      "  mov  %%cr4,%3\n"                        \
-      : "=rm"(_cr0), "=rm"(_cr2), "=rm"(_cr3), "=rm"(_cr4)    \
-      : /* no input */                            \
-      : "%rax"                                    \
-      )
+#define __cr(_cr0, _cr2, _cr3, _cr4)                       \
+  __asm(                                                  \
+    "  mov  %%cr0,%0\n"                                   \
+    "  mov  %%cr2,%1\n"                                   \
+    "  mov  %%cr3,%2\n"                                   \
+    "  mov  %%cr4,%3\n"                                   \
+    : "=rm"(_cr0), "=rm"(_cr2), "=rm"(_cr3), "=rm"(_cr4)  \
+    : /* no input */                                      \
+    : "%rax"                                              \
+  )
 #endif
 
-void cpu_print_info() {
+void cpu_print_info(__unused int argc, __unused char** argv) {
   uint32_t id[13];
   id[12] = 0;  // to create a zero-terminated string
   __cpuid(0x80000002, id[0], id[1], id[2], id[3]);

@@ -1,9 +1,10 @@
 #include <string.h>
 #include <stdio.h>
-#include <kernel/acpi.h>
-#include <kernel/mem.h>
+#include <stdlib.h>
 #include <assert.h>
-#include "stdlib.h"
+
+#include <kernel/mem.h>
+#include <kernel/acpi.h>
 
 acpi_rsdp* _rsdp;
 
@@ -17,7 +18,7 @@ void acpi_init(mb2_tag_new_acpi* rsdp_tag) {
   mem_identity_map_range(range.phys_addr, range.size, MEMORY_ACPI);
 }
 
-void acpi_print_info() {
+void acpi_print_info(__unused int argc, __unused char** argv) {
   acpi_rsdt* rsdt = (acpi_rsdt*) (uint64_t) _rsdp->rsdt_address;
   int entry_count = (rsdt->header.length - sizeof(acpi_header)) / 4;
   printf("Signature: %.4s\n", (char*) rsdt);

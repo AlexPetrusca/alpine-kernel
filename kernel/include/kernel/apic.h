@@ -88,7 +88,8 @@ void apic_enable(uint64_t apic_base_addr);
 void apic_send_init(uint64_t apic_base_addr);
 uint32_t apic_read_reg(apic_reg reg, uint64_t apic_base_addr);
 void apic_write_reg(apic_reg reg, uint32_t value, uint64_t apic_base_addr);
-void apic_print_info();
-void apic_print_lapic_info();
+
+void apic_print_info(int argc, char** argv);
+void apic_print_lapic_info(int argc, char** argv);
 
 #endif //_APIC_H_

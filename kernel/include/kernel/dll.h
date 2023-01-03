@@ -2,8 +2,9 @@
 #define KERNEL_ARCH_X86_64_DLL_H_
 
 #include <stdint.h>
+#include <test.h>
+
 #include <kernel/error.h>
-#include "test.h"
 
 typedef struct dll_list dll_list;
 typedef struct dll_node dll_node;

@@ -1,7 +1,8 @@
-#include <kernel/mem.h>
 #include <stdio.h>
 #include <assert.h>
-#include "kernel/heap.h"
+
+#include <kernel/mem.h>
+#include <kernel/heap.h>
 
 #define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
 #define PAGE_PRESENT    (1 << 0)
@@ -182,7 +183,7 @@ bool mem_update_range(mem_range_node* range) {
   return false;
 }
 
-void mem_print_map() {
+void mem_print_map(__unused int argc, __unused char** argv) {
   printf(" Phys Start   Phys End     Virtual Addr     Size\n");
   for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
     printf(" %0.12lx %0.12lx %0.16lx %.12ld %s\n",

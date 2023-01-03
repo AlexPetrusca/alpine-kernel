@@ -213,6 +213,6 @@ void psf_font_info_print_x(psf_font f) {
   }
 }
 
-void psf_font_info_print() {
+void psf_font_info_print(__unused int argc, __unused char** argv) {
   psf_font_info_print_x(*psf_active_font);
 }

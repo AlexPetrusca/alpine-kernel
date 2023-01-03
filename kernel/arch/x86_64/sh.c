@@ -25,8 +25,8 @@
 
 typedef struct {
   char* name;
-  void (* run)();
-//  void (* run)(va_list args);
+//  void (* run)();
+  void (* run)(int argc, char** argv);
 } sh_command;
 
 sh_command commands[] = {
@@ -134,7 +134,7 @@ bool shell_execute() {
       printf("Alpine shell terminated.");
       return false;
     } else if ((cmd = find_command(command))) {
-      cmd->run();
+      cmd->run(0, NULL);
     } else {
       printf("ash: command not found: %s", command);
     }

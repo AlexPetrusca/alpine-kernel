@@ -1,8 +1,9 @@
-#include <kernel/pci.h>
 #include <stdio.h>
-#include <kernel/mem.h>
 #include <assert.h>
-#include "stdlib.h"
+#include <stdlib.h>
+
+#include <kernel/pci.h>
+#include <kernel/mem.h>
 
 #define MAX_PCI_DEVICES 32
 
@@ -605,7 +606,7 @@ uint64_t pci_bar_addr_64(pci_device* device, int bar_index) {
   return (pci_bar_addr_32(device, bar_index + 1) << 32) + pci_bar_addr_32(device, bar_index);
 }
 
-void pci_print_mcfg() {
+void pci_print_mcfg(__unused int argc, __unused char** argv) {
   pci_mcfg_table* mcfg = find_mcfg_table();
   int bridge_count = (mcfg->header.length - (sizeof(acpi_header) + 8)) / sizeof(pci_host_bridge);
 
@@ -627,7 +628,7 @@ void pci_print_mcfg() {
   }
 }
 
-void pci_print_devices() {
+void pci_print_devices(__unused int argc, __unused char** argv) {
   for (int i = 0; i < _pci_device_count; i++) {
     pci_device* device = &_pci_devices[i];
     pci_class_cames strings;
