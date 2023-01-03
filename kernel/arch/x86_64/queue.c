@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <test.h>
+#include <assert.h>
 
 static inline void dq_link(dq_node* node1, dq_node* node2) {
   node1->next = node2;
@@ -45,9 +46,8 @@ dq_node* dq_add_tail(dequeue* queue, dq_node* node) {
 
 dq_node* dq_add_before(dq_node* ref_node, dq_node* node) {
   dequeue* queue = ref_node->queue;
-  if (queue == NULL) {
-    RAISED(NOT_FOUND, NULL, "Node does not belong to a queue.");
-  } else if (queue->head == ref_node) {
+  assert(queue != NULL, "Node does not belong to a queue.");
+  if (queue->head == ref_node) {
     return dq_add_head(queue, node);
   } else {
     dq_link(ref_node->prev, node);
@@ -60,9 +60,8 @@ dq_node* dq_add_before(dq_node* ref_node, dq_node* node) {
 
 dq_node* dq_add_after(dq_node* ref_node, dq_node* node) {
   dequeue* queue = ref_node->queue;
-  if (queue == NULL) {
-    RAISED(NOT_FOUND, NULL, "Node does not belong to a queue.");
-  } else if (queue->tail == ref_node) {
+  assert(queue != NULL, "Node does not belong to a queue.");
+  if (queue->tail == ref_node) {
     return dq_add_tail(queue, node);
   } else {
     dq_link(node, ref_node->next);
@@ -74,9 +73,8 @@ dq_node* dq_add_after(dq_node* ref_node, dq_node* node) {
 }
 
 dq_node* dq_remove_head(dequeue* queue) {
-  if (queue->size == 0) {
-    RAISED(NOT_FOUND, NULL, "Cannot remove head from an empty queue");
-  } else if (queue->size == 1) {
+  assert(queue->size != 0, "Cannot remove head from an empty queue");
+  if (queue->size == 1) {
     dq_node* n = queue->head;
     dq_clear(queue);
     return n;
@@ -90,9 +88,8 @@ dq_node* dq_remove_head(dequeue* queue) {
 }
 
 dq_node* dq_remove_tail(dequeue* queue) {
-  if (queue->size == 0) {
-    RAISED(NOT_FOUND, NULL, "Cannot remove tail from an empty queue");
-  } else if (queue->size == 1) {
+  assert(queue->size != 0, "Cannot remove tail from an empty queue");
+  if (queue->size == 1) {
     dq_node* n = queue->head;
     dq_clear(queue);
     return n;
@@ -107,9 +104,8 @@ dq_node* dq_remove_tail(dequeue* queue) {
 
 dq_node* dq_remove(dq_node* node) {
   dequeue* queue = node->queue;
-  if (queue == NULL) {
-    RAISED(NOT_FOUND, NULL, "Node does not belong to a queue.");
-  } else if (queue->head == node) {
+  assert(queue != NULL, "Node does not belong to a queue.");
+  if (queue->head == node) {
     return dq_remove_head(queue);
   } else if (queue->tail == node) {
     return dq_remove_tail(queue);
@@ -134,19 +130,20 @@ void dq_iterate(dequeue* queue, bool (* process)(dq_node*)) {
   }
 }
 
-void dq_check(dequeue* queue) {
+char* dq_check(dequeue* queue) {
   if (queue->size == 0) {
-    if (queue->head != NULL) RAISE(UNKNOWN, "The head of empty list must be NULL");
-    if (queue->tail != NULL) RAISE(UNKNOWN, "The tail of empty list must be NULL");
+    if (queue->head != NULL) return "The head of empty list must be NULL";
+    if (queue->tail != NULL) return "The tail of empty list must be NULL";
   } else {
-    if (queue->head->prev != NULL) RAISE(UNKNOWN, "The head of list must not have prev");
-    if (queue->tail->next != NULL) RAISE(UNKNOWN, "The tail of list must not have next");
+    if (queue->head->prev != NULL) return "The head of list must not have prev";
+    if (queue->tail->next != NULL) return "The tail of list must not have next";
     for (dq_node* n = queue->head; n != NULL; n = n->next) {
       if (n->queue != queue) {
-        RAISE(UNKNOWN, "The node does not belong to the queue");
+        return "The node does not belong to the queue";
       }
     }
   }
+  return NULL;
 }
 
 SUITE(dequeue)
@@ -162,7 +159,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(dq.head, &node1);
     ASSERT_EQUAL_PTR(dq.tail, &node1);
     ASSERT_EQUAL_PTR(node1.queue, &dq);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_add_head_2)
@@ -180,7 +177,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(node1.prev, &node2);
     ASSERT_EQUAL_PTR(node1.queue, &dq);
     ASSERT_EQUAL_PTR(node2.queue, &dq);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_add_tail_1)
@@ -194,7 +191,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(dq.head, &node1);
     ASSERT_EQUAL_PTR(dq.tail, &node1);
     ASSERT_EQUAL_PTR(node1.queue, &dq);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_add_tail_2)
@@ -212,7 +209,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(node2.prev, &node1);
     ASSERT_EQUAL_PTR(node1.queue, &dq);
     ASSERT_EQUAL_PTR(node2.queue, &dq);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_remove_head)
@@ -228,8 +225,8 @@ SUITE(dequeue)
     ASSERT_EQUAL_INT(dq.size, 0);
     ASSERT_NULL(dq.head);
     ASSERT_NULL(dq.tail);
-    ASSERT_RAISES_KERR(dq_remove_head(&dq), NOT_FOUND, "Cannot remove head from an empty queue");
-    dq_check(&dq);
+//    ASSERT_ASSERTS(dq_remove_head(&dq), "Cannot remove head from an empty queue");
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_remove_tail)
@@ -245,8 +242,8 @@ SUITE(dequeue)
     ASSERT_EQUAL_INT(dq.size, 0);
     ASSERT_NULL(dq.head);
     ASSERT_NULL(dq.tail);
-    ASSERT_RAISES_KERR(dq_remove_tail(&dq), NOT_FOUND, "Cannot remove tail from an empty queue");
-    dq_check(&dq);
+//    ASSERT_ASSERTS(dq_remove_tail(&dq), "Cannot remove tail from an empty queue");
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_remove)
@@ -267,7 +264,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_INT(dq.size, 1);
     ASSERT_EQUAL_PTR(dq.head, &node3);
     ASSERT_EQUAL_PTR(dq.tail, &node3);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_add_after_tail)
@@ -280,7 +277,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(dq.tail, &node2);
     ASSERT_EQUAL_PTR(node1.next, &node2);
     ASSERT_EQUAL_PTR(node2.prev, &node1);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_add_after_mid)
@@ -295,7 +292,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(node2.prev, &node1);
     ASSERT_EQUAL_PTR(node1.next, &node2);
     ASSERT_EQUAL_PTR(node3.prev, &node2);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_add_before_head)
@@ -309,7 +306,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(dq.head, &node1);
     ASSERT_EQUAL_PTR(node1.next, &node2);
     ASSERT_EQUAL_PTR(node2.prev, &node1);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_add_before_mid)
@@ -324,7 +321,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_PTR(node2.prev, &node1);
     ASSERT_EQUAL_PTR(node1.next, &node2);
     ASSERT_EQUAL_PTR(node3.prev, &node2);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
   TEST(dq_clear)
@@ -337,7 +334,7 @@ SUITE(dequeue)
     ASSERT_EQUAL_INT(dq.size, 0);
     ASSERT_NULL(dq.tail);
     ASSERT_NULL(dq.head);
-    dq_check(&dq);
+    ASSERT_NULL(dq_check(&dq));
     ENDT
 
 ENDS

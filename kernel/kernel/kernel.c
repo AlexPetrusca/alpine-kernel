@@ -1,14 +1,11 @@
 #include <kernel/tty.h>
 #include <kernel/sh.h>
-#include <kernel/mb2_type.h>
 #include <kernel/acpi.h>
 #include <kernel/pci.h>
 #include <kernel/mem.h>
-#include <kernel/heap.h>
-#include <kernel/panic.h>
-#include <kernel/kerr.h>
 #include <kernel/mb2_info.h>
 #include <kernel/usb.h>
+#include <assert.h>
 
 void validate_boot(unsigned long magic, unsigned long kernel_addr) {
   if (magic != MB2_BOOTLOADER_MAGIC) {
@@ -21,15 +18,16 @@ void validate_boot(unsigned long magic, unsigned long kernel_addr) {
 
 void kernel_init(uint64_t kernel_addr) {
   mb2_info* mbi = mb2_info_init(kernel_addr);
-  TRY(terminal_init(mbi->framebuffer_tag));
-  TRY(mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag));
-  TRY(acpi_init(mbi->rsdp_tag));
-  TRY(pci_init());
-  WARN(usb_init(), "Could not initialize USB subsystem.");
+
+  terminal_init(mbi->framebuffer_tag);
+  mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag);
+  acpi_init(mbi->rsdp_tag);
+  pci_init();
+  usb_init();
 }
 
 void kernel_main(uint64_t magic, uint64_t kernel_addr) {
   validate_boot(magic, kernel_addr);
-  PANIC(kernel_init(kernel_addr));
-  PANIC(shell_start());
+  kernel_init(kernel_addr);
+  shell_start();
 }

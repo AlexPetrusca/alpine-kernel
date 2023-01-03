@@ -1,5 +1,6 @@
 #include <kernel/mem.h>
 #include <stdio.h>
+#include <assert.h>
 #include "kernel/heap.h"
 
 #define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
@@ -32,25 +33,22 @@ mb2_mmap_entry* mem_find_main_mem(mb2_tag_mmap* mem_map) {
       return mmap;
     }
   }
-  RAISED(NOT_FOUND, NULL, "Cannot find the main memory range");
+  return NULL;
 }
 
-void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
-  if (mem_map == NULL) {
-    RAISE(MISSING_INFO, "Memory map not provided.");
-  }
-  if (basic_meminfo == NULL) {
-    RAISE(MISSING_INFO, "Basic memory info not provided.");
-  }
+bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
+  assert(mem_map != NULL, "Memory map not provided.");
+  assert(basic_meminfo != NULL, "Basic memory info not provided.");
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
 
-  mb2_mmap_entry* main_mem = TRY_GET(mem_find_main_mem(mem_map));
+  mb2_mmap_entry* main_mem = mem_find_main_mem(mem_map);
+  assert(main_mem != NULL, "Could not find main memory region.");
   uint64_t heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
   for (uint64_t addr = heap_addr; addr < heap_addr + HEAP_SIZE; addr += PAGE_SIZE) {
     identity_map(addr); // todo: don't identity map
   }
-  TRY(heap_init(heap_addr, HEAP_SIZE));
+  heap_init(heap_addr, HEAP_SIZE);
 
   for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
@@ -67,6 +65,7 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   heap_mem_range.type = HEAP;
   heap_mem_range.virt_addr = heap_addr;
   mem_update_range(&heap_mem_range);
+  return  true;
 }
 
 uint64_t allocate_page() {

@@ -30,6 +30,7 @@ typedef enum {
   HEAP = 7
 } mem_type;
 
+// TODO do not use this in the API
 typedef struct {
   dq_node node;
   uint64_t phys_addr;
@@ -38,7 +39,7 @@ typedef struct {
   mem_type type;
 } mem_range;
 
-void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
+bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
 void mem_identity_map_range(mem_range* range);
 bool mem_find_range(uint64_t addr, mem_range* range);
 bool mem_update_range(mem_range* range);
