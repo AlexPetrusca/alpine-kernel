@@ -2,13 +2,12 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdio_tests.h>
 
+#include <sys/vector.h>
 #include <sys/circ_buf.h>
 #include <kernel/kb.h>
 #include <kernel/tty.h>
 #include <kernel/sh.h>
-#include <kernel/error.h>
 
 #include <kernel/cpu.h>
 #include <kernel/acpi.h>
@@ -25,7 +24,6 @@
 
 typedef struct {
   char* name;
-//  void (* run)();
   void (* run)(int argc, char** argv);
 } sh_command;
 
@@ -99,7 +97,7 @@ void shell_load_history() {
   shell_command_printf("%s", command);
 }
 
-sh_command* find_command(char* name) {
+sh_command* shell_find_command(char* name) {
   for (sh_command* cmd = commands; cmd->run != NULL; cmd++) {
     if (strcmp(cmd->name, name) == 0) {
       return cmd;
@@ -108,20 +106,35 @@ sh_command* find_command(char* name) {
   return NULL;
 }
 
-void printCommands() {
+void shell_print_commands() {
   for (sh_command* cmd = commands; cmd->run != NULL; cmd++) {
     printf("%s ", cmd->name);
   }
   printf("\n");
 }
 
+vector* shell_strsplit(char* str, const char* delim) {
+  char copy[MAX_COMMAND];
+  strcpy(copy, str);
+
+  vector* args_vec = vector_new();
+  char* token = strtok(copy, delim);
+  while (token != NULL) {
+    vector_add(args_vec, token);
+    token = strtok(NULL, delim);
+  }
+  return args_vec;
+}
+
 bool shell_execute() {
   printf("\n");
   shell_write_command_buffer('\0');
-  char* command = shell_command_buffer();
+  char* command_line = shell_command_buffer();
   sh_command* cmd = NULL;
   // todo: instead, check if input contains only whitespace
   if (command_idx > 0) {
+    vector* args = shell_strsplit(command_line, " ");
+    char* command = vector_get(args, 0);
     if (strequ(command, "history")) {
       for (size_t i = 1; i < history_circ_buf.size; i++) {
         printf("%d: %s\n", i, (char*) circ_buf_peekn(&history_circ_buf, i));
@@ -129,12 +142,12 @@ bool shell_execute() {
     } else if (strequ(command, "clear")) {
       terminal_clear();
     } else if (strequ(command, "help")) {
-      printCommands();
+      shell_print_commands();
     } else if (strequ(command, "exit")) {
       printf("Alpine shell terminated.");
       return false;
-    } else if ((cmd = find_command(command))) {
-      cmd->run(0, NULL);
+    } else if ((cmd = shell_find_command(command))) {
+      cmd->run(args->length, (char**) args->items);
     } else {
       printf("ash: command not found: %s", command);
     }

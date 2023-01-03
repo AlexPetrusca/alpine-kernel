@@ -240,7 +240,7 @@ typedef struct {
   uint8_t y_char;			    // ...
   uint8_t planes;
   uint8_t bpp;			      // bits per pixel in this mode
-  uint8_t banks;		     	// deprecated; total number of banks in this mode
+  uint8_t banks;		     	// deprecated; length number of banks in this mode
   uint8_t memory_model;
   uint8_t bank_size;	  	// deprecated; size of a bank, almost always 64 KB but may be 16 KB...
   uint8_t image_pages;
