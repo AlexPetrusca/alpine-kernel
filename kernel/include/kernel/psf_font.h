@@ -58,6 +58,7 @@ psf_font* psf_get_active_font();
 psf_font* psf_name2font(char* name);
 void psf_set_active_font(psf_font* font);
 psf_fonts* psf_get_available_fonts();
-void psf_font_info_print();
+
+void psf_font_info_print(int argc, char** argv);
 
 #endif //ALPINE_KERNEL_PSF_FONT_H

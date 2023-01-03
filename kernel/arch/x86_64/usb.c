@@ -15,7 +15,7 @@ bool usb_init() {
   return true;
 }
 
-void usb_print_info() {
+void usb_print_info(__unused int argc, __unused char** argv) {
   CHECK_INIT();
   printf("Interface Version: %d\n", usb_caps.HCIVERSION);
   printf("Capability Length: %d\n", usb_caps.CAPLENGTH);

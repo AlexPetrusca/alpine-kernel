@@ -42,7 +42,7 @@ apic_table_header* find_apic_table() {
   return (apic_table_header*) acpi_find_table("APIC");
 }
 
-void apic_print_info() {
+void apic_print_info(__unused int argc, __unused char** argv) {
   apic_table_header* apic = find_apic_table();
 
   printf("Signature: %.4s\n", (char*) &(apic->header.signature));
@@ -77,7 +77,7 @@ void apic_print_info() {
   }
 }
 
-void apic_print_lapic_info() {
+void apic_print_lapic_info(__unused int argc, __unused char** argv) {
   uint32_t apic_base_addr = apic_global_enable();
   printf("LAPIC ID: %d\n", apic_read_reg(APIC_REG_ID, apic_base_addr));
   printf("LAPIC Version: %d\n", apic_read_reg(APIC_REG_VR, apic_base_addr));

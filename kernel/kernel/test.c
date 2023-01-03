@@ -1,6 +1,6 @@
-#include "test.h"
-#include "stdio.h"
-#include "string.h"
+#include <stdio.h>
+#include <string.h>
+#include <test.h>
 
 int assert_equal_bool(bool found, bool expected, int line, char* test, char* file) {
   if (found != expected) {

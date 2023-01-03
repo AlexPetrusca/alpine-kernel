@@ -111,7 +111,8 @@ void pci_get_class_names(pci_device* device, pci_class_cames* names);
 bool pci_get_device(pci_device* device);
 uint64_t pci_bar_addr_32(pci_device* device, int bar_index);
 uint64_t pci_bar_addr_64(pci_device* device, int bar_index);
-void pci_print_mcfg();
-void pci_print_devices();
+
+void pci_print_mcfg(int argc, char** argv);
+void pci_print_devices(int argc, char** argv);
 
 #endif //KERNEL_ARCH_I386_PCI_H_

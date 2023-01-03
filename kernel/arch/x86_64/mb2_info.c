@@ -67,7 +67,7 @@ mb2_info* mb2_info_init(uint64_t kernel_addr) {
   return mb2_get_tags();
 }
 
-void mb2_info_print() {
+void mb2_info_print(__unused int argc, __unused char** argv) {
   printf("Boot loader name = %s\n", mbi.bootloader_name);
   printf("Boot device 0x%x,%u,%u\n", mbi.bootdev_tag->biosdev, mbi.bootdev_tag->slice, mbi.bootdev_tag->part);
   printf("Load base addr 0x%lx\n", mbi.kernel_base_addr);
@@ -79,7 +79,7 @@ void mb2_info_print() {
   printf("Command line = %s\n", mbi.kernel_cmd_line);
 }
 
-void mb2_fb_info_print() {
+void mb2_fb_info_print(__unused int argc, __unused char** argv) {
   mb2_tag_framebuffer_common common = mbi.framebuffer_tag->common;
   if (common.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
     printf("Type: VBE RGB Mode\n");

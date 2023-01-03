@@ -38,6 +38,7 @@ typedef struct {
 
 void acpi_init(mb2_tag_new_acpi* rsdp_tag);
 acpi_header* acpi_find_table(char* name);
-void acpi_print_info();
+
+void acpi_print_info(int argc, char** argv);
 
 #endif //_ACPI_H_

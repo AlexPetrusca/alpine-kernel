@@ -31,6 +31,7 @@ typedef struct {
 } __attribute__((packed)) usb_capability_regs;
 
 bool usb_init();
-void usb_print_info();
+
+void usb_print_info(int argc, char** argv);
 
 #endif //KERNEL_ARCH_X86_64_USB_H_

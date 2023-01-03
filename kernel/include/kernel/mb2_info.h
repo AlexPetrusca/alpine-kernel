@@ -23,7 +23,7 @@ typedef struct {
 mb2_info* mb2_info_init(uint64_t kernel_addr);
 mb2_info* mb2_info_get();
 
-void mb2_info_print();
-void mb2_fb_info_print();
+void mb2_info_print(int argc, char** argv);
+void mb2_fb_info_print(int argc, char** argv);
 
 #endif //ALPINE_KERNEL_MB2_INFO_H
