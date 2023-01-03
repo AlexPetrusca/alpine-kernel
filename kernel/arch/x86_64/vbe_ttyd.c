@@ -58,23 +58,32 @@ uint32_t vbe_ttyd_convert_color(tty_color color) {
 };
 
 uint32_t vbe_ttyd_get_width() {
-  return vbe_screen_width / PSF_CHAR_WIDTH;
+  return vbe_screen_width / PSF1_CHAR_WIDTH;
 }
 
 uint32_t vbe_ttyd_get_height() {
-  return vbe_screen_height / vbe_tty_font->charsize;
+  return vbe_screen_height / vbe_tty_font->glyph_height;
 }
 
 void vbe_ttyd_put_char(uint32_t x, uint32_t y, uint8_t ch) {
-  psf_glyph16* glyph = vbe_tty_font->glyphs.glyphs16 + ch;
-  uint32_t screen_x = x * PSF_CHAR_WIDTH;
-  uint32_t screen_y = y * vbe_tty_font->charsize;
-  for (uint32_t offset_y = 0; offset_y < vbe_tty_font->charsize; offset_y++) {
-    uint8_t mask = 1 << (PSF_CHAR_WIDTH - 1);
-    for (int offset_x = 0; offset_x < PSF_CHAR_WIDTH; offset_x++) {
-      uint32_t screen_pos = (screen_y + offset_y) * vbe_screen_width + screen_x + offset_x;
-      vbe_fb[screen_pos] = (glyph->rows[offset_y] & mask) ? vbe_tty_fg : vbe_tty_bg;
-      mask >>= 1;
+  char* glyph = vbe_tty_font->glyphs + ch * vbe_tty_font->glyph_size;
+  uint32_t screen_x = x * vbe_tty_font->glyph_width;
+  uint32_t screen_y = y * vbe_tty_font->glyph_height;
+  for (uint32_t offset_y = 0; offset_y < vbe_tty_font->glyph_height; offset_y++) {
+    if (vbe_tty_font->psf_version == 1) {
+      uint8_t mask = 1 << (PSF1_CHAR_WIDTH - 1);
+      for (uint32_t offset_x = 0; offset_x < vbe_tty_font->glyph_width; offset_x++) {
+        uint32_t screen_pos = (screen_y + offset_y) * vbe_screen_width + screen_x + offset_x;
+        vbe_fb[screen_pos] = (glyph[offset_y] & mask) ? vbe_tty_fg : vbe_tty_bg;
+        mask >>= 1;
+      }
+    } else {
+      uint16_t mask = 1 << (PSF2_CHAR_WIDTH - 1);
+      for (uint32_t offset_x = 0; offset_x < vbe_tty_font->glyph_width; offset_x++) {
+        uint32_t screen_pos = (screen_y + offset_y) * vbe_screen_width + screen_x + offset_x;
+        vbe_fb[screen_pos] = (((uint16_t*) glyph)[offset_y] & mask) ? vbe_tty_fg : vbe_tty_bg;
+        mask >>= 1;
+      }
     }
   }
 }
@@ -111,7 +120,7 @@ tty_device vbe_ttyd_init(uint64_t fb, uint32_t screen_width, uint32_t screen_hei
   vbe_fb = (uint32_t*) fb;
   vbe_screen_width = screen_width;
   vbe_screen_height = screen_height;
-  vbe_tty_font = psf_font_get_font(&vbe_tty_font);
+  vbe_tty_font = psf_font_init();
 
   vbe_tty_device.get_width = vbe_ttyd_get_width;
   vbe_tty_device.get_height = vbe_ttyd_get_height;

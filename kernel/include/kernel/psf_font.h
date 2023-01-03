@@ -3,48 +3,28 @@
 
 #include <stdint.h>
 
-#define PSF_MAGIC        0x0436
+#define PSF1_MAGIC        0x0436
+#define PSF2_MAGIC        0x864AB572
 
-#define PSF_MODE512      0x01
-#define PSF_MODEHASTAB   0x02
-#define PSF_MODEHASSEQ   0x04
-#define PSF_MAXMODE      0x05
+#define PSF1_MODE512      0x01
+#define PSF1_MODEHASTAB   0x02
+#define PSF1_MODEHASSEQ   0x04
+#define PSF1_MAXMODE      0x05
+#define PSF2_FLAGSHASUNI  0x01
 
-#define PSF_SEPARATOR    0xFFFF
-#define PSF_STARTSEQ     0xFFFE
-
-#define PSF_NUM_GLYPHS   256
-#define PSF_CHAR_WIDTH   8
-
-extern char _binary_arch_x86_64_font_psf_start;
+#define PSF1_CHAR_WIDTH   8
+#define PSF2_CHAR_WIDTH   16
 
 typedef struct {
-  uint8_t rows[9];
-} psf_glyph9;
-
-typedef struct {
-  uint8_t rows[16];
-} psf_glyph16;
-
-typedef union {
-  struct {
-    psf_glyph9 glyphs9[PSF_NUM_GLYPHS];
-  };
-  struct {
-    psf_glyph16 glyphs16[PSF_NUM_GLYPHS];
-  };
-} psf_glyphs;
-
-typedef struct {
-  uint16_t magic;     /* Magic number */
-  uint8_t mode;       /* PSF vbe_tty_font mode */
-  uint8_t charsize;   /* Character size */
-  psf_glyphs glyphs;  /* List of PSF Glyphs */
+  uint8_t psf_version;
+  uint8_t glyph_width;
+  uint8_t glyph_height;
+  uint8_t glyph_size;
+//  uint32_t num_glyphs;
+  char* glyphs;
 } psf_font;
 
-psf_font * psf_font_get_font(psf_font** font) {
-  *font = (psf_font*) &_binary_arch_x86_64_font_psf_start;
-  return *font;
-}
+psf_font* psf_font_init();
+void psf_font_info_print();
 
 #endif //ALPINE_KERNEL_PSF_FONT_H

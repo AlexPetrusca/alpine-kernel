@@ -20,7 +20,6 @@ void validate_boot(unsigned long magic, unsigned long kernel_addr) {
 
 void kernel_init(uint64_t kernel_addr) {
   mb2_info* mbi = mb2_info_init(kernel_addr);
-
   terminal_init(mbi->framebuffer_tag);
   mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag);
   heap_init(512 * PAGE_SIZE);
