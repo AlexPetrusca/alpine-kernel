@@ -538,9 +538,7 @@ void pci_init() {
     if (!mem_find_range(bridge.base_address, &range)) {
       panic("Cannot find PCI bridge memory range\n");
     }
-    mem_identity_map_range(&range);
-    range.type = MEMORY_PCI_ECAM;
-    mem_update_range(&range);
+    mem_identity_map_range(range.phys_addr, range.size, MEMORY_PCI_ECAM);
 
     for (int bus = bridge.start_bus_number; bus <= bridge.end_bus_number; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {

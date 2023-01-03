@@ -27,12 +27,13 @@ typedef enum {
   MEMORY_NVS = 4,
   MEMORY_BADRAM = 5,
   MEMORY_PCI_ECAM = 6,
-  HEAP = 7
+  MEMORY_USB_DEVICE = 7,
+  MEMORY_HEAP = 8,
+  MEMORY_FRAME_BUFFER = 9,
+  MEMORY_ACPI = 10,
 } mem_type;
 
-// TODO do not use this in the API
 typedef struct {
-  dll_node node;
   uint64_t phys_addr;
   uint64_t virt_addr;
   uint64_t size;
@@ -40,9 +41,8 @@ typedef struct {
 } mem_range;
 
 bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
-void mem_identity_map_range(mem_range* range);
+void mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type);
 bool mem_find_range(uint64_t addr, mem_range* range);
-bool mem_update_range(mem_range* range);
 void mem_print_map();
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_

@@ -9,6 +9,7 @@
 #include <kernel/vbe_ttyd.h>
 #include <kernel/vga_ttyd.h>
 #include <kernel/tty.h>
+#include <stdio.h>
 
 #define TERMINAL_BUFFER_SIZE 65535
 #define TERMINAL_LINE_LIMIT 1000
@@ -65,8 +66,7 @@ void tty_device_init(mb2_tag_framebuffer* framebuffer_tag) {
   mb2_tag_framebuffer_common fb_info = framebuffer_tag->common;
   if (fb_info.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
     size_t fb_size = (fb_info.framebuffer_width * fb_info.framebuffer_height) * sizeof(uint32_t);
-    mem_range fb_range = {.phys_addr = fb_info.framebuffer_addr, .size = fb_size};
-    mem_identity_map_range(&fb_range);
+    mem_identity_map_range(fb_info.framebuffer_addr, fb_size, MEMORY_FRAME_BUFFER);
     *device = vbe_ttyd_init(fb_info.framebuffer_addr, fb_info.framebuffer_width, fb_info.framebuffer_height);
   } else {
     *device = vga_ttyd_init(VGA_TEXT_MODE_PHYS_ADDR);
@@ -205,7 +205,7 @@ void terminal_scroll_up() {
 
 void terminal_scroll_down() {
   if ((char**) circ_buf_ptr_getoffset(&terminal_line_buf_rptr, cursor_y)
-      != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
+    != terminal_line_buf + terminal_circ_line_buf.tail - 1) {
     terminal_scroll_down_force();
   }
 }

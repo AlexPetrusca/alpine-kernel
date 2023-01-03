@@ -16,14 +16,24 @@
 #define MAIN_MEM_START      0x100000 // todo: define known ranges in mem.h
 #define HEAP_SIZE           512 * PAGE_SIZE
 
+typedef struct {
+  dll_node node;
+  uint64_t phys_addr;
+  uint64_t virt_addr;
+  uint64_t size;
+  mem_type type;
+} mem_range_node;
+
 uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
 
 uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
 dll_list _mem_map;
-char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCI ECAM", "Heap"};
+char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config",
+                     "USB (xHCI)", "Kernel Heap", "Frame Buffer", "ACPI"};
 
 void identity_map(uint64_t addr);
+bool mem_update_range(mem_range_node* range);
 
 mb2_mmap_entry* mem_find_main_mem(mb2_tag_mmap* mem_map) {
   for (mb2_mmap_entry* mmap = mem_map->entries;
@@ -53,7 +63,7 @@ bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
        mmap = (mb2_mmap_entry*) ((uint64_t) mmap + mem_map->entry_size)) {
-    mem_range* range = (mem_range*) kmalloc(sizeof(mem_range));
+    mem_range_node* range = (mem_range_node*) kmalloc(sizeof(mem_range_node));
     range->phys_addr = mmap->addr;
     range->virt_addr = MAX_VIRTUAL_ADDR;
     range->size = mmap->len;
@@ -61,11 +71,11 @@ bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
     dll_add_tail(&_mem_map, (dll_node*) range);
   }
 
-  mem_range heap_mem_range = {.phys_addr = heap_addr, .size = HEAP_SIZE};
-  heap_mem_range.type = HEAP;
+  mem_range_node heap_mem_range = {.phys_addr = heap_addr, .size = HEAP_SIZE};
+  heap_mem_range.type = MEMORY_HEAP;
   heap_mem_range.virt_addr = heap_addr;
   mem_update_range(&heap_mem_range);
-  return  true;
+  return true;
 }
 
 uint64_t allocate_page() {
@@ -96,49 +106,76 @@ void identity_map(uint64_t addr) {
 }
 
 // Good explanation of the concepts can be found here: https://back.engineering/23/08/2020/
-void mem_identity_map_range(mem_range* range) {
-  for (uint64_t addr = range->phys_addr; addr < range->phys_addr + range->size; addr += PAGE_SIZE) {
+void mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) {
+  for (uint64_t addr = phys_addr; addr < phys_addr + size; addr += PAGE_SIZE) {
     identity_map(addr);
   }
-  range->virt_addr = range->phys_addr;
-  mem_update_range(range);
+  mem_range_node range = {.phys_addr = phys_addr, .virt_addr = phys_addr, .size = size, .type = type};
+  mem_update_range(&range);
 }
 
 bool mem_find_range(uint64_t addr, mem_range* range) {
-  for (mem_range* r = (mem_range*) _mem_map.head; r != NULL; r = (mem_range*) r->node.next) {
+  for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
     if (addr >= r->phys_addr && addr < r->phys_addr + r->size) {
-      *range = *r;
+      range->phys_addr = r->phys_addr;
+      range->virt_addr = r->virt_addr;
+      range->size = r->size;
+      range->type = r->type;
       return true;
     }
   }
   return false;
 }
 
-bool mem_update_range(mem_range* range) {
-  for (mem_range* r = (mem_range*) _mem_map.head; r != NULL; r = (mem_range*) r->node.next) {
-    if (range->phys_addr >= r->phys_addr && range->phys_addr + range->size <= r->phys_addr + r->size) {
-      uint64_t addr1 = r->phys_addr, addr2 = range->phys_addr, addr3 = range->phys_addr + range->size,
-        addr4 = r->phys_addr + r->size;
-      if (addr4 > addr3) { // add the suffix range
-        mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
-        *nr = *r;
-        nr->phys_addr = addr3;
-        nr->size = addr4 - addr3;
-        dll_add_after((dll_node*) r, (dll_node*) nr);
+bool mem_contains(mem_range_node* r1, mem_range_node* r2) {
+  uint64_t x1 = r1->phys_addr, x2 = r1->phys_addr + r1->size;
+  uint64_t y1 = r2->phys_addr, y2 = r2->phys_addr + r2->size;
+  return y1 >= x1 && y2 <= x2;
+}
+
+bool mem_intersect(mem_range_node* r1, mem_range_node* r2) {
+  uint64_t x1 = r1->phys_addr, x2 = r1->phys_addr + r1->size;
+  uint64_t y1 = r2->phys_addr, y2 = r2->phys_addr + r2->size;
+  return (y1 >= x1 && y1 < x2) || (y2 >= x1 && y2 < x2);
+}
+
+bool mem_update_range(mem_range_node* range) {
+  for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
+    if (mem_intersect(r, range)) {
+      if (!mem_contains(r, range)) {
+        panic("Memory range not fully contained in existing range.");
+      } else {
+        uint64_t addr1 = r->phys_addr, addr2 = range->phys_addr, addr3 = range->phys_addr + range->size,
+          addr4 = r->phys_addr + r->size;
+        if (addr4 > addr3) { // add the suffix range
+          mem_range_node* nr = (mem_range_node*) kmalloc(sizeof(mem_range_node));
+          *nr = *r;
+          nr->phys_addr = addr3;
+          nr->size = addr4 - addr3;
+          dll_add_after((dll_node*) r, (dll_node*) nr);
+        }
+        { // add the main range
+          mem_range_node* nr = (mem_range_node*) kmalloc(sizeof(mem_range_node));
+          *nr = *range;
+          dll_add_after((dll_node*) r, (dll_node*) nr);
+        }
+        if (addr2 > addr1) { // add the prefix range
+          mem_range_node* nr = (mem_range_node*) kmalloc(sizeof(mem_range_node));
+          *nr = *r;
+          nr->size = addr2 - addr1;
+          dll_add_after((dll_node*) r, (dll_node*) nr);
+        }
+        dll_remove((dll_node*) r); // remove old range
+        kfree(r);
+        return true;
       }
-      { // add the main range
-        mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
-        *nr = *range;
-        dll_add_after((dll_node*) r, (dll_node*) nr);
-      }
-      if (addr2 > addr1) { // add the prefix range
-        mem_range* nr = (mem_range*) kmalloc(sizeof(mem_range));
-        *nr = *r;
-        nr->size = addr2 - addr1;
-        dll_add_after((dll_node*) r, (dll_node*) nr);
-      }
-      dll_remove((dll_node*) r); // remove old range
-      kfree(r);
+    }
+  }
+  for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
+    if (range->phys_addr + range->size <= r->phys_addr) {
+      mem_range_node* nr = (mem_range_node*) kmalloc(sizeof(mem_range_node));
+      *nr = *range;
+      dll_add_before((dll_node*) r, (dll_node*) nr);
       return true;
     }
   }
@@ -147,7 +184,7 @@ bool mem_update_range(mem_range* range) {
 
 void mem_print_map() {
   printf(" Phys Start   Phys End     Virtual Addr     Size\n");
-  for (mem_range* r = (mem_range*) _mem_map.head; r != NULL; r = (mem_range*) r->node.next) {
+  for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
     printf(" %0.12lx %0.12lx %0.16lx %.12ld %s\n",
            r->phys_addr, r->phys_addr + r->size,
            r->virt_addr,
