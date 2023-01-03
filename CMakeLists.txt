@@ -81,4 +81,6 @@ add_executable(alpine_kernel
         kernel/include/kernel/dll.h
         kernel/arch/x86_64/tests.c
         kernel/include/kernel/tests.h
-        )
+        libc/include/sys/vector.h
+        libc/sys/vector.c
+        libc/sys/circ_buf_ptr.c)
