@@ -36,6 +36,7 @@ stdio/printf_test.o \
 stdio/getchar.o \
 stdio/putchar.o \
 stdio/puts.o \
+stdlib/malloc.o \
 stdlib/abort.o \
 stdlib/itoa.o \
 string/memchr.o \
@@ -55,6 +56,7 @@ string/strstr.o \
 string/strcat.o \
 sys/circ_buf.o \
 sys/circ_buf_ptr.o \
+sys/vector.o
 
 HOSTEDOBJS=\
 $(ARCH_HOSTEDOBJS) \

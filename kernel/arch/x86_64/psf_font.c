@@ -118,7 +118,9 @@ psf_font* psf_init_fonts() {
 }
 
 psf_font* psf_name2font(char* name) {
-  if (strequ(name, "Fixed13")) {
+  if (strequ(name, "Default")) {
+    return &psf_available_fonts.Default;
+  } else if (strequ(name, "Fixed13")) {
     return &psf_available_fonts.Fixed13;
   } else if (strequ(name, "Fixed14")) {
     return &psf_available_fonts.Fixed14;
@@ -166,9 +168,8 @@ psf_font* psf_name2font(char* name) {
     return &psf_available_fonts.TerminusBoldVGA14;
   } else if (strequ(name, "TerminusBoldVGA16")) {
     return &psf_available_fonts.TerminusBoldVGA16;
-  } else {
-    return &psf_available_fonts.Default;
   }
+  return NULL;
 }
 
 void psf_set_active_font(psf_font* font) {
@@ -213,6 +214,15 @@ void psf_font_info_print_x(psf_font f) {
   }
 }
 
-void psf_font_info_print(__unused int argc, __unused char** argv) {
-  psf_font_info_print_x(*psf_active_font);
+void psf_font_info_print(int argc, char** argv) {
+  if (argc > 1) {
+    psf_font* font = psf_name2font(argv[1]);
+    if (font) {
+      psf_font_info_print_x(*font);
+    } else {
+      printf("Error: font %s not found", argv[1]);
+    }
+  } else {
+    psf_font_info_print_x(*psf_active_font);
+  }
 }
