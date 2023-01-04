@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <test.h>
+#include <kernel/test/test.h>
 
 SUITE(sprintf)
   char _str[128];

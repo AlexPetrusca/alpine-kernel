@@ -1,7 +1,3 @@
-DEFAULT_HOST!=../default-host.sh
-HOST?=DEFAULT_HOST
-HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
-
 CFLAGS?=-O2 -g
 CPPFLAGS?=
 LDFLAGS?=
@@ -18,47 +14,85 @@ CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
 LDFLAGS:=$(LDFLAGS)
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
-ARCHDIR=arch/$(HOSTARCH)
+KERNEL_CFLAGS=-m64 -z max-page-size=0x1000 -mno-red-zone -mno-mmx -mno-sse -mno-sse2
+KERNEL_CPPFLAGS=
+KERNEL_ASMFLAGS=-felf64
+KERNEL_LDFLAGS=
+KERNEL_LIBS=
 
-include $(ARCHDIR)/make.config
-
-CFLAGS:=$(CFLAGS) $(KERNEL_ARCH_CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) $(KERNEL_ARCH_CPPFLAGS)
-ASMFLAGS:=$(ASMFLAGS) $(KERNEL_ARCH_ASMFLAGS)
-LDFLAGS:=$(LDFLAGS) $(KERNEL_ARCH_LDFLAGS)
-LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
+CFLAGS:=$(CFLAGS) $(KERNEL_CFLAGS)
+CPPFLAGS:=$(CPPFLAGS) $(KERNEL_CPPFLAGS)
+ASMFLAGS:=$(ASMFLAGS) $(KERNEL_ASMFLAGS)
+LDFLAGS:=$(LDFLAGS) $(KERNEL_LDFLAGS)
+LIBS:=$(LIBS) $(KERNEL_LIBS)
 
 KERNEL_OBJS=\
-$(KERNEL_ARCH_OBJS) \
-kernel/kernel.o \
-kernel/test.o \
+boot/kernel.o \
+boot/boot.o \
+boot/mb2_info.o \
+tty/tty.o \
+tty/vga_ttyd.o \
+tty/vbe_ttyd.o \
+font/psf_font.o \
+font/Default.o \
+font/Fixed13.o \
+font/Fixed14.o \
+font/Fixed15.o \
+font/Fixed16.o \
+font/Fixed18.o \
+font/Terminus12x6.o \
+font/Terminus14.o \
+font/Terminus16.o \
+font/Terminus18x10.o \
+font/Terminus20x10.o \
+font/Terminus22x11.o \
+font/Terminus24x12.o \
+font/Terminus28x14.o \
+font/Terminus32x16.o \
+font/TerminusBold14.o \
+font/TerminusBold16.o \
+font/TerminusBold18x10.o \
+font/TerminusBold20x10.o \
+font/TerminusBold22x11.o \
+font/TerminusBold24x12.o \
+font/TerminusBold28x14.o \
+font/TerminusBold32x16.o \
+font/TerminusBoldVGA14.o \
+font/TerminusBoldVGA16.o \
+shell/sh.o \
+cpu/msr.o \
+cpu/cpu.o \
+device/acpi.o \
+device/apic.o \
+device/pci.o \
+device/usb.o \
+mem/mem.o \
+mem/heap.o \
+test/tests.o \
+test/test.o \
 
 OBJS=\
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
+boot/crti.o \
+crtbegin.o \
 $(KERNEL_OBJS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o \
+crtend.o \
+boot/crtn.o \
 
 LINK_LIST=\
 $(LDFLAGS) \
-$(ARCHDIR)/crti.o \
-$(ARCHDIR)/crtbegin.o \
-$(KERNEL_OBJS) \
+$(OBJS) \
 $(LIBS) \
-$(ARCHDIR)/crtend.o \
-$(ARCHDIR)/crtn.o \
 
 .PHONY: all clean install install-headers install-kernel
 .SUFFIXES: .o .c .S .asm .psf
 
 all: alpine.kernel
 
-alpine.kernel: $(OBJS) $(ARCHDIR)/linker.ld
-	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+alpine.kernel: $(OBJS) linker.ld
+	$(CC) -T linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 	grub-file --is-x86-multiboot2 alpine.kernel
 
-$(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
+crtbegin.o crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
 .c.o:
