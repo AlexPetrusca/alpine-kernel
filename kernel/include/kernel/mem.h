@@ -41,9 +41,9 @@ typedef struct {
   mem_type type;
 } mem_range;
 
-bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
-void mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type);
-bool mem_find_range(uint64_t addr, mem_range* range);
+void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
+bool mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) __attribute__ ((warn_unused_result));
+bool mem_find_range(uint64_t addr, mem_range* range) __attribute__ ((warn_unused_result));
 
 void mem_print_map(int argc, char** argv);
 

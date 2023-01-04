@@ -30,7 +30,7 @@ typedef struct {
   uint32_t HCCPARAMS2;// Capability Parameters 2 5.3.9
 } __attribute__((packed)) usb_capability_regs;
 
-bool usb_init();
+bool usb_init() __attribute__ ((warn_unused_result));
 
 void usb_print_info(int argc, char** argv);
 

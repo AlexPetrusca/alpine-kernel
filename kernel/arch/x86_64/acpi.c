@@ -7,18 +7,20 @@
 #include <kernel/acpi.h>
 
 acpi_rsdp* _rsdp;
+bool acpi_inited;
+#define CHECK_INIT(def)  try(acpi_inited, def, "ACPI subsystem not initialized")
 
 void acpi_init(mb2_tag_new_acpi* rsdp_tag) {
   assert(rsdp_tag != NULL, "RSDP does not exist");
   _rsdp = (acpi_rsdp*) &rsdp_tag->rsdp;
   mem_range range;
-  if (!mem_find_range(_rsdp->rsdt_address, &range)) {
-    panic("Cannot find ACPI memory range\n");
-  }
-  mem_identity_map_range(range.phys_addr, range.size, MEMORY_ACPI);
+  assert(mem_find_range(_rsdp->rsdt_address, &range), "Cannot find ACPI memory range\n");
+  assert(mem_identity_map_range(range.phys_addr, range.size, MEMORY_ACPI), "Cannot map the ACPI memory range");
+  acpi_inited = true;
 }
 
 void acpi_print_info(__unused int argc, __unused char** argv) {
+  CHECK_INIT();
   acpi_rsdt* rsdt = (acpi_rsdt*) (uint64_t) _rsdp->rsdt_address;
   int entry_count = (rsdt->header.length - sizeof(acpi_header)) / 4;
   printf("Signature: %.4s\n", (char*) rsdt);
@@ -30,6 +32,7 @@ void acpi_print_info(__unused int argc, __unused char** argv) {
 }
 
 acpi_header* acpi_find_table(char* name) {
+  CHECK_INIT(NULL);
   acpi_rsdt* rsdt = (acpi_rsdt*) (uint64_t) _rsdp->rsdt_address;
   int entry_count = (rsdt->header.length - sizeof(acpi_header)) / 4;
   for (int i = 0; i < entry_count; i++) {

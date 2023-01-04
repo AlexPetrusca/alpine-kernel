@@ -25,6 +25,9 @@ typedef struct {
   mem_type type;
 } mem_range_node;
 
+bool mem_inited = false;
+#define CHECK_INIT(def)  try(mem_inited, def, "Memory subsystem not initialized")
+
 uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
 
 uint32_t _mem_lower = 0;
@@ -47,12 +50,13 @@ mb2_mmap_entry* mem_find_main_mem(mb2_tag_mmap* mem_map) {
   return NULL;
 }
 
-bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
+void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   assert(mem_map != NULL, "Memory map not provided.");
   assert(basic_meminfo != NULL, "Basic memory info not provided.");
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
 
+  // initialize the heap
   mb2_mmap_entry* main_mem = mem_find_main_mem(mem_map);
   assert(main_mem != NULL, "Could not find main memory region.");
   uint64_t heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
@@ -61,6 +65,7 @@ bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   }
   heap_init(heap_addr, HEAP_SIZE);
 
+  //  save the memory map
   for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
        mmap = (mb2_mmap_entry*) ((uint64_t) mmap + mem_map->entry_size)) {
@@ -72,11 +77,13 @@ bool mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
     dll_add_tail(&_mem_map, (dll_node*) range);
   }
 
+  // register the heap in the memory map
   mem_range_node heap_mem_range = {.phys_addr = heap_addr, .size = HEAP_SIZE};
   heap_mem_range.type = MEMORY_HEAP;
   heap_mem_range.virt_addr = heap_addr;
   mem_update_range(&heap_mem_range);
-  return true;
+
+  mem_inited = true;
 }
 
 uint64_t allocate_page() {
@@ -107,15 +114,18 @@ void identity_map(uint64_t addr) {
 }
 
 // Good explanation of the concepts can be found here: https://back.engineering/23/08/2020/
-void mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) {
+bool mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) {
+  CHECK_INIT(false);
   for (uint64_t addr = phys_addr; addr < phys_addr + size; addr += PAGE_SIZE) {
     identity_map(addr);
   }
   mem_range_node range = {.phys_addr = phys_addr, .virt_addr = phys_addr, .size = size, .type = type};
   mem_update_range(&range);
+  return true;
 }
 
 bool mem_find_range(uint64_t addr, mem_range* range) {
+  CHECK_INIT(false);
   for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
     if (addr >= r->phys_addr && addr < r->phys_addr + r->size) {
       range->phys_addr = r->phys_addr;
@@ -184,6 +194,7 @@ bool mem_update_range(mem_range_node* range) {
 }
 
 void mem_print_map(__unused int argc, __unused char** argv) {
+  CHECK_INIT();
   printf(" Phys Start   Phys End     Virtual Addr     Size\n");
   for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
     printf(" %0.12lx %0.12lx %0.16lx %.12ld %s\n",
