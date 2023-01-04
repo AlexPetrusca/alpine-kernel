@@ -9,6 +9,8 @@
 
 pci_device _pci_devices[MAX_PCI_DEVICES] = {0};
 int _pci_device_count = 0;
+bool pci_inited;
+#define CHECK_INIT(def)  try(pci_inited, def, "PCI subsystem not initialized")
 
 pci_mcfg_table* find_mcfg_table() {
   return (pci_mcfg_table*) acpi_find_table("MCFG");
@@ -512,6 +514,7 @@ PciClassEntry* FindClassEntry(uint8_t class, PciClassEntry* entries) {
 }
 
 void pci_get_class_names(pci_device* device, pci_class_cames* names) {
+  CHECK_INIT();
   names->base_class = "?";
   names->sub_class = "?";
   names->pif_class = "?";
@@ -530,16 +533,15 @@ void pci_get_class_names(pci_device* device, pci_class_cames* names) {
   }
 }
 
-void pci_init() {
+bool pci_init() {
   pci_mcfg_table* mcfg = find_mcfg_table();
+  try(mcfg, false, "Cannot find MCFG table");
   int bridge_count = (mcfg->header.length - (sizeof(acpi_header) + 8)) / sizeof(pci_host_bridge);
   for (int brideg_id = 0; brideg_id < bridge_count; brideg_id++) {
     pci_host_bridge bridge = mcfg->host_bridge[brideg_id];
     mem_range range;
-    if (!mem_find_range(bridge.base_address, &range)) {
-      panic("Cannot find PCI bridge memory range\n");
-    }
-    mem_identity_map_range(range.phys_addr, range.size, MEMORY_PCI_ECAM);
+    try(mem_find_range(bridge.base_address, &range), false, "Cannot find PCI bridge memory range\n");
+    try(mem_identity_map_range(range.phys_addr, range.size, MEMORY_PCI_ECAM), false, "");
 
     for (int bus = bridge.start_bus_number; bus <= bridge.end_bus_number; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {
@@ -581,9 +583,12 @@ void pci_init() {
       }
     }
   }
+
+  return (pci_inited = true);
 }
 
 bool pci_get_device(pci_device* device) {
+  CHECK_INIT(false);
   for (int i = 0; i < _pci_device_count; i++) {
     pci_device* d = &_pci_devices[i];
     if (device->base_class_code == d->base_class_code && device->sub_class_code == d->sub_class_code
@@ -607,6 +612,7 @@ uint64_t pci_bar_addr_64(pci_device* device, int bar_index) {
 }
 
 void pci_print_mcfg(__unused int argc, __unused char** argv) {
+  CHECK_INIT();
   pci_mcfg_table* mcfg = find_mcfg_table();
   int bridge_count = (mcfg->header.length - (sizeof(acpi_header) + 8)) / sizeof(pci_host_bridge);
 
@@ -628,7 +634,22 @@ void pci_print_mcfg(__unused int argc, __unused char** argv) {
   }
 }
 
-void pci_print_devices(__unused int argc, __unused char** argv) {
+bool has_arg(char* arg, int argc, char** argv) {
+  for (int i = 0; i < argc; i++) {
+    if (strequ(argv[i], arg)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void pci_print_devices(int argc, char** argv) {
+  CHECK_INIT();
+  if (has_arg("-h", argc, argv)) {
+    printf("  pci     - prints PCI device list\n");
+    printf("  pci bar - prints PCI device list including the BARs\n");
+    return;
+  }
   for (int i = 0; i < _pci_device_count; i++) {
     pci_device* device = &_pci_devices[i];
     pci_class_cames strings;
@@ -639,12 +660,14 @@ void pci_print_devices(__unused int argc, __unused char** argv) {
            device->base_class_code, device->sub_class_code, device->pi_class_code,
            device->header_type,
            strings.base_class, strings.sub_class, strings.pif_class);
-    printf("  BARs: ");
-    for (int j = 0; j < 6; j++) {
-      if (device->bar[j].value != 0) {
-        printf("%x(%d), ", device->bar[j].value, device->bar[j].type);
+    if (has_arg("bar", argc, argv)) {
+      printf("  BARs: ");
+      for (int j = 0; j < 6; j++) {
+        if (device->bar[j].value != 0) {
+          printf("%x(%d), ", device->bar[j].value, device->bar[j].type);
+        }
       }
+      printf("\n");
     }
-    printf("\n");
   }
 }

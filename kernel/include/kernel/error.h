@@ -5,8 +5,14 @@
 #include <stdbool.h>
 
 #define try(code, def, message)       \
-    if ((code) <= 0) { \
-      printf("Warning: %s:", message);\
+    if ((uint64_t)(code) <= 0) { \
+      printf("Warning: %s\n", message);\
+      return def; \
+    }
+
+#define warn(code, def, message)       \
+    if ((uint64_t)(code) <= 0) { \
+      printf("Warning: %s\n", message);\
       return def; \
     }
 

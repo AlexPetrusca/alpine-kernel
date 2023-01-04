@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#define assert(condition, message)    \
-    if (!(condition)) panic(message); \
+#define assert(condition, format, ...)    \
+    if (!(condition)) panic(format, ##__VA_ARGS__); \
 
 #endif //LIBC_INCLUDE_ASSERT_H_

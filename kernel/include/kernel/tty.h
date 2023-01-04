@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <kernel/mb2_type.h>
 #include <kernel/ttyd.h>

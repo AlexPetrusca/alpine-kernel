@@ -10,6 +10,7 @@
 #include <kernel/vga_ttyd.h>
 #include <kernel/tty.h>
 #include <stdio.h>
+#include "assert.h"
 
 #define TERMINAL_BUFFER_SIZE 65535
 #define TERMINAL_LINE_LIMIT 1000
@@ -62,19 +63,21 @@ void terminal_buf_enqueue_line(char* line) {
   terminal_buf_write_null_terminator();
 }
 
-void tty_device_init(mb2_tag_framebuffer* framebuffer_tag) {
+__attribute__ ((warn_unused_result))
+bool tty_device_init(mb2_tag_framebuffer* framebuffer_tag) {
   mb2_tag_framebuffer_common fb_info = framebuffer_tag->common;
   if (fb_info.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
     size_t fb_size = (fb_info.framebuffer_width * fb_info.framebuffer_height) * sizeof(uint32_t);
-    mem_identity_map_range(fb_info.framebuffer_addr, fb_size, MEMORY_FRAME_BUFFER);
+    try(mem_identity_map_range(fb_info.framebuffer_addr, fb_size, MEMORY_FRAME_BUFFER), false, "");
     *device = vbe_ttyd_init(fb_info.framebuffer_addr, fb_info.framebuffer_width, fb_info.framebuffer_height);
   } else {
     *device = vga_ttyd_init(VGA_TEXT_MODE_PHYS_ADDR);
   }
+  return true;
 }
 
 void terminal_init(mb2_tag_framebuffer* fb_tag) {
-  tty_device_init(fb_tag);
+  assert(tty_device_init(fb_tag), "");
   width = device->get_width();
   height = device->get_height();
   terminal_setcolor(COLOR_LIGHT_GREEN, COLOR_BLACK);
