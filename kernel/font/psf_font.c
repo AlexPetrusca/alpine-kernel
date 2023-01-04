@@ -113,7 +113,7 @@ psf_font* psf_init_fonts() {
   psf_register_font(&psf_available_fonts.TerminusBold32x16, &_binary_font_TerminusBold32x16_psf_start);
   psf_register_font(&psf_available_fonts.TerminusBoldVGA14, &_binary_font_TerminusBoldVGA14_psf_start);
   psf_register_font(&psf_available_fonts.TerminusBoldVGA16, &_binary_font_TerminusBoldVGA16_psf_start);
-  psf_active_font = &psf_available_fonts.Default;
+  psf_active_font = &psf_available_fonts.Terminus18x10;
   return psf_active_font;
 }
 
