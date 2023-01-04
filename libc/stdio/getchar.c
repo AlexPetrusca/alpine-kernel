@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include <kernel/kb.h>
+#include <kernel/device/kb.h>
 
 int getchar() {
   // todo: implement

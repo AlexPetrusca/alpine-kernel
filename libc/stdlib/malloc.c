@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include <kernel/heap.h>
+#include <kernel/mem/heap.h>
 
 void* malloc(size_t size) {
   return kmalloc(size);

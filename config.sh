@@ -2,7 +2,7 @@ SYSTEM_HEADER_PROJECTS="libc kernel"
 PROJECTS="libc kernel"
 
 export MAKE=${MAKE:-gmake}
-export HOST=${HOST:-$(./default-host.sh)}
+export HOST=${HOST:-x86_64-elf}
 
 export AR=${HOST}-ar
 export AS=${HOST}-as

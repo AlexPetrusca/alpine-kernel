@@ -8,27 +8,27 @@ include_directories(libc/include)
 include_directories(libc/include/sys)
 
 add_executable(alpine_kernel
-        kernel/arch/x86_64/boot.asm
-        kernel/arch/x86_64/sh.c
-        kernel/arch/x86_64/tty.c
-        kernel/arch/x86_64/msr.c
-        kernel/arch/x86_64/cpu.c
-        kernel/arch/x86_64/acpi.c
-        kernel/arch/x86_64/apic.c
-        kernel/arch/x86_64/pci.c
-        kernel/include/kernel/kb.h
-        kernel/include/kernel/sh.h
-        kernel/include/kernel/tty.h
-        kernel/include/kernel/vga_ttyd.h
-        kernel/include/kernel/vbe_ttyd.h
-        kernel/arch/x86_64/vga_ttyd.c
-        kernel/arch/x86_64/vbe_ttyd.c
-        kernel/include/kernel/msr.h
-        kernel/include/kernel/cpu.h
-        kernel/include/kernel/acpi.h
-        kernel/include/kernel/apic.h
-        kernel/include/kernel/pci.h
-        kernel/kernel/kernel.c
+        kernel/boot/boot.asm
+        kernel/shell/sh.c
+        kernel/tty/tty.c
+        kernel/cpu/msr.c
+        kernel/cpu/cpu.c
+        kernel/device/acpi.c
+        kernel/device/apic.c
+        kernel/device/pci.c
+        kernel/include/kernel/device/kb.h
+        kernel/include/kernel/shell/sh.h
+        kernel/include/kernel/tty/tty.h
+        kernel/include/kernel/tty/vga_ttyd.h
+        kernel/include/kernel/tty/vbe_ttyd.h
+        kernel/tty/vga_ttyd.c
+        kernel/tty/vbe_ttyd.c
+        kernel/include/kernel/cpu/msr.h
+        kernel/include/kernel/cpu/cpu.h
+        kernel/include/kernel/device/acpi.h
+        kernel/include/kernel/device/apic.h
+        kernel/include/kernel/device/pci.h
+        kernel/boot/kernel.c
         libc/include/sys/cdefs.h
         libc/include/sys/circ_buf.h
         libc/include/sys/io.h
@@ -59,28 +59,27 @@ add_executable(alpine_kernel
         libc/string/strstr.c
         libc/string/strtok.c
         libc/sys/circ_buf.c
-        kernel/kernel/test.c
-        kernel/include/test.h
+        kernel/test/test.c
+        kernel/include/kernel/test/test.h
         libc/stdio/printf_test.c
         libc/include/stdio_tests.h
-        kernel/arch/x86_64/mem.c
-        kernel/include/kernel/mb2_info.h
-        kernel/include/kernel/mb2_type.h
-        kernel/include/kernel/mem.h
-        kernel/include/kernel/psf_font.h
-        kernel/include/kernel/heap.h
-        kernel/arch/x86_64/heap.c
-        kernel/arch/x86_64/mb2_info.c
-        kernel/arch/x86_64/error.c
-        kernel/include/kernel/error.h
-        kernel/include/kernel/usb.h
-        kernel/arch/x86_64/usb.c
-        kernel/arch/x86_64/psf_font.c
-        kernel/arch/x86_64/psf_font.c
-        kernel/arch/x86_64/dll.c
-        kernel/include/kernel/dll.h
-        kernel/arch/x86_64/tests.c
-        kernel/include/kernel/tests.h
+        kernel/mem/mem.c
+        kernel/include/kernel/boot/mb2_info.h
+        kernel/include/kernel/boot/mb2_type.h
+        kernel/include/kernel/mem/mem.h
+        kernel/include/kernel/font/psf_font.h
+        kernel/include/kernel/mem/heap.h
+        kernel/mem/heap.c
+        kernel/boot/mb2_info.c
+        kernel/include/kernel/error/error.h
+        kernel/include/kernel/device/usb.h
+        kernel/device/usb.c
+        kernel/font/psf_font.c
+        kernel/font/psf_font.c
+        libc/sys/dll.c
+        libc/include/sys/dll.h
+        kernel/test/tests.c
+        kernel/include/kernel/test/tests.h
         libc/include/sys/vector.h
         libc/sys/vector.c
         libc/sys/circ_buf_ptr.c)

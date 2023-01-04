@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <kernel/tty.h>
+#include <kernel/tty/tty.h>
 
 // Print primitives
 #define LEFT_JUSTIFY         1 << 0
