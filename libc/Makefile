@@ -1,3 +1,5 @@
+.ONESHELL: # Applies to every targets in the file!
+
 CFLAGS?=-O2 -g
 CPPFLAGS?=
 LDFLAGS?=
@@ -14,26 +16,21 @@ CPPFLAGS:=$(CPPFLAGS) -D__is_libc -Iinclude
 LIBK_CFLAGS:=$(CFLAGS)
 LIBK_CPPFLAGS:=$(CPPFLAGS) -D__is_libk
 
-ARCH_CFLAGS=-m64 -z max-page-size=0x1000 -mno-red-zone -mno-mmx -mno-sse -mno-sse2
-ARCH_CPPFLAGS=
-ARCH_ASMFLAGS=-felf64
-KERNEL_ARCH_CFLAGS=
-KERNEL_ARCH_CPPFLAGS=
-KERNEL_ARCH_ASMFLAGS=
+CFLAGS=-m64 -z max-page-size=0x1000 -mno-red-zone -mno-mmx -mno-sse -mno-sse2
+CPPFLAGS=
+ASMFLAGS=-felf64
+KERNEL_CFLAGS=
+KERNEL_CPPFLAGS=
+KERNEL_ASMFLAGS=
 
-ARCH_FREEOBJS=\
-
-ARCH_HOSTEDOBJS=\
-
-CFLAGS:=$(CFLAGS) $(ARCH_CFLAGS)
-CPPFLAGS:=$(CPPFLAGS) $(ARCH_CPPFLAGS)
-ASMFLAGS:=$(ASMFLAGS) $(ARCH_ASMFLAGS)
+CFLAGS:=$(CFLAGS) $(CFLAGS)
+CPPFLAGS:=$(CPPFLAGS) $(CPPFLAGS)
+ASMFLAGS:=$(ASMFLAGS) $(ASMFLAGS)
 LIBK_CFLAGS:=$(LIBK_CFLAGS) $(KERNEL_CFLAGS)
 LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_CPPFLAGS)
 LIBK_ASMFLAGS:=$(ASMFLAGS) $(KERNEL_ASMFLAGS)
 
-FREEOBJS=\
-$(ARCH_FREEOBJS) \
+OBJS=\
 stdio/printf.o \
 stdio/printf_test.o \
 stdio/getchar.o \
@@ -62,14 +59,7 @@ sys/circ_buf_ptr.o \
 sys/dll.o \
 sys/vector.o
 
-HOSTEDOBJS=\
-$(ARCH_HOSTEDOBJS) \
-
-OBJS=\
-$(FREEOBJS) \
-$(HOSTEDOBJS) \
-
-LIBK_OBJS=$(FREEOBJS:.o=.libk.o)
+LIBK_OBJS=$(OBJS:.o=.libk.o)
 
 #BINARIES=libc.a libk.a # Not ready for libc yet.
 BINARIES=libk.a
@@ -80,43 +70,52 @@ BINARIES=libk.a
 all: $(BINARIES)
 
 libc.a: $(OBJS)
+	@ cd ../build
 	$(AR) rcs $@ $(OBJS)
 
 libk.a: $(LIBK_OBJS)
+	@  cd ../build
 	$(AR) rcs $@ $(LIBK_OBJS)
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS)
+	@ cd ../build mkdir -p $(@D);
+	$(CC) -MD -c ../libc/$< -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS)
 
 .c.S:
-	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	@ cd ../build; mkdir -p $(@D);
+	$(CC) -MD -c ../libc/$< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 .c.asm:
-	$(ASM) $< -o $@ $(ASMFLAGS)
+	@ cd ../build; mkdir -p $(@D);
+	$(ASM) ../libc/$< -o $@ $(ASMFLAGS)
 
 .c.libk.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+	@ cd ../build; mkdir -p $(@D);
+	$(CC) -MD -c ../libc/$< -o $@ -std=gnu17 $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 .S.libk.o:
-	$(CC) -MD -c $< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
+	@ cd ../build; mkdir -p $(@D);
+	$(CC) -MD -c ../libc/$< -o $@ $(LIBK_CFLAGS) $(LIBK_CPPFLAGS)
 
 .asm.libk.o:
-	$(ASM) $< -o $@ $(ASMFLAGS)
+	@ cd ../build; mkdir -p $(@D);
+	$(ASM) ../libc/$< -o $@ $(ASMFLAGS)
 
 clean:
-	rm -f $(BINARIES) *.a
-	rm -f $(OBJS) $(LIBK_OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) $(LIBK_OBJS:.o=.d) *.d */*.d */*/*.d
+	@ rm -f build
+	@ rm -f $(BINARIES) *.a
+	@ rm -f $(OBJS) $(LIBK_OBJS) *.o */*.o */*/*.o
+	@ rm -f $(OBJS:.o=.d) $(LIBK_OBJS:.o=.d) *.d */*.d */*/*.d
 
 install: install-headers install-libs
 
 install-headers:
-	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R -p include/. $(DESTDIR)$(INCLUDEDIR)/.
+	@ mkdir -p $(DESTDIR)$(INCLUDEDIR)
+	@ cp -R -p include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 install-libs: $(BINARIES)
-	mkdir -p $(DESTDIR)$(LIBDIR)
-	cp $(BINARIES) $(DESTDIR)$(LIBDIR)
+	@ mkdir -p $(DESTDIR)$(LIBDIR)
+	@ cd ../build; cp $(BINARIES) $(DESTDIR)$(LIBDIR)
 
 -include $(OBJS:.o=.d)
 -include $(LIBK_OBJS:.o=.d)

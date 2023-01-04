@@ -1,3 +1,5 @@
+.ONESHELL: # Applies to every targets in the file!
+
 CFLAGS?=-O2 -g
 CPPFLAGS?=
 LDFLAGS?=
@@ -11,7 +13,7 @@ INCLUDEDIR?=$(PREFIX)/include
 
 CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude
-LDFLAGS:=$(LDFLAGS)
+LDFLAGS:=$(LDFLAGS) -z noexecstack
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
 KERNEL_CFLAGS=-m64 -z max-page-size=0x1000 -mno-red-zone -mno-mmx -mno-sse -mno-sse2
@@ -89,37 +91,49 @@ $(LIBS) \
 all: alpine.kernel
 
 alpine.kernel: $(OBJS) linker.ld
-	$(CC) -T linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+	@ cd ../build
+	$(CC) -T ../kernel/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
 	grub-file --is-x86-multiboot2 alpine.kernel
 
 crtbegin.o crtend.o:
-	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
+	@ OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" ../build/$@
 
 .c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS)
+	@ cd ../build
+	@ mkdir -p $(@D);
+	$(CC) -MD -c ../kernel/$< -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS)
 
 .S.o:
-	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+	@ cd ../build
+	@ mkdir -p $(@D);
+	$(CC) -MD -c ../kernel/$< -o $@ $(CFLAGS) $(CPPFLAGS)
 
 .psf.o:
+	@ cd ../build
+	@ mkdir -p $(@D);
+	cp ../kernel/$< $(@D);
 	x86_64-elf-objcopy -O elf64-x86-64 -B i386 -I binary $< $@
 
 .asm.o:
-	$(ASM) $< -o $@ $(ASMFLAGS)
+	@ cd ../build
+	@ mkdir -p $(@D);
+	$(ASM) ../kernel/$< -o $@ $(ASMFLAGS)
 
 clean:
-	rm -f alpine.kernel
-	rm -f $(OBJS) *.o */*.o */*/*.o
-	rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
+	@ rm -f build
+	@ rm -f alpine.kernel
+	@ rm -f $(OBJS) *.o */*.o */*/*.o
+	@ rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
 
 install: install-headers install-kernel
 
 install-headers:
-	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R -p include/. $(DESTDIR)$(INCLUDEDIR)/.
+	@ mkdir -p $(DESTDIR)$(INCLUDEDIR)
+	@ cp -R -p include/. $(DESTDIR)$(INCLUDEDIR)/.
 
 install-kernel: alpine.kernel
-	mkdir -p $(DESTDIR)$(BOOTDIR)
-	cp alpine.kernel $(DESTDIR)$(BOOTDIR)
+	@ mkdir -p $(DESTDIR)$(BOOTDIR)
+	@ cd ../build;
+	@ cp alpine.kernel $(DESTDIR)$(BOOTDIR)
 
 -include $(OBJS:.o=.d)

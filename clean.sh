@@ -2,6 +2,8 @@
 set -e
 . ./config.sh
 
+echo "Cleaning..."
+
 for PROJECT in $PROJECTS; do
   (cd $PROJECT && $MAKE clean)
 done

@@ -2,6 +2,7 @@
 set -e
 . ./iso.sh
 
+echo "Running QEMU..."
 qemu-system-x86_64 \
 		-machine q35 \
 		-smp 2 \

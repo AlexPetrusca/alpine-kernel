@@ -8,7 +8,9 @@ edk2
 .DS_Store
 **/*.iso
 **/*.o
+**/*.a
+**/*.d
 **/*.so
 **/*.img
 **/*.lst
-**/*.EFI
+**/*.kernel
