@@ -45,10 +45,10 @@ GRAN_4K       equ 1 << 7
 
 ; Paging constants
 PAGE_SIZE     equ 4096   ; 4 KB
-PML4T_START   equ 0x1000
-PDPT_START    equ 0x2000
-PDT_START     equ 0x3000
-PT_START      equ 0x4000
+PML4T_START   equ 0xA000
+PDPT_START    equ 0xB000
+PDT_START     equ 0xC000
+PT_START      equ 0xD000
 
 ; Page access bits
 PAGE_PRESENT    equ (1 << 0)
@@ -70,14 +70,14 @@ multiboot_header:
     dd HEADER_SIZE
     dd CHECKSUM
 
-framebuffer_tag:
-    align 8
-    dw FRAMEBUFFER_TAG
-    dw 0
-    dd FRAMEBUFFER_TAG_SIZE
-    dd SCREEN_WIDTH
-    dd SCREEN_HEIGHT
-    dd SCREEN_DEPTH
+;framebuffer_tag:
+;    align 8
+;    dw FRAMEBUFFER_TAG
+;    dw 0
+;    dd FRAMEBUFFER_TAG_SIZE
+;    dd SCREEN_WIDTH
+;    dd SCREEN_HEIGHT
+;    dd SCREEN_DEPTH
 
 end_tag:
     align 8
@@ -92,13 +92,18 @@ stack_bottom:
 resb STACK_SIZE ; 16 KiB stack
 stack_top:
 
+extern main_gdt_pointer_size
+extern main_gdt_pointer_base
+extern main_idt_pointer_size
+extern main_idt_pointer_base
+
 section .data
 align 4
 IDT:
     .Length:
-        dw 0
+        main_idt_pointer_size dw 0
     .Base:
-        dd 0
+        main_idt_pointer_base dd 0
 
 GDT:
     .Null:
@@ -116,8 +121,8 @@ GDT:
         db GRAN_4K | SZ_32 | 0xF                    ; Flags & Limit (high, bits 16-19)
         db 0                                        ; Base (high, bits 24-31)
     .Pointer:
-        dw $ - GDT - 1
-        dq GDT
+        main_gdt_pointer_size dw $ - GDT - 1
+        main_gdt_pointer_base dq GDT
 
 [BITS 32]
 section .text

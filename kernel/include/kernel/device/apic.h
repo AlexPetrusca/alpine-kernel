@@ -81,13 +81,45 @@ typedef enum {
   APIC_REG_DCR = 0x3E0, //Divide Configuration Register (for Timer) (RW)
 } apic_reg;
 
-#define APIC_REG_SIV_ENABLE (1 << 8)
+// Interrupt Command Register
+// Delivery Mode
+#define ICR_FIXED                       0x00000000
+#define ICR_LOWEST                      0x00000100
+#define ICR_SMI                         0x00000200
+#define ICR_NMI                         0x00000400
+#define ICR_INIT                        0x00000500
+#define ICR_STARTUP                     0x00000600
+// Destination Mode
+#define ICR_PHYSICAL                    0x00000000
+#define ICR_LOGICAL                     0x00000800
+// Delivery Status
+#define ICR_IDLE                        0x00000000
+#define ICR_SEND_PENDING                0x00001000
+// Level
+#define ICR_DEASSERT                    0x00000000
+#define ICR_ASSERT                      0x00004000
+// Trigger Mode
+#define ICR_EDGE                        0x00000000
+#define ICR_LEVEL                       0x00008000
+// Destination Shorthand
+#define ICR_NO_SHORTHAND                0x00000000
+#define ICR_SELF                        0x00040000
+#define ICR_ALL_INCLUDING_SELF          0x00080000
+#define ICR_ALL_EXCLUDING_SELF          0x000c0000
+// Destination Field
+#define ICR_DESTINATION_SHIFT           24
 
-uint32_t apic_global_enable();
-void apic_enable(uint64_t apic_base_addr);
-void apic_send_init(uint64_t apic_base_addr);
-uint32_t apic_read_reg(apic_reg reg, uint64_t apic_base_addr);
-void apic_write_reg(apic_reg reg, uint32_t value, uint64_t apic_base_addr);
+//Spurious Interrupt Vector Register
+#define APIC_REG_SIV_ENABLE             (1 << 8)
+
+bool apic_init() __attribute__ ((warn_unused_result));
+void apic_enable_lapic();
+void apic_send_init();
+void apic_send_sipi();
+void LocalApicSendInit(uint32_t apic_id);
+void LocalApicSendStartup(uint32_t apic_id, uint32_t vector);
+uint32_t apic_read_reg(apic_reg reg);
+void apic_write_reg(apic_reg reg, uint32_t value);
 
 void apic_print_info(int argc, char** argv);
 void apic_print_lapic_info(int argc, char** argv);

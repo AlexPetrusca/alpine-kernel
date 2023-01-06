@@ -80,6 +80,8 @@ add_executable(alpine_kernel
         libc/include/sys/dll.h
         kernel/test/tests.c
         kernel/include/kernel/test/tests.h
+        kernel/cpu/smp.c
+        kernel/include/kernel/cpu/smp.h
         libc/include/sys/vector.h
         libc/sys/vector.c
         libc/sys/circ_buf_ptr.c
@@ -88,4 +90,5 @@ add_executable(alpine_kernel
         libc/string/strchr_test.c
         libc/string/strtok_test.c
         libc/string/strstr_test.c
-        libc/string/strcat_test.c)
+        libc/string/strcat_test.c
+        )

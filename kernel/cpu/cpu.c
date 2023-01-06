@@ -33,6 +33,27 @@
     : "%rax"                                              \
   )
 
+uint64_t rdtsc() {
+  unsigned int lo, hi;
+  __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+  return ((uint64_t) hi << 32) | lo;
+}
+
+void cpu_delay_us(long us) {
+  uint64_t clock = rdtsc() + 2 * 1000 * us;
+  while (rdtsc() < clock) {}
+}
+
+void cpu_delay_ms(long ms) {
+  uint64_t clock = rdtsc() + 2 * 1000 * 1000 * ms;
+  while (rdtsc() < clock) {}
+}
+
+void cpu_delay_s(long s) {
+  uint64_t clock = rdtsc() + 2 * 1000 * 1000 * 1000 * s;
+  while (rdtsc() < clock) {}
+}
+
 void cpu_print_info(__unused int argc, __unused char** argv) {
   uint32_t id[13];
   id[12] = 0;  // to create a zero-terminated string
@@ -81,4 +102,7 @@ void cpu_print_info(__unused int argc, __unused char** argv) {
   printf("Long Mode Active: %d\n", (efer & IA32_EFER_MSR_LMA) != 0);
   printf("Long Mode Segment Limit Enable: %d\n", (efer & IA32_EFER_MSR_LMSLE) != 0);
   printf("System Call Extensions: %d\n", (efer & IA32_EFER_MSR_SCE) != 0);
+
+  printf("CR0 = 0x%x, \"CR2 = 0x%x, \"CR3 = 0x%x, \"CR4 = 0x%x\n", cr0, cr2, cr3, cr4);
+  printf("EFER = 0x%lx\n", efer);
 }

@@ -90,6 +90,9 @@
 // Hyper Threading
 # define CPU_FEATURE_HTT 1 << 28
 
+void cpu_delay_us(long us);
+void cpu_delay_ms(long ms);
+void cpu_delay_s(long s);
 void cpu_print_info(int argc, char** argv);
 
 #endif //_CPUID_H_

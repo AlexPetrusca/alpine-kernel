@@ -64,6 +64,8 @@ font/TerminusBoldVGA16.o \
 shell/sh.o \
 cpu/msr.o \
 cpu/cpu.o \
+cpu/smp.o \
+cpu/trampoline.o \
 device/acpi.o \
 device/apic.o \
 device/pci.o \
