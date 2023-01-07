@@ -172,7 +172,7 @@ void sh_right_arrow() {
 }
 
 void sh_up_arrow() {
-  if (kb_is_pressed(OPTION)) {
+  if (kb_is_pressed(KB_OPTION)) {
     tty_scroll_up();
   } else if ((sh_history_idx == 0 && sh_command_idx == 0) || sh_history_idx > 0) {
     if (sh_history_idx < sh_history_circ_buf.size - 1) {
@@ -196,7 +196,7 @@ void sh_left_arrow() {
 }
 
 void sh_down_arrow() {
-  if (kb_is_pressed(OPTION)) {
+  if (kb_is_pressed(KB_OPTION)) {
     tty_scroll_down();
   } else if (sh_history_idx > 0) {
     sh_history_idx--;
@@ -218,7 +218,7 @@ void sh_backspace() {
 
 bool sh_handle_input(int ch) {
   switch (ch) {
-    case CONTROL ... SCROLL_LOCK:
+    case KB_CONTROL ... SCROLL_LOCK:
     case F1 ... F12:
     case ESC:
       break;
