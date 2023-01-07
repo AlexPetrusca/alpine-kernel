@@ -234,8 +234,8 @@ typedef struct {
   uint16_t segment_b;
   uint32_t win_func_ptr;	// deprecated; used to switch banks from protected mode without returning to real mode
   uint16_t pitch;			    // number of bytes per horizontal line
-  uint16_t width;			    // width in pixels
-  uint16_t height;			  // height in pixels
+  uint16_t width;			    // tty_width in pixels
+  uint16_t height;			  // tty_height in pixels
   uint8_t w_char;			    // unused...
   uint8_t y_char;			    // ...
   uint8_t planes;

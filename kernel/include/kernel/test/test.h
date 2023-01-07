@@ -13,17 +13,17 @@
 #define STRINGIZE(A) STRINGIZE_NX(A)
 
 #define SUITEDECL(name) void PPCAT3(test_, name, _suite)()
-#define SUITE(name)     \
-  SUITEDECL(name) {     \
+#define SUITE(name)                      \
+  SUITEDECL(name) {                     \
     printf("%s:\n", STRINGIZE(name));
 #define ENDS }
 
-#define TEST(test_name) \
-  do {                  \
+#define TEST(test_name)                  \
+  do {                                  \
     char* name = STRINGIZE(test_name);
 
-#define ENDT \
-    printf("  %s: OK\n", name); \
+#define ENDT                             \
+    printf("  %s: OK\n", name);         \
   } while (0);
 
 int assert_equal_str(char* found, char* expected, int line, char* test, char* file);

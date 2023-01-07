@@ -39,7 +39,7 @@
 
 // todo: some of these fields/functions don't need to be exposed to downstream consumers --> can move them to kb.c
 
-static int keyboard_us_layout[256] = {
+static int kb_us_layout[256] = {
     0, ESC, '1', '2', '3', '4', '5', '6', '7', '8',
     '9', '0', '-', '=', '\b', '\t', 'q', 'w', 'e', 'r',
     't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', CONTROL,
@@ -70,59 +70,59 @@ static int keyboard_us_layout[256] = {
 };
 
 static bool kb_pressed[256];
-static bool keyboard_num_lock;
-static bool keyboard_caps_lock;
-static bool keyboard_scroll_lock;
+static bool kb_num_lock;
+static bool kb_caps_lock;
+static bool kb_scroll_lock;
 
-static inline bool keyboard_is_pressed(int ch) {
+static inline bool kb_is_pressed(int ch) {
   return kb_pressed[ch];
 }
 
-static inline bool keyboard_is_released(int ch) {
+static inline bool kb_is_released(int ch) {
   return !kb_pressed[ch];
 }
 
-static inline void keyboard_set_pressed(int ch) {
+static inline void kb_set_pressed(int ch) {
   kb_pressed[ch] = true;
 }
 
-static inline void keyboard_set_released(int ch) {
+static inline void kb_set_released(int ch) {
   kb_pressed[ch] = false;
 }
 
-static inline int keyboard_readscan() {
+static inline int kb_readscan() {
   return inb(0x60);
 }
 
-static inline int keyboard_scan2ch(int scan) {
+static inline int kb_scan2ch(int scan) {
   int scan_offset = scan & 0x7F;
-  if (keyboard_is_pressed(LEFT_SHIFT) || keyboard_is_pressed(RIGHT_SHIFT) || keyboard_caps_lock) {
+  if (kb_is_pressed(LEFT_SHIFT) || kb_is_pressed(RIGHT_SHIFT) || kb_caps_lock) {
     // todo: CAPS_LOCK should only affect alphabetic characters
     // todo: when holding shift and CAPS_LOCK on, should type lowecase characters???
-    return keyboard_us_layout[scan_offset + 128];
+    return kb_us_layout[scan_offset + 128];
   } else {
-    return keyboard_us_layout[scan_offset];
+    return kb_us_layout[scan_offset];
   }
 }
 
-static inline int keyboard_scan2release(int scan) {
+static inline int kb_scan2release(int scan) {
   return scan & 0x80;
 }
 
-static inline int keyboard_getchar() {
+static inline int kb_getchar() {
   while (true) {
-    int scan = keyboard_readscan();
-    int ch = keyboard_scan2ch(scan);
-    if (keyboard_scan2release(scan)) {
-      keyboard_set_released(ch);
-    } else if (keyboard_is_released(ch)) {
-      keyboard_set_pressed(ch);
+    int scan = kb_readscan();
+    int ch = kb_scan2ch(scan);
+    if (kb_scan2release(scan)) {
+      kb_set_released(ch);
+    } else if (kb_is_released(ch)) {
+      kb_set_pressed(ch);
       if (ch == NUM_LOCK) {
-        keyboard_num_lock = !keyboard_num_lock;
+        kb_num_lock = !kb_num_lock;
       } else if (ch == CAPS_LOCK) {
-        keyboard_caps_lock = !keyboard_caps_lock;
+        kb_caps_lock = !kb_caps_lock;
       } else if (ch == SCROLL_LOCK) {
-        keyboard_scroll_lock = !keyboard_scroll_lock;
+        kb_scroll_lock = !kb_scroll_lock;
       }
       return ch;
     }

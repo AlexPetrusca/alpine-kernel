@@ -19,15 +19,15 @@
 #include <kernel/font/psf_font.h>
 #include <kernel/test/tests.h>
 
-#define MAX_HISTORY 5
-#define MAX_COMMAND 4096
+#define SH_MAX_HISTORY 5
+#define SH_MAX_COMMAND 4096
 
 typedef struct {
   char* name;
   void (* run)(int argc, char** argv);
 } sh_command;
 
-sh_command commands[] = {
+sh_command sh_commands[] = {
     {"cpu",  cpu_print_info},
     {"test", tests_run},
     {"acpi", acpi_print_info},
@@ -42,63 +42,63 @@ sh_command commands[] = {
     {"", NULL}
 };;
 
-char history_buf[(MAX_HISTORY + 1) * (MAX_COMMAND + 1)];
-struct circ_buf history_circ_buf;
+char sh_history_buf[(SH_MAX_HISTORY + 1) * (SH_MAX_COMMAND + 1)];
+struct circ_buf sh_history_circ_buf;
 
-int16_t prompt_limit;
-size_t history_idx;
-size_t command_idx;
+uint32_t sh_prompt_limit;
+uint32_t sh_history_idx;
+uint32_t sh_command_idx;
 
-static inline char* shell_command_buffer() {
-  return circ_buf_peek(&history_circ_buf);
+static inline char* sh_command_buffer() {
+  return circ_buf_peek(&sh_history_circ_buf);
 }
 
-static inline void shell_write_command_buffer(char ch) {
-  shell_command_buffer()[command_idx] = ch;
+static inline void sh_write_command_buffer(char ch) {
+  sh_command_buffer()[sh_command_idx] = ch;
 }
 
-void shell_command_printf(const char* format, ...) {
-  int pre_line = terminal_getline();
+void sh_command_printf(const char* format, ...) {
+  uint32_t pre_line = tty_getline();
 
   va_list arg;
   va_start(arg, format);
   vprintf(format, arg);
   va_end(arg);
 
-  int post_line = terminal_getline();
+  uint32_t post_line = tty_getline();
 
   if (post_line > pre_line) {
-    prompt_limit -= terminal_get_width() * (post_line - pre_line);
+    sh_prompt_limit -= tty_get_width() * (post_line - pre_line);
   }
 }
 
-void shell_prompt() {
-  if (terminal_get_cursor_pos() % terminal_get_width() != 0) {
+void sh_prompt() {
+  if (tty_get_cursor_pos() % tty_get_width() != 0) {
     printf("\n");
   }
   printf("$ ");
-  prompt_limit = terminal_get_cursor_pos();
-  history_idx = 0;
-  command_idx = 0;
+  sh_prompt_limit = tty_get_cursor_pos();
+  sh_history_idx = 0;
+  sh_command_idx = 0;
 }
 
-void shell_load_history() {
-  terminal_delete(command_idx);
+void sh_load_history() {
+  tty_delete(sh_command_idx);
 
-  char* command = shell_command_buffer();
-  if (history_idx == 0) {
+  char* command = sh_command_buffer();
+  if (sh_history_idx == 0) {
     command[0] = '\0';
-    command_idx = 0;
+    sh_command_idx = 0;
   } else {
-    strcpy(command, circ_buf_peekn(&history_circ_buf, history_idx));
-    command_idx = strlen(command);
+    strcpy(command, circ_buf_peekn(&sh_history_circ_buf, sh_history_idx));
+    sh_command_idx = strlen(command);
   }
-  terminal_set_cursor_pos(prompt_limit);
-  shell_command_printf("%s", command);
+  tty_set_cursor_pos(sh_prompt_limit);
+  sh_command_printf("%s", command);
 }
 
-sh_command* shell_find_command(char* name) {
-  for (sh_command* cmd = commands; cmd->run != NULL; cmd++) {
+sh_command* sh_find_command(char* name) {
+  for (sh_command* cmd = sh_commands; cmd->run != NULL; cmd++) {
     if (strcmp(cmd->name, name) == 0) {
       return cmd;
     }
@@ -106,15 +106,15 @@ sh_command* shell_find_command(char* name) {
   return NULL;
 }
 
-void shell_print_commands() {
-  for (sh_command* cmd = commands; cmd->run != NULL; cmd++) {
+void sh_print_commands() {
+  for (sh_command* cmd = sh_commands; cmd->run != NULL; cmd++) {
     printf("%s ", cmd->name);
   }
   printf("\n");
 }
 
-vector* shell_strsplit(char* str, const char* delim) {
-  char copy[MAX_COMMAND];
+vector* sh_strsplit(char* str, const char* delim) {
+  char copy[SH_MAX_COMMAND];
   strcpy(copy, str);
 
   vector* args_vec = vector_new();
@@ -126,144 +126,144 @@ vector* shell_strsplit(char* str, const char* delim) {
   return args_vec;
 }
 
-bool shell_execute() {
+bool sh_execute() {
   printf("\n");
-  shell_write_command_buffer('\0');
-  char* command_line = shell_command_buffer();
+  sh_write_command_buffer('\0');
+  char* command_line = sh_command_buffer();
   sh_command* cmd = NULL;
   // todo: instead, check if input contains only whitespace
-  if (command_idx > 0) {
-    vector* args = shell_strsplit(command_line, " ");
+  if (sh_command_idx > 0) {
+    vector* args = sh_strsplit(command_line, " ");
     char* command = vector_get(args, 0);
     if (strequ(command, "history")) {
-      for (size_t i = 1; i < history_circ_buf.size; i++) {
-        printf("%d: %s\n", i, (char*) circ_buf_peekn(&history_circ_buf, i));
+      for (size_t i = 1; i < sh_history_circ_buf.size; i++) {
+        printf("%d: %s\n", i, (char*) circ_buf_peekn(&sh_history_circ_buf, i));
       }
     } else if (strequ(command, "clear")) {
-      terminal_clear();
+      tty_clear();
     } else if (strequ(command, "help")) {
-      shell_print_commands();
+      sh_print_commands();
     } else if (strequ(command, "exit")) {
       printf("Alpine shell terminated.");
       return false;
-    } else if ((cmd = shell_find_command(command))) {
+    } else if ((cmd = sh_find_command(command))) {
       cmd->run(args->length, (char**) args->items);
     } else {
       printf("ash: command not found: %s", command);
     }
     // todo: if command "ls" is executed multiple times, history should only contain "ls" once
-    circ_buf_push(&history_circ_buf, "\0");
+    circ_buf_push(&sh_history_circ_buf, "\0");
   }
-  shell_prompt();
+  sh_prompt();
   return true;
 }
 
-void shell_right_arrow() {
-  uint16_t cursor_pos = terminal_get_cursor_pos();
-  if (cursor_pos != terminal_get_height() * terminal_get_width() - 1) {
-    if (cursor_pos < prompt_limit + command_idx) {
+void sh_right_arrow() {
+  uint32_t cursor_pos = tty_get_cursor_pos();
+  if (cursor_pos != tty_get_height() * tty_get_width() - 1) {
+    if (cursor_pos < sh_prompt_limit + sh_command_idx) {
       cursor_pos++;
     }
   } else {
-    cursor_pos = (terminal_get_height() - 1) * terminal_get_width();
-    terminal_scroll_down();
+    cursor_pos = (tty_get_height() - 1) * tty_get_width();
+    tty_scroll_down();
   }
-  terminal_set_cursor_pos(cursor_pos);
+  tty_set_cursor_pos(cursor_pos);
 }
 
-void shell_up_arrow() {
-  if (keyboard_is_pressed(OPTION)) {
-    terminal_scroll_up();
-  } else if ((history_idx == 0 && command_idx == 0) || history_idx > 0) {
-    if (history_idx < history_circ_buf.size - 1) {
-      history_idx++;
-      shell_load_history();
+void sh_up_arrow() {
+  if (kb_is_pressed(OPTION)) {
+    tty_scroll_up();
+  } else if ((sh_history_idx == 0 && sh_command_idx == 0) || sh_history_idx > 0) {
+    if (sh_history_idx < sh_history_circ_buf.size - 1) {
+      sh_history_idx++;
+      sh_load_history();
     }
   }
 }
 
-void shell_left_arrow() {
-  uint16_t cursor_pos = terminal_get_cursor_pos();
+void sh_left_arrow() {
+  uint32_t cursor_pos = tty_get_cursor_pos();
   if (cursor_pos != 0) {
-    if (cursor_pos > prompt_limit) {
+    if (cursor_pos > sh_prompt_limit) {
       cursor_pos--;
     }
   } else {
-    cursor_pos = terminal_get_width() - 1;
-    terminal_scroll_up();
+    cursor_pos = tty_get_width() - 1;
+    tty_scroll_up();
   }
-  terminal_set_cursor_pos(cursor_pos);
+  tty_set_cursor_pos(cursor_pos);
 }
 
-void shell_down_arrow() {
-  if (keyboard_is_pressed(OPTION)) {
-    terminal_scroll_down();
-  } else if (history_idx > 0) {
-    history_idx--;
-    shell_load_history();
+void sh_down_arrow() {
+  if (kb_is_pressed(OPTION)) {
+    tty_scroll_down();
+  } else if (sh_history_idx > 0) {
+    sh_history_idx--;
+    sh_load_history();
   }
 }
 
-void shell_tab() {
+void sh_tab() {
   // todo: implement TAB
 }
 
-void shell_backspace() {
-  if (terminal_get_cursor_pos() > prompt_limit) {
-    command_idx--;
-    shell_write_command_buffer('\0');
-    terminal_delete(1);
+void sh_backspace() {
+  if (tty_get_cursor_pos() > sh_prompt_limit) {
+    sh_command_idx--;
+    sh_write_command_buffer('\0');
+    tty_delete(1);
   }
 }
 
-bool shell_handle_input(int ch) {
+bool sh_handle_input(int ch) {
   switch (ch) {
     case CONTROL ... SCROLL_LOCK:
     case F1 ... F12:
     case ESC:
       break;
     case RIGHT_ARROW:
-      shell_right_arrow();
+      sh_right_arrow();
       break;
     case UP_ARROW:
-      shell_up_arrow();
+      sh_up_arrow();
       break;
     case LEFT_ARROW:
-      shell_left_arrow();
+      sh_left_arrow();
       break;
     case DOWN_ARROW:
-      shell_down_arrow();
+      sh_down_arrow();
       break;
     case '\t':
-      shell_tab();
+      sh_tab();
       break;
     case '\b':
-      shell_backspace();
+      sh_backspace();
       break;
     case '\n':
-      return shell_execute();
+      return sh_execute();
     default:
-      if (command_idx < MAX_COMMAND) {
-        shell_command_printf("%c", ch);
-        shell_write_command_buffer(ch);
-        command_idx++;
+      if (sh_command_idx < SH_MAX_COMMAND) {
+        sh_command_printf("%c", ch);
+        sh_write_command_buffer(ch);
+        sh_command_idx++;
       }
   }
   return true;
 }
 
-void shell_initialize() {
-  history_circ_buf.buf = history_buf;
-  history_circ_buf.capacity = MAX_HISTORY + 1;
-  history_circ_buf.granularity = MAX_COMMAND;
-  circ_buf_push(&history_circ_buf, "\0");
+void sh_initialize() {
+  sh_history_circ_buf.buf = sh_history_buf;
+  sh_history_circ_buf.capacity = SH_MAX_HISTORY + 1;
+  sh_history_circ_buf.granularity = SH_MAX_COMMAND;
+  circ_buf_push(&sh_history_circ_buf, "\0");
 
-  terminal_enable_cursor();
+  tty_enable_cursor();
   printf("Welcome to alpine shell!\n\n");
-  shell_prompt();
+  sh_prompt();
 }
 
-void shell_start() {
-  shell_initialize();
-  while (shell_handle_input(keyboard_getchar()));
+void sh_start() {
+  sh_initialize();
+  while (sh_handle_input(kb_getchar()));
 }
