@@ -5,7 +5,10 @@
 #include <kernel/mem/mem.h>
 #include <kernel/boot/mb2_info.h>
 #include <kernel/device/usb.h>
+#include <kernel/device/apic.h>
+#include <kernel/cpu/cpu.h>
 #include <assert.h>
+#include <kernel/cpu/smp.h>
 
 void validate_boot(unsigned long magic, unsigned long kernel_addr) {
   assert(magic == MB2_BOOTLOADER_MAGIC, "Invalid magic number: 0x%x\n", (unsigned) magic);
@@ -17,6 +20,7 @@ void kernel_init(uint64_t kernel_addr) {
   mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag);
   tty_init(mbi->framebuffer_tag);
   acpi_init(mbi->rsdp_tag);
+  assert(apic_init(), "Could not initialize PCI subsystem");
   warn(pci_init(), , "Could not initialize PCI subsystem");
   warn(usb_init(), , "Could not initialize USB subsystem");
 }
@@ -24,5 +28,10 @@ void kernel_init(uint64_t kernel_addr) {
 void kernel_main(uint64_t magic, uint64_t kernel_addr) {
   validate_boot(magic, kernel_addr);
   kernel_init(kernel_addr);
+
+//  printf("\n\n");
+//  smp_startup();
+//  printf("Startup message sent\n");
+
   sh_start();
 }

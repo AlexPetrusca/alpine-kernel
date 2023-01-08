@@ -6,6 +6,17 @@ ENTRY(_start)
    kernel image. */
 SECTIONS
 {
+	/* Place the SMP trampoline at 8000h since this is where vector 00 points to. */
+	. = 8000h;
+	.text BLOCK(4K) : ALIGN(4K)
+	{
+		*(.trampoline)
+	}
+	.data BLOCK(4K) : ALIGN(4)
+	{
+		*(.trampolinedata)
+	}
+
 	/* Begin putting sections at 1 MiB, a conventional place for kernels to be
 	   loaded at by the bootloader. */
 	. = 1M;

@@ -32,6 +32,7 @@ typedef enum {
   MEMORY_HEAP = 8,
   MEMORY_FRAME_BUFFER = 9,
   MEMORY_ACPI = 10,
+  MEMORY_LAPIC = 11,
 } mem_type;
 
 typedef struct {
@@ -46,5 +47,7 @@ bool mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) __
 bool mem_find_range(uint64_t addr, mem_range* range) __attribute__ ((warn_unused_result));
 
 void mem_print_map(int argc, char** argv);
+void mem_print_pt(int argc, char** argv);
+void mem_print_range(char* text, uint64_t addr, uint64_t size);
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_

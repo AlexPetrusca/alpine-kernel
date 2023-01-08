@@ -8,10 +8,10 @@
 #define PAGE_PRESENT    (1 << 0)
 #define PAGE_WRITE      (1 << 1)
 
-#define PML4T_START   0x1000
-#define PDPT_START    0x2000
-#define PDT_START     0x3000
-#define PT_START      0x4000
+#define PML4T_START   0xA000
+#define PDPT_START    0xB000
+#define PDT_START     0xC000
+#define PT_START      0xD000
 
 #define MAX_VIRTUAL_ADDR    0xFFFFFFFFFFFFFFFF
 #define MAIN_MEM_START      0x100000 // todo: define known ranges in mem.h
@@ -34,7 +34,7 @@ uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
 dll_list _mem_map;
 char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config",
-                     "USB (xHCI)", "Kernel Heap", "Frame Buffer", "ACPI"};
+                     "USB (xHCI)", "Kernel Heap", "Frame Buffer", "ACPI", "LAPIC"};
 
 void identity_map(uint64_t addr);
 bool mem_update_range(mem_range_node* range);
@@ -204,4 +204,18 @@ void mem_print_map(__unused int argc, __unused char** argv) {
            _mem_type[r->type]);
   }
   printf(" lower %dKB, upper %dKB\n", _mem_lower, _mem_upper);
+}
+
+void mem_print_pt(__unused int argc, __unused char** argv) {
+  CHECK_INIT();
+  printf("PT 0x%lx - 0x%lx\n", (uint64_t)PT_START, _next_page_pointer);
+}
+
+void mem_print_range(char* text, uint64_t addr, uint64_t size) {
+  printf("%s: ", text);
+  uint8_t* p = (uint8_t*) addr;
+  for (uint64_t i = 0; i < size; i++) {
+    printf("%.2x ", p[i]);
+  }
+  printf("\n");
 }
