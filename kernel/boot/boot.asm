@@ -44,7 +44,7 @@ SZ_32         equ 1 << 6
 GRAN_4K       equ 1 << 7
 
 ; Paging constants
-PAGE_SIZE     equ 4096   ; 4 KB
+PAGE_SIZE     equ 4096      ; 4 KB
 PML4T_START   equ 0xA000
 PDPT_START    equ 0xB000
 PDT_START     equ 0xC000
@@ -62,28 +62,33 @@ SCREEN_WIDTH    equ 1024
 SCREEN_HEIGHT   equ 768
 SCREEN_DEPTH    equ 32
 
+extern main_gdt_pointer_size
+extern main_gdt_pointer_base
+extern main_idt_pointer_size
+extern main_idt_pointer_base
+
 section .multiboot
+align 8
 multiboot_header:
-    align 8
     dd MAGIC
     dd ARCH
     dd HEADER_SIZE
     dd CHECKSUM
 
-;framebuffer_tag:
-;    align 8
-;    dw FRAMEBUFFER_TAG
-;    dw 0
-;    dd FRAMEBUFFER_TAG_SIZE
-;    dd SCREEN_WIDTH
-;    dd SCREEN_HEIGHT
-;    dd SCREEN_DEPTH
-
-end_tag:
     align 8
-    dw 0
-    dw 0
-    dd 8
+    .FramebufferTag:
+        dw FRAMEBUFFER_TAG
+        dw 0
+        dd FRAMEBUFFER_TAG_SIZE
+        dd SCREEN_WIDTH
+        dd SCREEN_HEIGHT
+        dd SCREEN_DEPTH
+
+    align 8
+    .EndTag:
+        dw 0
+        dw 0
+        dd 8
 multiboot_header_end:
 
 section .bss
@@ -92,20 +97,15 @@ stack_bottom:
 resb STACK_SIZE ; 16 KiB stack
 stack_top:
 
-extern main_gdt_pointer_size
-extern main_gdt_pointer_base
-extern main_idt_pointer_size
-extern main_idt_pointer_base
-
 section .data
 align 4
-IDT:
+idt:
     .Length:
         main_idt_pointer_size dw 0
     .Base:
         main_idt_pointer_base dd 0
 
-GDT:
+gdt:
     .Null:
         dq 0
     .Code:
@@ -121,8 +121,8 @@ GDT:
         db GRAN_4K | SZ_32 | 0xF                    ; Flags & Limit (high, bits 16-19)
         db 0                                        ; Base (high, bits 24-31)
     .Pointer:
-        main_gdt_pointer_size dw $ - GDT - 1
-        main_gdt_pointer_base dq GDT
+        main_gdt_pointer_size dw $ - gdt - 1
+        main_gdt_pointer_base dq gdt
 
 [BITS 32]
 section .text
@@ -159,11 +159,12 @@ _start:
     mov edi, PT_START
     mov ebx, PAGE_PRESENT | PAGE_WRITE
     mov ecx, 512                 ; map 512 4k pages = 2Mb
-.SetEntry:
+
+.set_entry:
     mov DWORD [edi], ebx
     add ebx, PAGE_SIZE           ; move to the next 4k page
     add edi, 8
-    loop .SetEntry
+    loop .set_entry
 
     ; Disable IRQs
     mov al, 0xFF                 ; Out 0xFF to 0xA1 and 0x21 to disable all IRQs.
@@ -173,7 +174,7 @@ _start:
     nop
     nop
 
-    lidt [IDT]                   ; Load a zero length IDT so that any NMI causes a triple fault.
+    lidt [idt]                   ; Load a zero length IDT so that any NMI causes a triple fault.
 
     ; Enter long mode.
     mov ecx, IA32_EFER_MSR            ; Set the LME bit in the EFER MSR.
@@ -191,12 +192,12 @@ _start:
     or ebx, CR0_PE | CR0_PG           ; - by enabling paging and protection simultaneously.
     mov cr0, ebx
 
-    lgdt [GDT.Pointer]                ; Load GDT.Pointer defined below.
+    lgdt [gdt.Pointer]                ; Load GDT pointer
 
-    jmp CODE_SEG:LongMode             ; Load CS with 64 bit segment (CS selects the submode of long mode)
+    jmp CODE_SEG:long_mode             ; Load CS with 64 bit segment (CS selects the submode of long mode)
 
 [BITS 64]
-LongMode:
+long_mode:
     mov ax, DATA_SEG
     mov ds, ax
     mov es, ax
@@ -210,8 +211,8 @@ LongMode:
     extern kernel_main
     call kernel_main   ; Now enter the C main function...
 
-loop:
+.loop:
     hlt
-    jmp loop
+    jmp .loop
 
 _end:
