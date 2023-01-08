@@ -4,6 +4,10 @@
 #include <kernel/test/test.h>
 
 SUITEDECL(sprintf);
-//void test_printf_suite();
+SUITEDECL(memchr);
+SUITEDECL(strchr);
+SUITEDECL(strtok);
+SUITEDECL(strstr);
+SUITEDECL(strcat);
 
 #endif //LIBC_STDIO_STDIO_TESTS_H_

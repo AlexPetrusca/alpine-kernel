@@ -9,15 +9,16 @@
 #include <kernel/tty/tty.h>
 #include <kernel/shell/sh.h>
 
-#include <kernel/cpu/cpu.h>
+// sh command includes
 #include <kernel/device/acpi.h>
 #include <kernel/device/apic.h>
 #include <kernel/device/pci.h>
-#include <kernel/mem/mem.h>
-#include <kernel/boot/mb2_info.h>
 #include <kernel/device/usb.h>
+#include <kernel/boot/mb2_info.h>
 #include <kernel/font/psf_font.h>
 #include <kernel/test/tests.h>
+#include <kernel/cpu/cpu.h>
+#include <kernel/mem/mem.h>
 
 #define SH_MAX_HISTORY 5
 #define SH_MAX_COMMAND 4096
@@ -218,20 +219,20 @@ void sh_backspace() {
 
 bool sh_handle_input(int ch) {
   switch (ch) {
-    case KB_CONTROL ... SCROLL_LOCK:
-    case F1 ... F12:
-    case ESC:
+    case KB_CONTROL ... KB_SCROLL_LOCK:
+    case KB_F1 ... KB_F12:
+    case KB_ESC:
       break;
-    case RIGHT_ARROW:
+    case KB_RIGHT_ARROW:
       sh_right_arrow();
       break;
-    case UP_ARROW:
+    case KB_UP_ARROW:
       sh_up_arrow();
       break;
-    case LEFT_ARROW:
+    case KB_LEFT_ARROW:
       sh_left_arrow();
       break;
-    case DOWN_ARROW:
+    case KB_DOWN_ARROW:
       sh_down_arrow();
       break;
     case '\t':

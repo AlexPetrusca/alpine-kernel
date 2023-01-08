@@ -9,3 +9,14 @@ char* strstr(const char* haystack, const char* needle) {
   }
   return NULL;
 }
+
+char* strrstr(const char* haystack, const char* needle) {
+  char* found = NULL;
+  size_t n = strlen(needle);
+  while (*haystack != '\0') {
+    if (!memcmp(haystack++, needle, n)) {
+      found = (char*) haystack - 1;
+    }
+  }
+  return found;
+}

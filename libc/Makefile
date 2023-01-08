@@ -31,8 +31,14 @@ LIBK_CPPFLAGS:=$(LIBK_CPPFLAGS) $(KERNEL_CPPFLAGS)
 LIBK_ASMFLAGS:=$(ASMFLAGS) $(KERNEL_ASMFLAGS)
 
 OBJS=\
-stdio/printf.o \
+sys/dll_test.o \
 stdio/printf_test.o \
+string/memchr_test.o \
+string/strchr_test.o \
+string/strstr_test.o \
+string/strtok_test.o \
+string/strcat_test.o \
+stdio/printf.o \
 stdio/getchar.o \
 stdio/putchar.o \
 stdio/puts.o \
