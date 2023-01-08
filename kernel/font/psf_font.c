@@ -20,7 +20,7 @@ typedef struct {
   uint32_t charsize;      /* number of bytes for each character */
   uint32_t height;
   uint32_t width;
-  /* charsize = tty_height * ((tty_width + 7) / 8) */
+  /* charsize = height * ((width + 7) / 8) */
 } psf2_header;
 
 typedef union {
@@ -190,17 +190,17 @@ void psf_font_info_print_x(psf_font f) {
     psf1_header* psf1 = (psf1_header*) f.psf_header;
     printf("PSF1 magic: 0x%x\n", psf1->magic);
     printf("PSF1 flags: %d\n", psf1->mode);
-    printf("Character tty_width: %d\n", PSF1_CHAR_WIDTH);
-    printf("Character tty_height: %d\n", psf1->charsize);
+    printf("Character width: %d\n", PSF1_CHAR_WIDTH);
+    printf("Character height: %d\n", psf1->charsize);
     printf("Character size (in bytes): %d\n", psf1->charsize);
   } else if (f.psf_version == 2) {
     psf2_header* psf2 = (psf2_header*) f.psf_header;
     printf("PSF2 magic: 0x%x\n", psf2->magic);
     printf("PSF2 flags: %d\n", psf2->flags);
-    printf("PSF2 headersize: %d\n", psf2->headersize);
+    printf("PSF2 header size: %d\n", psf2->headersize);
     printf("Number of glyphs: %d\n", psf2->length);
-    printf("Character tty_width: %d\n", psf2->width);
-    printf("Character tty_height: %d\n", psf2->height);
+    printf("Character width: %d\n", psf2->width);
+    printf("Character height: %d\n", psf2->height);
     printf("Character size (in bytes): %d\n", psf2->charsize);
   }
   printf("Sample glyph bitmap (\"W\"): \n");

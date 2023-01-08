@@ -133,7 +133,7 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
     // Clear all the flag bits except those that may have been passed in
     flags &= (uint32_t) (COUNT_ONLY_NO_PRINT);
 
-    // Set the default tty_width to zero, and the default precision to 1
+    // Set the default width to zero, and the default precision to 1
     width = 0;
     precision = 1;
     prefix = 0;
@@ -199,7 +199,7 @@ uint32_t sprintf_impl(char* buffer, uint32_t buffer_size, const char* format, VA
 
             case '\0':
               // Make no output if Format string terminates unexpectedly when
-              // looking up for flag, tty_width, precision and type.
+              // looking up for flag, width, precision and type.
               format -= 1;
               precision = 0;
               done = true;

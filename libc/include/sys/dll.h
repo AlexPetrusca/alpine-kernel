@@ -30,6 +30,4 @@ dll_node* dll_remove_tail(dll_list* queue);
 dll_node* dll_remove(dll_node* node);
 void dll_clear(dll_list* queue);
 
-SUITEDECL(dll);
-
 #endif //KERNEL_ARCH_X86_64_DLL_H_

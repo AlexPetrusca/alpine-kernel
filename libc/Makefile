@@ -32,12 +32,14 @@ LIBK_ASMFLAGS:=$(ASMFLAGS) $(KERNEL_ASMFLAGS)
 
 OBJS=\
 sys/dll_test.o \
+sys/strsplit_test.o \
 stdio/printf_test.o \
 string/memchr_test.o \
 string/strchr_test.o \
 string/strstr_test.o \
 string/strtok_test.o \
 string/strcat_test.o \
+string/strdup_test.o \
 stdio/printf.o \
 stdio/getchar.o \
 stdio/putchar.o \
@@ -60,10 +62,12 @@ string/strtok.o \
 string/strspn.o \
 string/strstr.o \
 string/strcat.o \
+string/strdup.o \
 sys/circ_buf.o \
 sys/circ_buf_ptr.o \
 sys/dll.o \
-sys/vector.o
+sys/vector.o \
+sys/strsplit.o
 
 LIBK_OBJS=$(OBJS:.o=.libk.o)
 

@@ -1,7 +1,7 @@
 #ifndef ALPINE_KERNEL_VGA_TTYD_H
 #define ALPINE_KERNEL_VGA_TTYD_H
 
-#include "ttyd.h"
+#include <kernel/tty/ttyd.h>
 
 #define VGA_TEXT_MODE_WIDTH       80
 #define VGA_TEXT_MODE_HEIGHT      25

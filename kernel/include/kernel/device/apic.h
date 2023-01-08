@@ -2,7 +2,8 @@
 #define _APIC_H_
 
 #include <stdint.h>
-#include "acpi.h"
+
+#include <kernel/device/acpi.h>
 
 #define LOCAL_APIC 0
 #define IO_APIC 1

@@ -1,8 +1,9 @@
 #ifndef KERNEL_ARCH_I386_PCI_H_
 #define KERNEL_ARCH_I386_PCI_H_
 
-#include "acpi.h"
 #include <stdint.h>
+
+#include <kernel/device/acpi.h>
 #include <kernel/error/error.h>
 
 #define PCI_MAX_DEVICE 31

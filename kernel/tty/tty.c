@@ -33,7 +33,7 @@ void tty_putchar_raw(char c);
 
 static inline char* tty_cursorxy_to_buf_wptr(uint32_t x, uint32_t y) {
   struct circ_buf_ptr line_ptr;
-  char* line = *((char**) circ_buf_ptr_getoffset(&tty_line_buf_rptr, y));
+  char* line = *(char**) circ_buf_ptr_getoffset(&tty_line_buf_rptr, y);
   circ_buf_ptr_init(&line_ptr, line, tty_buf, TTY_BUFFER_SIZE, sizeof(char));
   return circ_buf_ptr_add(&line_ptr, x);
 }
@@ -43,11 +43,11 @@ static inline char* tty_cursor_to_buf_wptr(uint32_t pos) {
 }
 
 static inline char* tty_buf_dequeue_line() {
-  return *((char**) circ_buf_dequeue(&tty_circ_line_buf));
+  return *(char**) circ_buf_dequeue(&tty_circ_line_buf);
 }
 
 static inline char* tty_buf_read_line(size_t n) {
-  return *((char**) circ_buf_peekn(&tty_circ_line_buf, n));
+  return *(char**) circ_buf_peekn(&tty_circ_line_buf, n);
 }
 
 void tty_buf_write_null_terminator() {
@@ -103,11 +103,11 @@ void tty_clear() {
 }
 
 void tty_delete(size_t n) {
-  char* tail_ptr = *((char**) circ_buf_peek_tail(&tty_circ_line_buf));
+  char* tail_ptr = *(char**) circ_buf_peek_tail(&tty_circ_line_buf);
   for (size_t i = 0; i < n; i++) {
     if (tty_buf_wptr.ptr == tail_ptr) {
       circ_buf_dequeue_tail(&tty_circ_line_buf);
-      tail_ptr = *((char**) circ_buf_peek_tail(&tty_circ_line_buf));
+      tail_ptr = *(char**) circ_buf_peek_tail(&tty_circ_line_buf);
     }
     uint32_t pos = tty_get_cursor_pos();
     tty_set_cursor_pos(pos - 1);
@@ -154,7 +154,7 @@ void tty_flush_line(size_t y) {
   tty_set_cursor_pos_xy(0, y);
 
   struct circ_buf_ptr line_ptr;
-  char* line = *((char**) circ_buf_ptr_getoffset(&tty_line_buf_rptr, y));
+  char* line = *(char**) circ_buf_ptr_getoffset(&tty_line_buf_rptr, y);
   circ_buf_ptr_init(&line_ptr, line, tty_buf, TTY_BUFFER_SIZE, sizeof(char));
   while (*line_ptr.ptr != '\0') {
     tty_putchar_raw(*line_ptr.ptr);
@@ -174,7 +174,7 @@ void tty_flush() {
   struct circ_buf_ptr line_ptr;
   circ_buf_ptr_init(&line_ptr, tty_buf, tty_buf, TTY_BUFFER_SIZE, sizeof(char));
   for (size_t i = 0; i < tty_height; i++) {
-    line_ptr.ptr = *((char**) circ_buf_ptr_getoffset(&tty_line_buf_rptr, i));
+    line_ptr.ptr = *(char**) circ_buf_ptr_getoffset(&tty_line_buf_rptr, i);
     while (*line_ptr.ptr != '\0') {
       tty_putchar_raw(*line_ptr.ptr);
       circ_buf_ptr_increment(&line_ptr);

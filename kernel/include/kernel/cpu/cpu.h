@@ -1,7 +1,7 @@
 #ifndef _CPUID_H_
 #define _CPUID_H_
 
-#include "msr.h"
+#include <kernel/cpu/msr.h>
 
 //0	PE	Protected Mode Enable	If 1, system is in protected mode, else, system is in real mode
 #define CR0_PE 1 << 0

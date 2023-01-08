@@ -7,7 +7,7 @@
 
 #include <kernel/error/error.h>
 #include <kernel/mem/mem.h>
-#include "pci.h"
+#include <kernel/device/pci.h>
 
 #define HCSPARAMS1_MAX_SLOTS(reg)           (reg & 0x000000FF)
 #define HCSPARAMS1_MAX_INTRS(reg)           ((reg & 0x0007FF00) >> 8)

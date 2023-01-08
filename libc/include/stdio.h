@@ -21,7 +21,7 @@ typedef __builtin_va_list VA_LIST;
   The print functions provide a simple means to produce formatted output
   strings. The format of argument descriptors is described below:
 
-    %[flags][tty_width][.precision]type
+    %[flags][width][.precision]type
 
   [flags]:
     - -
@@ -44,12 +44,12 @@ typedef __builtin_va_list VA_LIST;
   [width]:
 
     - *
-      - The tty_width of the field is specified by a uint32_t argument in the
+      - The width of the field is specified by a uint32_t argument in the
         argument list.
     - number
-      - The number specified as a decimal value represents the tty_width of
+      - The number specified as a decimal value represents the width of
         the field.
-    - NOTE: If [tty_width] is not specified, then a field tty_width of 0 is assumed.
+    - NOTE: If [width] is not specified, then a field width of 0 is assumed.
 
   [.precision]:
 

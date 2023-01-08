@@ -22,7 +22,7 @@ A minimal x86 kernel
 ## Debug
 
 * Get a disassembly of the kernel 
-  * `x86_64-elf-objdump -D kernel/alpine.kernel > kernel.dump`
+  * `x86_64-elf-objdump -D build/alpine.kernel > kernel.dump`
 * Get debug logs and cpu traces from Qemu
   * Enable logging: `./qemu.sh -D qemu.log`
   * Log interrupts/exceptions: add `-d int`

@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #include <kernel/boot/mb2_type.h>
-#include "ttyd.h"
+#include <kernel/tty/ttyd.h>
 
 void tty_init(mb2_tag_framebuffer* fb_tag);
 uint32_t tty_get_width();

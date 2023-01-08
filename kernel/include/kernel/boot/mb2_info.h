@@ -1,7 +1,7 @@
 #ifndef ALPINE_KERNEL_MB2_INFO_H
 #define ALPINE_KERNEL_MB2_INFO_H
 
-#include "mb2_type.h"
+#include <kernel/boot/mb2_type.h>
 
 #include <stdint.h>
 

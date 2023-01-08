@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include <sys/cdefs.h>
+#include <sys/vector.h>
 
 __BEGIN_DECLS
 
@@ -31,8 +32,11 @@ size_t strspn(const char* s1, const char* s2);
 size_t strcspn(const char* s1, const char* s2);
 char* strcat(char* dest, const char* src);
 char* strncat(char* dest, const char* src, size_t n);
+char* strdup(const char* s);
+char* strndup(const char* s, size_t n);
 char* strrev(char* s);
 size_t strlen(const char* s);
+size_t strnlen(const char* str, size_t n);
 
 __END_DECLS
 
