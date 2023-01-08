@@ -40,6 +40,7 @@ string/strstr_test.o \
 string/strtok_test.o \
 string/strcat_test.o \
 string/strdup_test.o \
+string/strtrim_test.o \
 stdio/printf.o \
 stdio/getchar.o \
 stdio/putchar.o \
@@ -63,6 +64,7 @@ string/strspn.o \
 string/strstr.o \
 string/strcat.o \
 string/strdup.o \
+string/strtrim.o \
 sys/circ_buf.o \
 sys/circ_buf_ptr.o \
 sys/dll.o \

@@ -10,6 +10,7 @@ SUITEDECL(strtok);
 SUITEDECL(strstr);
 SUITEDECL(strcat);
 SUITEDECL(strdup);
+SUITEDECL(strtrim);
 
 SUITEDECL(dll);
 SUITEDECL(strsplit);

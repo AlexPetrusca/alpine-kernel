@@ -97,4 +97,4 @@ add_executable(alpine_kernel
         libc/string/strdup_test.c
         libc/string/strdup_test.c
         libc/string/strdup_test.c
-        libc/sys/strsplit_test.c)
+        libc/sys/strsplit_test.c libc/string/strtrim.c libc/include/math.h libc/string/strtrim_test.c)

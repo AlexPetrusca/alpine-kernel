@@ -12,4 +12,5 @@ void tests_run(__unused int argc, __unused char** argv) {
   test_strcat_suite();
   test_strdup_suite();
   test_strsplit_suite();
+  test_strtrim_suite();
 }
