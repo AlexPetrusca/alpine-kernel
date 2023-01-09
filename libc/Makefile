@@ -69,6 +69,7 @@ sys/circ_buf.o \
 sys/circ_buf_ptr.o \
 sys/dll.o \
 sys/vector.o \
+sys/vector_test.o \
 sys/strsplit.o
 
 LIBK_OBJS=$(OBJS:.o=.libk.o)

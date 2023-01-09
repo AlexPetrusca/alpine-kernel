@@ -66,7 +66,6 @@ add_executable(alpine_kernel
         kernel/test/test.c
         kernel/include/kernel/test/test.h
         libc/stdio/printf_test.c
-        libc/include/test/lib_tests.h
         kernel/mem/mem.c
         kernel/include/kernel/boot/mb2_info.h
         kernel/include/kernel/boot/mb2_type.h
@@ -103,4 +102,4 @@ add_executable(alpine_kernel
         libc/string/strtrim.c
         libc/string/strtrim_test.c
         libc/include/math.h
-        )
+        kernel/mem/heap_test.c libc/sys/vector_test.c)
