@@ -58,7 +58,7 @@ uint32_t vbe_ttyd_convert_color(tty_color color) {
 };
 
 uint32_t vbe_ttyd_get_width() {
-  return vbe_screen_width / PSF1_CHAR_WIDTH;
+  return vbe_screen_width / vbe_tty_font->glyph_width;
 }
 
 uint32_t vbe_ttyd_get_height() {
