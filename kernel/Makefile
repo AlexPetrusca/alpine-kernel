@@ -66,6 +66,7 @@ cpu/msr.o \
 cpu/cpu.o \
 cpu/smp.o \
 cpu/trampoline.o \
+cpu/process.o \
 device/acpi.o \
 device/apic.o \
 device/pci.o \

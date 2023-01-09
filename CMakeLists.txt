@@ -13,6 +13,12 @@ add_executable(alpine_kernel
         kernel/tty/tty.c
         kernel/cpu/msr.c
         kernel/cpu/cpu.c
+        kernel/cpu/smp.c
+        kernel/cpu/process.c
+        kernel/include/kernel/cpu/process.h
+        kernel/include/kernel/cpu/smp.h
+        kernel/include/kernel/cpu/msr.h
+        kernel/include/kernel/cpu/cpu.h
         kernel/device/acpi.c
         kernel/device/apic.c
         kernel/device/pci.c
@@ -23,8 +29,6 @@ add_executable(alpine_kernel
         kernel/include/kernel/tty/vbe_ttyd.h
         kernel/tty/vga_ttyd.c
         kernel/tty/vbe_ttyd.c
-        kernel/include/kernel/cpu/msr.h
-        kernel/include/kernel/cpu/cpu.h
         kernel/include/kernel/device/acpi.h
         kernel/include/kernel/device/apic.h
         kernel/include/kernel/device/pci.h
@@ -80,8 +84,6 @@ add_executable(alpine_kernel
         libc/include/sys/dll.h
         kernel/test/tests.c
         kernel/include/kernel/test/tests.h
-        kernel/cpu/smp.c
-        kernel/include/kernel/cpu/smp.h
         libc/include/sys/vector.h
         libc/sys/vector.c
         libc/sys/circ_buf_ptr.c
@@ -97,4 +99,8 @@ add_executable(alpine_kernel
         libc/string/strdup_test.c
         libc/string/strdup_test.c
         libc/string/strdup_test.c
-        libc/sys/strsplit_test.c libc/string/strtrim.c libc/include/math.h libc/string/strtrim_test.c)
+        libc/sys/strsplit_test.c
+        libc/string/strtrim.c
+        libc/string/strtrim_test.c
+        libc/include/math.h
+        )

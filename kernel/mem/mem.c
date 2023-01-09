@@ -33,8 +33,9 @@ uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
 uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
 dll_list _mem_map;
+uint64_t _mem_heap_addr;
 char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config",
-                     "USB (xHCI)", "Kernel Heap", "Frame Buffer", "ACPI", "LAPIC"};
+                     "USB (xHCI)", "Kernel Heap", "Frame Buffer", "ACPI", "LAPIC", "Process Stacks"};
 
 void identity_map(uint64_t addr);
 bool mem_update_range(mem_range_node* range);
@@ -50,6 +51,14 @@ mb2_mmap_entry* mem_find_main_mem(mb2_tag_mmap* mem_map) {
   return NULL;
 }
 
+uint64_t mem_get_pml4_addr() {
+  return PML4T_START;
+}
+
+uint64_t mem_get_heap_addr() {
+  return _mem_heap_addr;
+}
+
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   assert(mem_map != NULL, "Memory map not provided.");
   assert(basic_meminfo != NULL, "Basic memory info not provided.");
@@ -59,11 +68,11 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   // initialize the heap
   mb2_mmap_entry* main_mem = mem_find_main_mem(mem_map);
   assert(main_mem != NULL, "Could not find main memory region.");
-  uint64_t heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
-  for (uint64_t addr = heap_addr; addr < heap_addr + HEAP_SIZE; addr += PAGE_SIZE) {
+  _mem_heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
+  for (uint64_t addr = _mem_heap_addr; addr < _mem_heap_addr + HEAP_SIZE; addr += PAGE_SIZE) {
     identity_map(addr); // todo: don't identity map
   }
-  heap_init(heap_addr, HEAP_SIZE);
+  heap_init(_mem_heap_addr, HEAP_SIZE);
 
   //  save the memory map
   for (mb2_mmap_entry* mmap = mem_map->entries;
@@ -78,9 +87,9 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   }
 
   // register the heap in the memory map
-  mem_range_node heap_mem_range = {.phys_addr = heap_addr, .size = HEAP_SIZE};
+  mem_range_node heap_mem_range = {.phys_addr = _mem_heap_addr, .size = HEAP_SIZE};
   heap_mem_range.type = MEMORY_HEAP;
-  heap_mem_range.virt_addr = heap_addr;
+  heap_mem_range.virt_addr = _mem_heap_addr;
   mem_update_range(&heap_mem_range);
 
   mem_inited = true;

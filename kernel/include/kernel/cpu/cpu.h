@@ -90,6 +90,8 @@
 // Hyper Threading
 # define CPU_FEATURE_HTT 1 << 28
 
+void cpu_init();
+uint32_t cpu_core_count();
 void cpu_delay_us(long us);
 void cpu_delay_ms(long ms);
 void cpu_delay_s(long s);

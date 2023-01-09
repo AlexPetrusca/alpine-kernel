@@ -33,44 +33,19 @@ void apic_enable_lapic() {
   apic_write_reg(APIC_REG_TPR, 0);
 }
 
-void LocalApicSendInit(uint32_t apic_id) {
-  apic_write_reg(APIC_REG_ICR_HIGH, apic_id << ICR_DESTINATION_SHIFT);
-  printf("INIT 0x%x\n", ICR_INIT | ICR_PHYSICAL
-    | ICR_ASSERT | ICR_EDGE | ICR_NO_SHORTHAND);
-//  apic_write_reg(APIC_REG_ICR_LOW, ICR_INIT | ICR_PHYSICAL
-//    | ICR_ASSERT | ICR_EDGE | ICR_NO_SHORTHAND);
-//  while (apic_read_reg(APIC_REG_ICR_LOW) & ICR_SEND_PENDING);
-}
-
-void apic_send_init() {
-  apic_write_reg(APIC_REG_ICR_HIGH, 0);
-  //  Vector: 00h
-  //  Delivery mode: Startup
-  //  Destination mode: ignored (0)
-  //  Level: ignored (1)
-  //  Trigger mode: ignored (0)
-  //  Shorthand: All excluding self (3)
-  //  Writing the low DWORD sent the IPI
-  apic_write_reg(APIC_REG_ICR_LOW, 0x0c4500);
-}
-
-void LocalApicSendStartup(uint32_t apic_id, uint32_t vector) {
-  apic_write_reg(APIC_REG_ICR_HIGH, apic_id << ICR_DESTINATION_SHIFT);
-  apic_write_reg(APIC_REG_ICR_LOW, vector | ICR_STARTUP
-    | ICR_PHYSICAL | ICR_ASSERT | ICR_EDGE | ICR_NO_SHORTHAND);
+void apic_send_command(uint32_t cmd_high, uint32_t cmd_low) {
+  while (apic_read_reg(APIC_REG_ICR_LOW) & ICR_SEND_PENDING);
+  apic_write_reg(APIC_REG_ICR_HIGH, cmd_high);
+  apic_write_reg(APIC_REG_ICR_LOW, cmd_low);
   while (apic_read_reg(APIC_REG_ICR_LOW) & ICR_SEND_PENDING);
 }
 
-void apic_send_sipi() {
-  apic_write_reg(APIC_REG_ICR_HIGH, 0);
-  //  Vector: 00h (Will make the CPU execute instruction ad address 08000h)
-  //  Delivery mode: Startup
-  //  Destination mode: ignored (0)
-  //  Level: ignored (1)
-  //  Trigger mode: ignored (0)
-  //  Shorthand: All excluding self (3)
-  //  Writing the low DWORD sent the IPI
-  apic_write_reg(APIC_REG_ICR_LOW, 0x0c4608);
+void apic_send_init() {
+  apic_send_command(0, ICR_ALL_EXCLUDING_SELF | ICR_INIT | ICR_PHYSICAL | ICR_ASSERT | ICR_EDGE | 0);
+}
+
+void apic_send_start() {
+  apic_send_command(0, ICR_ALL_EXCLUDING_SELF | ICR_STARTUP | ICR_PHYSICAL | ICR_ASSERT | ICR_EDGE | 8);
 }
 
 apic_table_header* find_apic_table() {
