@@ -3,9 +3,6 @@
 
 #include <sys/vector.h>
 
-typedef vector strsplit_t;
-
-strsplit_t* strsplit(char* str, const char* delim);
-void strsplit_free(strsplit_t* split);
+vector* strsplit(char* str, const char* delim);
 
 #endif //ALPINE_KERNEL_STRSPLIT_H

@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <sys/vector.h>
 #include <sys/circ_buf.h>
+#include <sys/strsplit.h>
 #include <kernel/device/kb.h>
 #include <kernel/tty/tty.h>
 #include <kernel/shell/sh.h>
@@ -19,6 +19,7 @@
 #include <kernel/test/tests.h>
 #include <kernel/cpu/cpu.h>
 #include <kernel/mem/mem.h>
+#include "stdlib.h"
 
 #define SH_MAX_HISTORY 5
 #define SH_MAX_COMMAND 4096
@@ -29,21 +30,21 @@ typedef struct {
 } sh_command;
 
 sh_command sh_commands[] = {
-    {"cpu",  cpu_print_info},
+    {"cpu", cpu_print_info},
     {"test", tests_run},
     {"acpi", acpi_print_info},
     {"apic", apic_print_info},
     {"lapic", apic_print_lapic_info},
     {"mcfg", pci_print_mcfg},
-    {"pci",  pci_print_devices},
+    {"pci", pci_print_devices},
     {"mmap", mem_print_map},
     {"pt", mem_print_pt},
-    {"mbi",  mb2_info_print},
-    {"fb",   mb2_fb_info_print},
-    {"usb",  usb_print_info},
+    {"mbi", mb2_info_print},
+    {"fb", mb2_fb_info_print},
+    {"usb", usb_print_info},
     {"font", psf_font_info_print},
     {"", NULL}
-};;
+};
 
 char sh_history_buf[(SH_MAX_HISTORY + 1) * (SH_MAX_COMMAND + 1)];
 struct circ_buf sh_history_circ_buf;
@@ -56,8 +57,8 @@ static inline char* sh_command_buffer() {
   return circ_buf_peek(&sh_history_circ_buf);
 }
 
-static inline void sh_write_command_buffer(char ch) {
-  sh_command_buffer()[sh_command_idx] = ch;
+static inline void sh_write_command_buffer(unsigned char ch) {
+  sh_command_buffer()[sh_command_idx] = (char) ch;
 }
 
 void sh_command_printf(const char* format, ...) {
@@ -85,9 +86,16 @@ void sh_prompt() {
   sh_command_idx = 0;
 }
 
-void sh_load_history() {
-  tty_delete(sh_command_idx);
+void sh_push_history() {
+  char* cmdline = sh_command_buffer();
+  void* last_cmdline = circ_buf_peekn(&sh_history_circ_buf, 1);
+  if (!strequ(cmdline, last_cmdline)) {
+    circ_buf_push(&sh_history_circ_buf, "\0");
+  }
+}
 
+void sh_pull_history() {
+  tty_delete(sh_command_idx);
   char* command = sh_command_buffer();
   if (sh_history_idx == 0) {
     command[0] = '\0';
@@ -116,46 +124,51 @@ void sh_print_commands() {
   printf("\n");
 }
 
-vector* sh_strsplit(char* str, const char* delim) {
-  char copy[SH_MAX_COMMAND];
-  strcpy(copy, str);
-
-  vector* args_vec = vector_new();
-  char* token = strtok(copy, delim);
-  while (token != NULL) {
-    vector_add(args_vec, token);
-    token = strtok(NULL, delim);
+void sh_print_history() {
+  for (size_t i = 1; i < sh_history_circ_buf.size; i++) {
+    printf("%lu: %s\n", i, (char*) circ_buf_peekn(&sh_history_circ_buf, i));
   }
-  return args_vec;
+}
+
+bool sh_exit() {
+  printf("Alpine shell terminated.");
+  return false;
+}
+
+bool sh_execute_command(int argc, char** argv) {
+  sh_command* sh_cmd = NULL;
+  if (argc > 0) {
+    char* cmd = argv[0];
+    if (strequ(cmd, "help")) {
+      sh_print_commands();
+    } else if (strequ(cmd, "history")) {
+      sh_print_history();
+    } else if (strequ(cmd, "clear")) {
+      tty_clear();
+    } else if (strequ(cmd, "exit")) {
+      return sh_exit();
+    } else if ((sh_cmd = sh_find_command(cmd))) {
+      sh_cmd->run(argc, argv);
+    } else {
+      printf("ash: command not found: %s", cmd);
+    }
+    sh_push_history();
+  }
+  return true;
 }
 
 bool sh_execute() {
   printf("\n");
   sh_write_command_buffer('\0');
-  char* command_line = sh_command_buffer();
-  sh_command* cmd = NULL;
-  // todo: instead, check if input contains only whitespace
+  char* cmdline = sh_command_buffer();
   if (sh_command_idx > 0) {
-    vector* args = sh_strsplit(command_line, " ");
-    char* command = vector_get(args, 0);
-    if (strequ(command, "history")) {
-      for (size_t i = 1; i < sh_history_circ_buf.size; i++) {
-        printf("%d: %s\n", i, (char*) circ_buf_peekn(&sh_history_circ_buf, i));
-      }
-    } else if (strequ(command, "clear")) {
-      tty_clear();
-    } else if (strequ(command, "help")) {
-      sh_print_commands();
-    } else if (strequ(command, "exit")) {
-      printf("Alpine shell terminated.");
+    char* cmdline_copy = strdup(cmdline);
+    vector* args = strsplit(cmdline_copy, " ");
+    if (!sh_execute_command(args->length, (char**) args->items)) {
       return false;
-    } else if ((cmd = sh_find_command(command))) {
-      cmd->run(args->length, (char**) args->items);
-    } else {
-      printf("ash: command not found: %s", command);
-    }
-    // todo: if command "ls" is executed multiple times, history should only contain "ls" once
-    circ_buf_push(&sh_history_circ_buf, "\0");
+    };
+    free(cmdline_copy);
+    vector_free(args);
   }
   sh_prompt();
   return true;
@@ -180,7 +193,7 @@ void sh_up_arrow() {
   } else if ((sh_history_idx == 0 && sh_command_idx == 0) || sh_history_idx > 0) {
     if (sh_history_idx < sh_history_circ_buf.size - 1) {
       sh_history_idx++;
-      sh_load_history();
+      sh_pull_history();
     }
   }
 }
@@ -203,7 +216,7 @@ void sh_down_arrow() {
     tty_scroll_down();
   } else if (sh_history_idx > 0) {
     sh_history_idx--;
-    sh_load_history();
+    sh_pull_history();
   }
 }
 
@@ -219,7 +232,7 @@ void sh_backspace() {
   }
 }
 
-bool sh_handle_input(int ch) {
+bool sh_handle_input(unsigned char ch) {
   switch (ch) {
     case KB_CONTROL ... KB_SCROLL_LOCK:
     case KB_F1 ... KB_F12:
