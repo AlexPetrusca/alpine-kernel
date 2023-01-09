@@ -116,9 +116,7 @@ typedef enum {
 bool apic_init() __attribute__ ((warn_unused_result));
 void apic_enable_lapic();
 void apic_send_init();
-void apic_send_sipi();
-void LocalApicSendInit(uint32_t apic_id);
-void LocalApicSendStartup(uint32_t apic_id, uint32_t vector);
+void apic_send_start();
 uint32_t apic_read_reg(apic_reg reg);
 void apic_write_reg(apic_reg reg, uint32_t value);
 

@@ -33,6 +33,7 @@ typedef enum {
   MEMORY_FRAME_BUFFER = 9,
   MEMORY_ACPI = 10,
   MEMORY_LAPIC = 11,
+  MEMORY_STACKS = 12,
 } mem_type;
 
 typedef struct {
@@ -42,6 +43,8 @@ typedef struct {
   mem_type type;
 } mem_range;
 
+uint64_t mem_get_pml4_addr();
+uint64_t mem_get_heap_addr();
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
 bool mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) __attribute__ ((warn_unused_result));
 bool mem_find_range(uint64_t addr, mem_range* range) __attribute__ ((warn_unused_result));

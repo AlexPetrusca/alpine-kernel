@@ -38,56 +38,29 @@ GRAN_4K       equ 1 << 7
 ; Paging constants
 PML4T_START   equ 0xA000
 
-extern trampoline_start
-extern trampoline_end
 extern smp_idt_pointer_size
 extern smp_idt_pointer_base
 extern smp_gdt_pointer_size
 extern smp_gdt_pointer_base
-extern smp_process_table
+extern smp_pml4_base
+extern _processes;
+extern enter_smp;
 
 section .trampolinedata
 align 4
-idt:
-    .Length:
-        dw 0
-    .Base:
-        dd 0
 
-gdt:
-    .Null:
-        dq 0
-    .Code:
-        dd 0xFFFF                                   ; Limit & Base (low, bits 0-15)
-        db 0                                        ; Base (mid, bits 16-23)
-        db PRESENT | NOT_SYS | EXEC | RW            ; Access
-        db GRAN_4K | LONG_MODE | 0xF                ; Flags & Limit (high, bits 16-19) (64-bit long mode)
-        db 0                                        ; Base (high, bits 24-31)
-    .Data:
-        dd 0xFFFF                                   ; Limit & Base (low, bits 0-15)
-        db 0                                        ; Base (mid, bits 16-23)
-        db PRESENT | NOT_SYS | RW                   ; Access
-        db GRAN_4K | SZ_32 | 0xF                    ; Flags & Limit (high, bits 16-19)
-        db 0                                        ; Base (high, bits 24-31)
-    .Pointer:
-        dw $ - gdt - 1
-        dq gdt
-
-misc_data:
-    .SmpIdtPointer:
+SmpIdtPointer:
         smp_idt_pointer_size    dw 0            ; size of the IDT
         smp_idt_pointer_base    dd 0            ; pointer to the IDT
 
-    .SmpGdtPointer:
-        smp_gdt_pointer_size    dw 23           ; size of the GDT
-        smp_gdt_pointer_base    dq 0x10F00E     ; pointer to the GDT
+SmpGdtPointer:
+        smp_gdt_pointer_size    dw 0           ; size of the GDT
+        smp_gdt_pointer_base    dq 0           ; pointer to the GDT
 
-    .SmpPml4Pointer:
-        smp_pml4                dq 0xA000       ; pointer to the PML4
+SmpPml4Pointer:
+        smp_pml4_base           dq 0           ; pointer to the PML4
 
-    counter                 dw 0
-    smp_process_table       dq 0
-    offset                  dw 40
+        process_counter         dq 0
 
 [BITS 16]
 section .trampoline
@@ -102,7 +75,7 @@ trampoline_start:
     nop
     nop
 
-    lidt [idt]                        ; Load a zero length IDT so that any NMI causes a triple fault.
+    lidt [SmpIdtPointer]                        ; Load a zero length IDT so that any NMI causes a triple fault.
 
     ; Enter long mode.
     mov ecx, IA32_EFER_MSR            ; Set the LME bit in the EFER MSR.
@@ -113,19 +86,19 @@ trampoline_start:
     mov eax, CR4_PAE | CR4_PGE | CR4_MCE | CR4_OSFXSR | CR4_OSXMMEXCPT
     mov cr4, eax
 
-    mov edi, PML4T_START              ; Point CR3 at the PML4.
+    mov edi, [SmpPml4Pointer]              ; Point CR3 at the PML4.
     mov cr3, edi
 
     mov ebx, cr0                      ; Activate long mode -
     or ebx, CR0_PE | CR0_PG           ; - by enabling paging and protection simultaneously.
     mov cr0, ebx
 
-    lgdt [gdt.Pointer]                ; Load GDT pointer
+    lgdt [SmpGdtPointer]                ; Load GDT pointer
 
-    jmp CODE_SEG:LongMode
+    jmp CODE_SEG:enter_smp
 
 [BITS 64]
-LongMode:
+enter_smp:
     mov ax, DATA_SEG
     mov ds, ax
     mov es, ax
@@ -133,25 +106,24 @@ LongMode:
     mov gs, ax
     mov ss, ax
 
-    ; Blank out the screen to a blue color.
-    mov edi, 0xB8000
-    mov rcx, 500                      ; Since we are clearing uint64_t over here, we put the count as Count/4.
-    mov rax, 0x1F201F201F201F20       ; Set the value to set the screen to: Blue background, white foreground, blank spaces.
-    rep stosq                         ; Clear the entire screen.
+    ; Get an unique id
+    mov rax, [process_counter]
+    try:
+      mov rbx, rax
+      inc rbx
+      ; Compares ax with [counter], if equal: [counter] = bx & z=1, if not ax = [counter] & z=0
+      lock cmpxchg [process_counter], rbx
+      jnz try
+    mov rdi, rax                           ; Save the unique id
 
-    ; Display "Hello World!"
-    mov edi, 0x00b8000
-    mov rax, 0x1F6C1F6C1F651F48
-    mov [edi],rax
-    mov rax, 0x1F6F1F571F201F6F
-    mov [edi + 8], rax
-    mov rax, 0x1F211F641F6C1F72
-    mov [edi + 16], rax
+    mov rax, rdi                           ; get the counter
+    shl rax, 4                             ; multiply by 16 to index into the processes
+    add rax, _processes                    ; add the base address of the process table
 
-    pause: jmp pause
+    mov rsp, [rax]                         ; read the stack pointer
+    mov rbp, rsp
 
-;    extern kernel_main
-;    call kernel_main   ; Now enter the C main function...
+    call [rax + 8]                         ; call the process main function
 
 .loop:
     hlt

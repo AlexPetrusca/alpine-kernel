@@ -33,6 +33,18 @@
     : "%rax"                                              \
   )
 
+uint32_t _cpu_core_count;
+
+void cpu_init() {
+  uint32_t eax, ebx, ecx, edx;
+  __cpuid(1, eax, ebx, ecx, edx);
+  _cpu_core_count = (ebx >> 16) & 0xFF;
+}
+
+uint32_t cpu_core_count() {
+  return _cpu_core_count;
+}
+
 uint64_t rdtsc() {
   unsigned int lo, hi;
   __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
