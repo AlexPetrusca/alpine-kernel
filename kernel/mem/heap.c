@@ -70,7 +70,6 @@ size_t mem_meta = 0;
 heap_chunk* head = NULL;
 heap_chunk* tail = NULL;
 
-
 // initialize a one element dlist
 static inline void dlist_init(dlist* dlist) {
   dlist->next = dlist;
@@ -302,6 +301,20 @@ void* krealloc(void* ptr, size_t size) {
   }
 }
 
+uint64_t kgetused() {
+  return mem_used;
+}
+
+uint64_t kgetfree() {
+  return mem_free;
+}
+
 void heap_init(uint64_t addr, size_t size) {
   mrvn_heap_init((char*) addr, size);
+}
+
+void heap_print_info() {
+  printf("Total: %10ld\n", mem_free + mem_used);
+  printf("Free : %10ld\n", mem_free);
+  printf("Used : %10ld\n", mem_used);
 }

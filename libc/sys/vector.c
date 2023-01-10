@@ -18,6 +18,7 @@ void vector_init(vector* vec) {
 
 void vector_free(vector* vec) {
   free(vec->items);
+  free(vec);
 }
 
 void vector_resize(vector* vec, int capacity) {

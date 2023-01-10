@@ -1,16 +1,17 @@
-#include <test/lib_tests.h>
-
+#include <kernel/test/test.h>
 #include <kernel/test/tests.h>
 
 void tests_run(__unused int argc, __unused char** argv) {
-  test_dll_suite();
-  test_memchr_suite();
-  test_sprintf_suite();
-  test_strchr_suite();
-  test_strtok_suite();
-  test_strstr_suite();
-  test_strcat_suite();
-  test_strdup_suite();
-  test_strsplit_suite();
-  test_strtrim_suite();
+  RUN_SUITE(dll);
+  RUN_SUITE(memchr);
+  RUN_SUITE(sprintf);
+  RUN_SUITE(strchr);
+  RUN_SUITE(strtok);
+  RUN_SUITE(strstr);
+  RUN_SUITE(strcat);
+  RUN_SUITE(strdup);
+  RUN_SUITE(strsplit);
+  RUN_SUITE(strtrim);
+  RUN_SUITE(heap);
+  RUN_SUITE(vector);
 }

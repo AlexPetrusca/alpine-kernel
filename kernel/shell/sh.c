@@ -19,6 +19,7 @@
 #include <kernel/test/tests.h>
 #include <kernel/cpu/cpu.h>
 #include <kernel/mem/mem.h>
+#include <kernel/mem/heap.h>
 #include "stdlib.h"
 
 #define SH_MAX_HISTORY 5
@@ -43,6 +44,7 @@ sh_command sh_commands[] = {
     {"fb", mb2_fb_info_print},
     {"usb", usb_print_info},
     {"font", psf_font_info_print},
+    {"heap", heap_print_info},
     {"", NULL}
 };
 

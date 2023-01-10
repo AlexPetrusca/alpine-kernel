@@ -73,6 +73,7 @@ device/pci.o \
 device/usb.o \
 mem/mem.o \
 mem/heap.o \
+mem/heap_test.o \
 test/tests.o \
 test/test.o \
 
