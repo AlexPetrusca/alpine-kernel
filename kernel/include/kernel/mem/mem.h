@@ -34,6 +34,8 @@ typedef enum {
   MEMORY_ACPI = 10,
   MEMORY_LAPIC = 11,
   MEMORY_STACKS = 12,
+  MEMORY_EBDA = 13,
+  MEMORY_MOTHERBOARD_BIOS = 14,
 } mem_type;
 
 typedef struct {
@@ -42,6 +44,11 @@ typedef struct {
   uint64_t size;
   mem_type type;
 } mem_range;
+
+uint32_t mem_read_8(uint64_t addr);
+uint32_t mem_read_16(uint64_t addr);
+uint32_t mem_read_32(uint64_t addr);
+uint64_t mem_read_64(uint64_t addr);
 
 uint64_t mem_get_pml4_addr();
 uint64_t mem_get_heap_addr();

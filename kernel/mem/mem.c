@@ -34,8 +34,26 @@ uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
 dll_list _mem_map;
 uint64_t _mem_heap_addr;
-char* _mem_type[] = {"", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config",
-                     "USB (xHCI)", "Kernel Heap", "Frame Buffer", "ACPI", "LAPIC", "Process Stacks"};
+char* _mem_type[] = {
+  "", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config", "USB (xHCI)", "Kernel Heap",
+  "Frame Buffer", "ACPI", "LAPIC", "Process Stacks", "EBDA", "Motherboard BIOS"};
+
+uint32_t mem_read_8(uint64_t addr) {
+  return *((uint8_t*) addr);
+}
+
+uint32_t mem_read_16(uint64_t addr) {
+  return *((uint16_t*) addr);
+}
+
+uint32_t mem_read_32(uint64_t addr) {
+  return *((uint32_t*) addr);
+}
+
+uint64_t mem_read_64(uint64_t addr) {
+  return *((uint64_t*) addr);
+}
+
 
 void identity_map(uint64_t addr);
 bool mem_update_range(mem_range_node* range);
@@ -57,6 +75,22 @@ uint64_t mem_get_pml4_addr() {
 
 uint64_t mem_get_heap_addr() {
   return _mem_heap_addr;
+}
+
+mem_range_node* mem_find_range_internal(uint64_t addr) {
+  for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
+    if (addr >= r->phys_addr && addr < r->phys_addr + r->size) {
+      return r;
+    }
+  }
+  return false;
+}
+
+void mem_mark_range(uint64_t addr, mem_type type) {
+  mem_range_node* range = mem_find_range_internal(addr);
+  if (range != NULL && range->type == MEMORY_RESERVED) {
+    range->type = type;
+  }
 }
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
@@ -91,6 +125,9 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   heap_mem_range.type = MEMORY_HEAP;
   heap_mem_range.virt_addr = _mem_heap_addr;
   mem_update_range(&heap_mem_range);
+
+  mem_mark_range(0xA0000 - 1, MEMORY_EBDA);         // EBDA, if exists, is just under 0xA0000
+  mem_mark_range(0xF0000, MEMORY_MOTHERBOARD_BIOS); // The BIOS ROM is at 0xF0000
 
   mem_inited = true;
 }
@@ -217,7 +254,7 @@ void mem_print_map(__unused int argc, __unused char** argv) {
 
 void mem_print_pt(__unused int argc, __unused char** argv) {
   CHECK_INIT();
-  printf("PT 0x%lx - 0x%lx\n", (uint64_t)PT_START, _next_page_pointer);
+  printf("PT 0x%lx - 0x%lx\n", (uint64_t) PT_START, _next_page_pointer);
 }
 
 void mem_print_range(char* text, uint64_t addr, uint64_t size) {
