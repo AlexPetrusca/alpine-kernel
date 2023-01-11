@@ -1,15 +1,18 @@
 #include <stdio.h>
 #include <assert.h>
-#include <stdlib.h>
 
 #include <kernel/device/pci.h>
 #include <kernel/mem/mem.h>
 
-#define MAX_PCI_DEVICES 32
+typedef struct {
+  dll_node node;
+  pci_device device;
+} pci_device_node;
 
-pci_device _pci_devices[MAX_PCI_DEVICES] = {0};
-int _pci_device_count = 0;
 bool pci_inited;
+dll_list _pci_devices = {0};
+char* bar_locatable_types[] = {"32", "<1MB", "64"};
+
 #define CHECK_INIT(def)  try(pci_inited, def, "PCI subsystem not initialized")
 
 pci_mcfg_table* find_mcfg_table() {
@@ -546,36 +549,41 @@ bool pci_init() {
     for (int bus = bridge.start_bus_number; bus <= bridge.end_bus_number; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {
         for (int fun = 0; fun <= PCI_MAX_FUNCTION; fun++) {
-          uint64_t addr = bridge.base_address + ((bus - bridge.start_bus_number) << 20) + (dev << 15) + (fun << 12);
-          pci_header* header = (pci_header*) addr;
-          if (header->vendor_id != 0xffff) { // 0xffff means there is no device
-            pci_device* device = &_pci_devices[_pci_device_count++];
-            assert(_pci_device_count < MAX_PCI_DEVICES, "Too many PCI devices, aborting enumeration.\n");
-            device->bus_number = bus;
-            device->device_number = dev;
-            device->function_number = fun;
-            device->header_type = header->header_type;
-            device->vendor_id = header->vendor_id;
-            device->device_id = header->device_id;
-            device->base_class_code = header->base_class_code;
-            device->sub_class_code = header->sub_class_code;
-            device->pi_class_code = header->pi_class_code;
-            device->ecam_adress = addr;
-            if (header->header_type & PCI_HEADER_TYPE_DEVICE) {
-              pci_type0_config* config = (pci_type0_config*) header;
+          uint32_t addr = bridge.base_address + ((bus - bridge.start_bus_number) << 20) + (dev << 15) + (fun << 12);
+          pci_header header = {0};
+          header.reg0 = mem_read_32(addr + 0x00);
+          if (header.vendor_id != 0xffff) { // 0xffff means there is no device
+            header.reg1 = mem_read_32(addr + 0x04);
+            header.reg2 = mem_read_32(addr + 0x08);
+            header.reg3 = mem_read_32(addr + 0x0C);
+
+            pci_device_node* node = malloc(sizeof(pci_device_node));
+            dll_add_tail(&_pci_devices, (dll_node*) node);
+
+            node->device.bus_number = bus;
+            node->device.device_number = dev;
+            node->device.function_number = fun;
+            node->device.header_type = header.header_type;
+            node->device.vendor_id = header.vendor_id;
+            node->device.device_id = header.device_id;
+            node->device.base_class_code = header.base_class_code;
+            node->device.sub_class_code = header.sub_class_code;
+            node->device.pi_class_code = header.pi_class_code;
+            node->device.ecam_adress = addr;
+            if (header.header_type & PCI_HEADER_TYPE_DEVICE) {
               for (int i = 0; i < 6; i++) {
-                device->bar[i] = config->bar[i];
+                node->device.bar[i].value = mem_read_32(addr + 0x10 + i * 4);
               }
             } else {
-              pci_type1_config* config = (pci_type1_config*) header;
-              device->bar[0] = config->bar[0];
-              device->bar[1] = config->bar[1];
-              device->bar[2].value = 0;
-              device->bar[3].value = 0;
-              device->bar[4].value = 0;
-              device->bar[5].value = 0;
+              for (int i = 0; i < 2; i++) {
+                node->device.bar[i].value = mem_read_32(addr + 0x10 + i * 4);
+              }
+              node->device.bar[2].value = 0;
+              node->device.bar[3].value = 0;
+              node->device.bar[4].value = 0;
+              node->device.bar[5].value = 0;
             }
-            if ((fun == 0) && ((header->header_type & PCI_HEADER_TYPE_MULTI_FUNCTION) == 0x00)) {
+            if ((fun == 0) && ((header.header_type & PCI_HEADER_TYPE_MULTI_FUNCTION) == 0x00)) {
               break;
             }
           }
@@ -589,8 +597,9 @@ bool pci_init() {
 
 bool pci_get_device(pci_device* device) {
   CHECK_INIT(false);
-  for (int i = 0; i < _pci_device_count; i++) {
-    pci_device* d = &_pci_devices[i];
+  for (pci_device_node* node = (pci_device_node*) _pci_devices.head; node != NULL;
+       node = (pci_device_node*) node->node.next) {
+    pci_device* d = &node->device;
     if (device->base_class_code == d->base_class_code && device->sub_class_code == d->sub_class_code
       && device->pi_class_code == d->pi_class_code) {
       *device = *d;
@@ -600,15 +609,32 @@ bool pci_get_device(pci_device* device) {
   return false;
 }
 
-uint64_t pci_bar_addr_32(pci_device* device, int bar_index) {
-  uint32_t bar = device->bar[bar_index].value;
-  return (bar & BAR_TYPE_MASK) == BAR_TYPE_MEMORY ?
-         bar & BAR_MEMORY_ADDRESS_MASK :
-         bar & BAR_IO_ADDRESS_MASK;
+uint64_t pci_bar_addr_32(pci_device* device, int index) {
+  pci_bar bar = device->bar[index];
+  return bar.type == BAR_TYPE_MEMORY ?
+         bar.value & BAR_MEMORY_ADDRESS_MASK :
+         bar.value & BAR_IO_ADDRESS_MASK;
 }
 
-uint64_t pci_bar_addr_64(pci_device* device, int bar_index) {
-  return (pci_bar_addr_32(device, bar_index + 1) << 32) + pci_bar_addr_32(device, bar_index);
+uint64_t pci_bar_addr_64(pci_device* device, int index) {
+  return (pci_bar_addr_32(device, index + 1) << 32) + pci_bar_addr_32(device, index);
+}
+
+uint64_t pci_bar_addr(pci_device* device, int index) {
+  pci_bar bar = device->bar[index];
+  if (bar.type == BAR_TYPE_MEMORY) {
+    switch (bar.mem.locatable) {
+      case BAR_ANY_32_BIT:
+      case BAR_BELOW_1M:
+        return pci_bar_addr_32(device, index);
+      case BAR_ANY_64_BIT:
+        return pci_bar_addr_64(device, index);
+      default:
+        panic("BAR locatable type %d not supported.", bar.mem.locatable);
+    }
+  } else {
+    panic("IO BARs not supported");
+  }
 }
 
 void pci_print_mcfg(__unused int argc, __unused char** argv) {
@@ -643,6 +669,10 @@ bool has_arg(char* arg, int argc, char** argv) {
   return false;
 }
 
+char* get_locatable_str(pci_bar bar) {
+  return bar.type == BAR_TYPE_MEMORY ? bar_locatable_types[bar.mem.locatable] : "";
+}
+
 void pci_print_devices(int argc, char** argv) {
   CHECK_INIT();
   if (has_arg("-h", argc, argv)) {
@@ -650,8 +680,9 @@ void pci_print_devices(int argc, char** argv) {
     printf("  pci bar - prints PCI device list including the BARs\n");
     return;
   }
-  for (int i = 0; i < _pci_device_count; i++) {
-    pci_device* device = &_pci_devices[i];
+  for (pci_device_node* node = (pci_device_node*) _pci_devices.head; node != NULL;
+       node = (pci_device_node*) node->node.next) {
+    pci_device* device = &node->device;
     pci_class_cames strings;
     pci_get_class_names(device, &strings);
     printf("%.2x:%.2x.%d: %x:%.4x %d, (%.2x:%.2x:%.2x) %s, %s, %s\n",
@@ -664,7 +695,9 @@ void pci_print_devices(int argc, char** argv) {
       printf("  BARs: ");
       for (int j = 0; j < 6; j++) {
         if (device->bar[j].value != 0) {
-          printf("%x(%d), ", device->bar[j].value, device->bar[j].type);
+          printf("%x (%s %s), ", device->bar[j].value,
+                 device->bar[j].type == BAR_TYPE_MEMORY ? "m" : "io", get_locatable_str(device->bar[j])
+          );
         }
       }
       printf("\n");

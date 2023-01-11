@@ -28,64 +28,63 @@ typedef struct {
   pci_host_bridge host_bridge[0];
 } __attribute__((packed)) pci_mcfg_table;
 
-typedef struct {
-  uint16_t vendor_id;
-  uint16_t device_id;
-  uint16_t command;
-  uint16_t status;
-  uint8_t revision_id;
-  uint8_t pi_class_code;
-  uint8_t sub_class_code;
-  uint8_t base_class_code;
-  uint8_t cache_line_size;
-  uint8_t master_latency_timer;
-  uint8_t header_type;
-  uint8_t bist;
+typedef union {
+  struct {
+    uint16_t vendor_id;
+    uint16_t device_id;
+    uint16_t command;
+    uint16_t status;
+    uint8_t revision_id;
+    uint8_t pi_class_code;
+    uint8_t sub_class_code;
+    uint8_t base_class_code;
+    uint8_t cache_line_size;
+    uint8_t master_latency_timer;
+    uint8_t header_type;
+    uint8_t bist;
+  };
+  struct {
+    uint32_t reg0;
+    uint32_t reg1;
+    uint32_t reg2;
+    uint32_t reg3;
+    uint32_t reg4;
+  };
 } __attribute__((packed)) pci_header;
-
-#define BAR_TYPE_MASK   0x00000001
-#define BAR_TYPE_MEMORY 0
-#define BAR_TYPE_IO     1
+static_assert(sizeof(pci_header) == 20, "pci_header must be 20 bytes long");
 
 #define BAR_MEMORY_ADDRESS_MASK     0xFFFFFFF0
 #define BAR_IO_ADDRESS_MASK         0xFFFFFFF3
 
-#define BAR_LOCATABLE_MASK    0
-#define BAR_LOCATABLE_32BIT   0
-#define BAR_LOCATABLE_BELOW1M 1
-#define BAR_LOCATABLE_64BIT   2
+typedef enum {
+  BAR_TYPE_MEMORY = 0,
+  BAR_TYPE_IO = 1
+} pci_bar_type;
+
+typedef enum {
+  BAR_ANY_32_BIT = 0,
+  BAR_BELOW_1M = 1,
+  BAR_ANY_64_BIT = 2,
+} pci_bar_locatable;
 
 typedef union {
   uint32_t value;
   struct {
-    uint32_t type: 1;  //  BAR_TYPE_MEMORY or BAR_TYPE_IO
-    union {
-      struct {
-        uint32_t locatable: 2;  // 0 = any 32-bit, 1 = < 1 MB, 2 = any 64-bit
-        uint32_t prefetchable: 1; // 0 = no, 1 = yes
-        uint32_t base_address: 28;
-      } __attribute__((packed)) memory;
-      struct {
-        uint32_t reserved: 1;
-        uint32_t base_address: 32;
-      } __attribute__((packed)) io;
-    }__attribute__((packed));
-  }__attribute__((packed));
+    pci_bar_type type: 1;
+  };
+  struct {
+    uint32_t : 1;                      // ignore bit 0, this is the type
+    pci_bar_locatable locatable: 2;    // 0 = any 32-bit, 1 = < 1 MB, 2 = any 64-bit
+    bool prefetchable: 1;
+    uint32_t base_address: 28;
+  } mem;
+  struct {
+    uint32_t : 1;             // ignore bit 0, this is the type
+    uint32_t : 1;             // reserved
+    uint32_t base_address: 30;
+  } io;
 } __attribute__((packed)) pci_bar;
-
-//static_assert(sizeof(pci_bar) == 4, "sizeof(pci_bar) must be 4");
-
-typedef struct {
-  pci_header header;
-  pci_bar bar[6];
-  // incomplete
-} __attribute__((packed)) pci_type0_config;
-
-typedef struct {
-  pci_header header;
-  pci_bar bar[2];
-  // incomplete
-} __attribute__((packed)) pci_type1_config;
+static_assert(sizeof(pci_bar) == 4, "A BAR register is 32 bits long");
 
 typedef struct {
   char* base_class; // Pointer to the PCI base class string
@@ -110,8 +109,9 @@ typedef struct {
 bool pci_init() __attribute__ ((warn_unused_result));
 bool pci_get_device(pci_device* device) __attribute__ ((warn_unused_result));
 void pci_get_class_names(pci_device* device, pci_class_cames* names);
-uint64_t pci_bar_addr_32(pci_device* device, int bar_index);
-uint64_t pci_bar_addr_64(pci_device* device, int bar_index);
+uint64_t pci_bar_addr_32(pci_device* device, int index);
+uint64_t pci_bar_addr_64(pci_device* device, int index);
+uint64_t pci_bar_addr(pci_device* device, int index);
 
 void pci_print_mcfg(int argc, char** argv);
 void pci_print_devices(int argc, char** argv);
