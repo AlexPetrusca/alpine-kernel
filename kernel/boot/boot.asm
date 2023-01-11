@@ -45,10 +45,10 @@ GRAN_4K       equ 1 << 7
 
 ; Paging constants
 PAGE_SIZE     equ 4096      ; 4 KB
-PML4T_START   equ 0xA000
-PDPT_START    equ 0xB000
-PDT_START     equ 0xC000
-PT_START      equ 0xD000
+PML4T_START   equ 0x3000
+PDPT_START    equ 0x4000
+PDT_START     equ 0x5000
+PT_START      equ 0x6000
 
 ; Page access bits
 PAGE_PRESENT    equ (1 << 0)

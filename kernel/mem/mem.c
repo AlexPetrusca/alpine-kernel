@@ -3,16 +3,13 @@
 
 #include <kernel/mem/mem.h>
 #include <kernel/mem/heap.h>
+#include <kernel/mem/pgm.h>
 
-#define PAGE_NUMBER_MASK 0x0000FFFFFFFFF000
-#define PAGE_PRESENT    (1 << 0)
-#define PAGE_WRITE      (1 << 1)
+#define PAGE_NUMBER_MASK    0x0000FFFFFFFFF000
+#define PAGE_PRESENT        (1 << 0)
+#define PAGE_WRITE          (1 << 1)
 
-#define PML4T_START   0xA000
-#define PDPT_START    0xB000
-#define PDT_START     0xC000
-#define PT_START      0xD000
-
+#define PML4T_START         0x3000
 #define MAX_VIRTUAL_ADDR    0xFFFFFFFFFFFFFFFF
 #define MAIN_MEM_START      0x100000 // todo: define known ranges in mem.h
 #define HEAP_SIZE           512 * PAGE_SIZE
@@ -28,15 +25,15 @@ typedef struct {
 bool mem_inited = false;
 #define CHECK_INIT(def)  try(mem_inited, def, "Memory subsystem not initialized")
 
-uint64_t _next_page_pointer = PT_START + PAGE_SIZE;
-
 uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
 dll_list _mem_map;
 uint64_t _mem_heap_addr;
+uint64_t _mem_pgm_handle;
+
 char* _mem_type[] = {
   "", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config", "USB (xHCI)", "Kernel Heap",
-  "Frame Buffer", "ACPI", "LAPIC", "Process Stacks", "EBDA", "Motherboard BIOS"};
+  "Frame Buffer", "ACPI", "LAPIC", "Process Stacks", "EBDA", "Motherboard BIOS", "SMP Trampoline", "Page Table"};
 
 uint32_t mem_read_8(uint64_t addr) {
   return *((uint8_t*) addr);
@@ -54,15 +51,14 @@ uint64_t mem_read_64(uint64_t addr) {
   return *((uint64_t*) addr);
 }
 
-
 void identity_map(uint64_t addr);
 bool mem_update_range(mem_range_node* range);
 
-mb2_mmap_entry* mem_find_main_mem(mb2_tag_mmap* mem_map) {
+mb2_mmap_entry* mem_find(mb2_tag_mmap* mem_map, uint64_t addr) {
   for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
        mmap = (mb2_mmap_entry*) ((uint64_t) mmap + mem_map->entry_size)) {
-    if (mmap->addr == MAIN_MEM_START) {
+    if (addr >= mmap->addr && addr < mmap->addr + mmap->len) {
       return mmap;
     }
   }
@@ -88,9 +84,13 @@ mem_range_node* mem_find_range_internal(uint64_t addr) {
 
 void mem_mark_range(uint64_t addr, mem_type type) {
   mem_range_node* range = mem_find_range_internal(addr);
-  if (range != NULL && range->type == MEMORY_RESERVED) {
+  if (range != NULL) {
     range->type = type;
   }
+}
+
+uint64_t mem_page_addr(uint64_t addr) {
+  return (addr >> 12) << 12;
 }
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
@@ -99,8 +99,18 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
 
+  // initialize the page manager
+  long pgm_start_addr = PML4T_START - PAGE_SIZE;
+  mb2_mmap_entry* lower_mem = mem_find(mem_map, pgm_start_addr);
+  long pgm_end_addr = mem_page_addr(lower_mem->addr + lower_mem->len);
+  _mem_pgm_handle = pgm_init(pgm_start_addr, pgm_end_addr - pgm_start_addr);
+  pgm_allocate_page(_mem_pgm_handle); // pml4
+  pgm_allocate_page(_mem_pgm_handle); // pdpt
+  pgm_allocate_page(_mem_pgm_handle); // pdt
+  pgm_allocate_page(_mem_pgm_handle); // pt
+
   // initialize the heap
-  mb2_mmap_entry* main_mem = mem_find_main_mem(mem_map);
+  mb2_mmap_entry* main_mem = mem_find(mem_map, MAIN_MEM_START);
   assert(main_mem != NULL, "Could not find main memory region.");
   _mem_heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
   for (uint64_t addr = _mem_heap_addr; addr < _mem_heap_addr + HEAP_SIZE; addr += PAGE_SIZE) {
@@ -108,7 +118,7 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   }
   heap_init(_mem_heap_addr, HEAP_SIZE);
 
-  //  save the memory map
+  // save the memory map
   for (mb2_mmap_entry* mmap = mem_map->entries;
        (uint8_t*) mmap < (uint8_t*) mem_map + mem_map->size;
        mmap = (mb2_mmap_entry*) ((uint64_t) mmap + mem_map->entry_size)) {
@@ -128,16 +138,16 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
 
   mem_mark_range(0xA0000 - 1, MEMORY_EBDA);         // EBDA, if exists, is just under 0xA0000
   mem_mark_range(0xF0000, MEMORY_MOTHERBOARD_BIOS); // The BIOS ROM is at 0xF0000
+  mem_range_node range = {.phys_addr = 0x1000, .size = PAGE_SIZE, .type = MEMORY_SMP_TRAMPOLINE};
+  mem_update_range(&range);
+  mem_mark_range(0x2000, MEMORY_PAGE_TABLE);
 
   mem_inited = true;
 }
 
 uint64_t allocate_page() {
-  uint64_t page_ptr = _next_page_pointer;
-  _next_page_pointer += PAGE_SIZE;
-  for (uint64_t* p = (uint64_t*) page_ptr; p < (uint64_t*) _next_page_pointer; p++) {
-    *p = 0;
-  }
+  uint64_t page_ptr = pgm_allocate_page(_mem_pgm_handle);
+  memset((void*) page_ptr, 0, PAGE_SIZE);
   return page_ptr;
 }
 
@@ -241,12 +251,15 @@ bool mem_update_range(mem_range_node* range) {
 
 void mem_print_map(__unused int argc, __unused char** argv) {
   CHECK_INIT();
-  printf(" Phys Start   Phys End     Virtual Addr     Size\n");
+  printf(" %12s %12s %16s %12s %8s  %s\n", "Phys Start", "Phys End", "Virtual Addr", "Size", "Pages", "Type");
+  printf(" %12s %12s %16s %12s %8s  %s\n", "==========", "========", "============", "====", "=====", "====");
   for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
-    printf(" %0.12lx %0.12lx %0.16lx %.12ld %s\n",
-           r->phys_addr, r->phys_addr + r->size,
-           r->virt_addr,
+    printf(" %12lx %12lx %16lx %12ld %8ld  %s\n",
+           r->phys_addr,
+           r->phys_addr + r->size,
+           r->virt_addr == MAX_VIRTUAL_ADDR ? 0 : r->virt_addr,
            r->size,
+           r->size / PAGE_SIZE,
            _mem_type[r->type]);
   }
   printf(" lower %dKB, upper %dKB\n", _mem_lower, _mem_upper);
@@ -254,14 +267,6 @@ void mem_print_map(__unused int argc, __unused char** argv) {
 
 void mem_print_pt(__unused int argc, __unused char** argv) {
   CHECK_INIT();
-  printf("PT 0x%lx - 0x%lx\n", (uint64_t) PT_START, _next_page_pointer);
-}
-
-void mem_print_range(char* text, uint64_t addr, uint64_t size) {
-  printf("%s: ", text);
-  uint8_t* p = (uint8_t*) addr;
-  for (uint64_t i = 0; i < size; i++) {
-    printf("%.2x ", p[i]);
-  }
-  printf("\n");
+  printf("Pages: %ld, Used: %ld, Free: %ld\n",
+         pgm_total_pages(_mem_pgm_handle), pgm_used_pages(_mem_pgm_handle), pgm_free_pages(_mem_pgm_handle));
 }

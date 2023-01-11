@@ -76,6 +76,8 @@ mem/heap.o \
 mem/heap_test.o \
 test/tests.o \
 test/test.o \
+mem/pgm.o \
+mem/pgm_test.o \
 
 OBJS=\
 boot/crti.o \

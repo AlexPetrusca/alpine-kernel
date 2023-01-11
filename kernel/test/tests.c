@@ -14,4 +14,5 @@ void tests_run(__unused int argc, __unused char** argv) {
   RUN_SUITE(strtrim);
   RUN_SUITE(heap);
   RUN_SUITE(vector);
+  RUN_SUITE(pgm);
 }
