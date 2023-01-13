@@ -102,4 +102,8 @@ add_executable(alpine_kernel
         libc/string/strtrim.c
         libc/string/strtrim_test.c
         libc/include/math.h
-        kernel/mem/heap_test.c libc/sys/vector_test.c kernel/include/kernel/util/types.h)
+        kernel/mem/heap_test.c
+        libc/sys/vector_test.c
+        kernel/mem/pgm.c
+        kernel/include/kernel/mem/pgm.h
+        kernel/mem/pgm_test.c)

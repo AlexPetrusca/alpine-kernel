@@ -35,9 +35,6 @@ LONG_MODE     equ 1 << 5
 SZ_32         equ 1 << 6
 GRAN_4K       equ 1 << 7
 
-; Paging constants
-PML4T_START   equ 0xA000
-
 extern smp_idt_pointer_size
 extern smp_idt_pointer_base
 extern smp_gdt_pointer_size
@@ -45,22 +42,6 @@ extern smp_gdt_pointer_base
 extern smp_pml4_base
 extern _processes;
 extern enter_smp;
-
-section .trampolinedata
-align 4
-
-SmpIdtPointer:
-        smp_idt_pointer_size    dw 0            ; size of the IDT
-        smp_idt_pointer_base    dd 0            ; pointer to the IDT
-
-SmpGdtPointer:
-        smp_gdt_pointer_size    dw 0           ; size of the GDT
-        smp_gdt_pointer_base    dq 0           ; pointer to the GDT
-
-SmpPml4Pointer:
-        smp_pml4_base           dq 0           ; pointer to the PML4
-
-        process_counter         dq 0
 
 [BITS 16]
 section .trampoline
@@ -128,5 +109,20 @@ enter_smp:
 .loop:
     hlt
     jmp .loop
+
+align 4
+
+SmpIdtPointer:
+        smp_idt_pointer_size    dw 0            ; size of the IDT
+        smp_idt_pointer_base    dd 0            ; pointer to the IDT
+
+SmpGdtPointer:
+        smp_gdt_pointer_size    dw 0           ; size of the GDT
+        smp_gdt_pointer_base    dq 0           ; pointer to the GDT
+
+SmpPml4Pointer:
+        smp_pml4_base           dq 0           ; pointer to the PML4
+
+        process_counter         dq 0
 
 trampoline_end:

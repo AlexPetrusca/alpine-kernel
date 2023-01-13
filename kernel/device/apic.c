@@ -45,7 +45,7 @@ void apic_send_init() {
 }
 
 void apic_send_start() {
-  apic_send_command(0, ICR_ALL_EXCLUDING_SELF | ICR_STARTUP | ICR_PHYSICAL | ICR_ASSERT | ICR_EDGE | 8);
+  apic_send_command(0, ICR_ALL_EXCLUDING_SELF | ICR_STARTUP | ICR_PHYSICAL | ICR_ASSERT | ICR_EDGE | 1); // vector 1
 }
 
 apic_table_header* find_apic_table() {

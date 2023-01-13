@@ -7,7 +7,7 @@
 #include <sys/dll.h>
 #include <kernel/boot/mb2_type.h>
 
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096L
 
 typedef union {
   uint64_t value;
@@ -36,6 +36,8 @@ typedef enum {
   MEMORY_STACKS = 12,
   MEMORY_EBDA = 13,
   MEMORY_MOTHERBOARD_BIOS = 14,
+  MEMORY_SMP_TRAMPOLINE = 15,
+  MEMORY_PAGE_TABLE = 16,
 } mem_type;
 
 typedef struct {
@@ -50,6 +52,8 @@ uint32_t mem_read_16(uint64_t addr);
 uint32_t mem_read_32(uint64_t addr);
 uint64_t mem_read_64(uint64_t addr);
 
+uint64_t mem_page_addr(uint64_t addr);
+
 uint64_t mem_get_pml4_addr();
 uint64_t mem_get_heap_addr();
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
@@ -58,6 +62,5 @@ bool mem_find_range(uint64_t addr, mem_range* range) __attribute__ ((warn_unused
 
 void mem_print_map(int argc, char** argv);
 void mem_print_pt(int argc, char** argv);
-void mem_print_range(char* text, uint64_t addr, uint64_t size);
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_

@@ -6,15 +6,11 @@ ENTRY(_start)
    kernel image. */
 SECTIONS
 {
-	/* Place the SMP trampoline at 8000h since this is where vector 00 points to. */
-	. = 8000h;
+	/* Place the SMP trampoline at 1000h since this is where vector 1 points to. */
+	. = 1000h;
 	.trampolinetext BLOCK(4K) : ALIGN(4K)
 	{
 		*(.trampoline)
-	}
-	.trampolinedata BLOCK(4K) : ALIGN(4)
-	{
-		*(.trampolinedata)
 	}
 
 	/* Begin putting sections at 1 MiB, a conventional place for kernels to be
