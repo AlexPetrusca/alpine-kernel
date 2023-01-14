@@ -103,7 +103,7 @@ idt:
     .Length:
         main_idt_pointer_size dw 0
     .Base:
-        main_idt_pointer_base dd 0
+        main_idt_pointer_base dq 0
 
 gdt:
     .Null:

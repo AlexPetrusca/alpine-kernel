@@ -47,6 +47,10 @@ static inline void outq(uint16_t port, uint64_t val) {
   asm volatile ( "outq %0, %1" : : "a"(val), "Nd"(port));
 }
 
+static inline void io_wait(void) {
+  outb(0x80, 0);
+}
+
 __END_DECLS
 
 #endif

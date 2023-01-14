@@ -104,6 +104,20 @@ add_executable(alpine_kernel
         libc/include/math.h
         kernel/mem/heap_test.c
         libc/sys/vector_test.c
+        kernel/cpu/gdt.c
+        kernel/cpu/idt.c
+        kernel/include/kernel/cpu/gdt.h
+        kernel/include/kernel/cpu/idt.h
+        libc/include/sys/int128.h
+        libc/stdlib/strtoimax.c
+        libc/stdlib/strtol.c
+        libc/stdlib/strtoul.c
+        libc/stdlib/atoi.c
+        libc/errno/errno.c
+        kernel/include/kernel/cpu/pic.h
+        kernel/cpu/pic.c
+        kernel/cpu/isr.c
+        kernel/include/kernel/cpu/isr.h
         kernel/mem/pgm.c
         kernel/include/kernel/mem/pgm.h
         kernel/mem/pgm_test.c)

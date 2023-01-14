@@ -2,8 +2,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-char* itoa(int value, char* str, int base) {
-  unsigned int uvalue = value;
+char* lltoa(long long int value, char* str, int base) {
+  unsigned long long int uvalue = value;
   if (uvalue == 0) {
     str[0] = '0';
     str[1] = '\0';
@@ -30,4 +30,12 @@ char* itoa(int value, char* str, int base) {
   str[i] = '\0';
   strrev(str);
   return str;
+}
+
+char* ltoa(int long value, char* str, int base) {
+  return lltoa(value, str, base);
+}
+
+char* itoa(int value, char* str, int base) {
+  return lltoa(value, str, base);
 }

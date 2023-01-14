@@ -67,6 +67,10 @@ cpu/cpu.o \
 cpu/smp.o \
 cpu/trampoline.o \
 cpu/process.o \
+cpu/gdt.o \
+cpu/idt.o \
+cpu/pic.o \
+cpu/isr.o \
 device/acpi.o \
 device/apic.o \
 device/pci.o \
@@ -103,6 +107,11 @@ alpine.kernel: $(OBJS) linker.ld
 
 crtbegin.o crtend.o:
 	@ OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" ../build/$@
+
+cpu/isr.o:
+	@ cd ../build
+	@ mkdir -p $(@D);
+	$(CC) -MD -c ../kernel/cpu/isr.c -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS) -mgeneral-regs-only
 
 .c.o:
 	@ cd ../build

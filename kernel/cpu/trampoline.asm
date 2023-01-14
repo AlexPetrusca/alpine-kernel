@@ -46,8 +46,6 @@ extern enter_smp;
 [BITS 16]
 section .trampoline
 trampoline_start:
-    cli
-
     ; Disable IRQs
     mov al, 0xFF                      ; Out 0xFF to 0xA1 and 0x21 to disable all IRQs.
     out 0xA1, al

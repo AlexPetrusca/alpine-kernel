@@ -48,6 +48,10 @@ stdio/puts.o \
 stdlib/malloc.o \
 stdlib/abort.o \
 stdlib/itoa.o \
+stdlib/atoi.o \
+stdlib/strtoimax.o \
+stdlib/strtol.o \
+stdlib/strtoul.o \
 string/memchr.o \
 string/memcmp.o \
 string/memcpy.o \
@@ -70,7 +74,8 @@ sys/circ_buf_ptr.o \
 sys/dll.o \
 sys/vector.o \
 sys/vector_test.o \
-sys/strsplit.o
+sys/strsplit.o \
+errno/errno.o
 
 LIBK_OBJS=$(OBJS:.o=.libk.o)
 

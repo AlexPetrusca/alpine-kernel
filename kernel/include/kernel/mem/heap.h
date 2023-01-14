@@ -11,6 +11,7 @@ void* kmalloc(size_t size);
 void kfree(void* ptr);
 void* kcalloc(size_t nmemb, size_t size);
 void* krealloc(void* ptr, size_t size);
+
 uint64_t kgetused();
 uint64_t kgetfree();
 

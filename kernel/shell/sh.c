@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <sys/circ_buf.h>
 #include <sys/strsplit.h>
@@ -18,9 +19,10 @@
 #include <kernel/font/psf_font.h>
 #include <kernel/test/tests.h>
 #include <kernel/cpu/cpu.h>
+#include <kernel/cpu/gdt.h>
+#include <kernel/cpu/idt.h>
 #include <kernel/mem/mem.h>
 #include <kernel/mem/heap.h>
-#include "stdlib.h"
 
 #define SH_MAX_HISTORY 5
 #define SH_MAX_COMMAND 4096
@@ -45,6 +47,10 @@ sh_command sh_commands[] = {
     {"usb", usb_print_info},
     {"font", psf_font_info_print},
     {"heap", heap_print_info},
+    {"gdt", gdt_print_info},
+    {"idt", idt_print_info},
+    {"int", idt_interrupt},
+    {"memdump", mem_memdump},
     {"", NULL}
 };
 

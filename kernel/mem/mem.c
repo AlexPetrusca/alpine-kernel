@@ -12,7 +12,7 @@
 #define PML4T_START         0x3000
 #define MAX_VIRTUAL_ADDR    0xFFFFFFFFFFFFFFFF
 #define MAIN_MEM_START      0x100000 // todo: define known ranges in mem.h
-#define HEAP_SIZE           512 * PAGE_SIZE
+#define HEAP_SIZE           (512 * PAGE_SIZE)
 
 typedef struct {
   dll_node node;
@@ -194,6 +194,20 @@ bool mem_find_range(uint64_t addr, mem_range* range) {
   return false;
 }
 
+bool mem_find_range_by_type(mem_type type, mem_range* range) {
+  CHECK_INIT(false);
+  for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
+    if (type == r->type) {
+      range->phys_addr = r->phys_addr;
+      range->virt_addr = r->virt_addr;
+      range->size = r->size;
+      range->type = r->type;
+      return true;
+    }
+  }
+  return false;
+}
+
 bool mem_contains(mem_range_node* r1, mem_range_node* r2) {
   uint64_t x1 = r1->phys_addr, x2 = r1->phys_addr + r1->size;
   uint64_t y1 = r2->phys_addr, y2 = r2->phys_addr + r2->size;
@@ -267,6 +281,19 @@ void mem_print_map(__unused int argc, __unused char** argv) {
 
 void mem_print_pt(__unused int argc, __unused char** argv) {
   CHECK_INIT();
-  printf("Pages: %ld, Used: %ld, Free: %ld\n",
-         pgm_total_pages(_mem_pgm_handle), pgm_used_pages(_mem_pgm_handle), pgm_free_pages(_mem_pgm_handle));
+  printf("Pages: %lld, Used: %lld, Free: %lld\n",
+      pgm_total_pages(_mem_pgm_handle), pgm_used_pages(_mem_pgm_handle), pgm_free_pages(_mem_pgm_handle));
+}
+
+void mem_memdump(int argc, char** argv) {
+  if (argc == 3) {
+    unsigned char* addr = (unsigned char*) strtoull(argv[1], NULL, 16);
+    uint64_t size = strtoull(argv[2], NULL, 10);
+    for (uint64_t i = 0; i < size; i++) {
+      printf("%.2x ", addr[i]);
+    }
+    printf("\n");
+  } else {
+    printf("Usage: memdump [addr] [size]");
+  }
 }
