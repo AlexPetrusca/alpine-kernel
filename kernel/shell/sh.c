@@ -33,25 +33,26 @@ typedef struct {
 } sh_command;
 
 sh_command sh_commands[] = {
-    {"cpu", cpu_print_info},
-    {"test", tests_run},
-    {"acpi", acpi_print_info},
-    {"apic", apic_print_info},
-    {"lapic", apic_print_lapic_info},
-    {"mcfg", pci_print_mcfg},
-    {"pci", pci_print_devices},
-    {"mmap", mem_print_map},
-    {"pt", mem_print_pt},
-    {"mbi", mb2_info_print},
-    {"fb", mb2_fb_info_print},
-    {"usb", usb_print_info},
-    {"font", psf_font_info_print},
-    {"heap", heap_print_info},
-    {"gdt", gdt_print_info},
-    {"idt", idt_print_info},
-    {"int", idt_interrupt},
-    {"memdump", mem_memdump},
-    {"", NULL}
+  {"cpu", cpu_print_info},
+  {"test", tests_run},
+  {"acpi", acpi_print_info},
+  {"apic", apic_print_info},
+  {"lapic", apic_print_lapic_info},
+  {"mcfg", pci_print_mcfg},
+  {"pci", pci_print_devices},
+  {"mmap", mem_print_map},
+  {"pt", mem_print_pt_pgm},
+  {"pgm", mem_print_main_pgm},
+  {"mbi", mb2_info_print},
+  {"fb", mb2_fb_info_print},
+  {"usb", usb_print_info},
+  {"font", psf_font_info_print},
+  {"heap", heap_print_info},
+  {"gdt", gdt_print_info},
+  {"idt", idt_print_info},
+  {"int", idt_interrupt},
+  {"memdump", mem_memdump},
+  {"", NULL}
 };
 
 char sh_history_buf[(SH_MAX_HISTORY + 1) * (SH_MAX_COMMAND + 1)];

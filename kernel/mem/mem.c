@@ -4,6 +4,7 @@
 #include <kernel/mem/mem.h>
 #include <kernel/mem/heap.h>
 #include <kernel/mem/pgm.h>
+#include <kernel/cpu/asm.h>
 
 #define PAGE_NUMBER_MASK    0x0000FFFFFFFFF000
 #define PAGE_PRESENT        (1 << 0)
@@ -11,7 +12,6 @@
 
 #define PML4T_START         0x3000
 #define MAX_VIRTUAL_ADDR    0xFFFFFFFFFFFFFFFF
-#define MAIN_MEM_START      0x100000 // todo: define known ranges in mem.h
 #define HEAP_SIZE           (512 * PAGE_SIZE)
 
 typedef struct {
@@ -29,11 +29,14 @@ uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
 dll_list _mem_map;
 uint64_t _mem_heap_addr;
-uint64_t _mem_pgm_handle;
+uint64_t _mem_low_pgm_handle;
+uint64_t _mem_main_pgm_handle;
 
 char* _mem_type[] = {
   "", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config", "USB (xHCI)", "Kernel Heap",
-  "Frame Buffer", "ACPI", "LAPIC", "Process Stacks", "EBDA", "Motherboard BIOS", "SMP Trampoline", "Page Table"};
+  "Frame Buffer", "ACPI", "LAPIC", "Process Stacks", "EBDA", "Motherboard BIOS", "SMP Trampoline", "Page Table",
+  "Page Manager"
+};
 
 uint32_t mem_read_8(uint64_t addr) {
   return *((uint8_t*) addr);
@@ -50,9 +53,6 @@ uint32_t mem_read_32(uint64_t addr) {
 uint64_t mem_read_64(uint64_t addr) {
   return *((uint64_t*) addr);
 }
-
-void identity_map(uint64_t addr);
-bool mem_update_range(mem_range_node* range);
 
 mb2_mmap_entry* mem_find(mb2_tag_mmap* mem_map, uint64_t addr) {
   for (mb2_mmap_entry* mmap = mem_map->entries;
@@ -99,23 +99,27 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   _mem_lower = basic_meminfo->mem_lower;
   _mem_upper = basic_meminfo->mem_upper;
 
-  // initialize the page manager
+  mem_inited = true;
+
+  // initialize the low page manager
   long pgm_start_addr = PML4T_START - PAGE_SIZE;
   mb2_mmap_entry* lower_mem = mem_find(mem_map, pgm_start_addr);
   long pgm_end_addr = mem_page_addr(lower_mem->addr + lower_mem->len);
-  _mem_pgm_handle = pgm_init(pgm_start_addr, pgm_end_addr - pgm_start_addr);
-  pgm_allocate_page(_mem_pgm_handle); // pml4
-  pgm_allocate_page(_mem_pgm_handle); // pdpt
-  pgm_allocate_page(_mem_pgm_handle); // pdt
-  pgm_allocate_page(_mem_pgm_handle); // pt
+  _mem_low_pgm_handle = pgm_init(pgm_start_addr, pgm_end_addr - pgm_start_addr);
+  pgm_allocate_page(_mem_low_pgm_handle); // pml4
+  pgm_allocate_page(_mem_low_pgm_handle); // pdpt
+  pgm_allocate_page(_mem_low_pgm_handle); // pdt
+  pgm_allocate_page(_mem_low_pgm_handle); // pt
 
-  // initialize the heap
+  // initialize the main page manager
   mb2_mmap_entry* main_mem = mem_find(mem_map, MAIN_MEM_START);
   assert(main_mem != NULL, "Could not find main memory region.");
-  _mem_heap_addr = main_mem->addr + main_mem->len - HEAP_SIZE;
-  for (uint64_t addr = _mem_heap_addr; addr < _mem_heap_addr + HEAP_SIZE; addr += PAGE_SIZE) {
-    identity_map(addr); // todo: don't identity map
-  }
+  long main_pgm_size = 4 * HEAP_SIZE;
+  uint64_t main_pgm_start_addr = main_mem->addr + main_mem->len - main_pgm_size;
+  _mem_main_pgm_handle = pgm_init(main_pgm_start_addr, main_pgm_size);
+
+  // initialize the heap
+  _mem_heap_addr = 0x10000000000;
   heap_init(_mem_heap_addr, HEAP_SIZE);
 
   // save the memory map
@@ -130,29 +134,23 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
     dll_add_tail(&_mem_map, (dll_node*) range);
   }
 
-  // register the heap in the memory map
-  mem_range_node heap_mem_range = {.phys_addr = _mem_heap_addr, .size = HEAP_SIZE};
-  heap_mem_range.type = MEMORY_HEAP;
-  heap_mem_range.virt_addr = _mem_heap_addr;
-  mem_update_range(&heap_mem_range);
-
+  // mark some memory areas
+  mem_update_range(_mem_heap_addr, _mem_heap_addr, HEAP_SIZE, MEMORY_HEAP);
   mem_mark_range(0xA0000 - 1, MEMORY_EBDA);         // EBDA, if exists, is just under 0xA0000
   mem_mark_range(0xF0000, MEMORY_MOTHERBOARD_BIOS); // The BIOS ROM is at 0xF0000
-  mem_range_node range = {.phys_addr = 0x1000, .size = PAGE_SIZE, .type = MEMORY_SMP_TRAMPOLINE};
-  mem_update_range(&range);
+  mem_update_range(0x1000, 0x1000, PAGE_SIZE, MEMORY_SMP_TRAMPOLINE);
   mem_mark_range(0x2000, MEMORY_PAGE_TABLE);
-
-  mem_inited = true;
+  mem_update_range(main_pgm_start_addr, main_pgm_start_addr, main_pgm_size, MEMORY_PGM);
 }
 
 uint64_t allocate_page() {
-  uint64_t page_ptr = pgm_allocate_page(_mem_pgm_handle);
+  uint64_t page_ptr = pgm_allocate_page(_mem_low_pgm_handle);
   memset((void*) page_ptr, 0, PAGE_SIZE);
   return page_ptr;
 }
 
-void identity_map(uint64_t addr) {
-  VirtualAddress vaddr = {addr};
+void mem_map_page(uint64_t virt_addr, uint64_t page_addr) {
+  VirtualAddress vaddr = {virt_addr};
   uint64_t* pml4_entry = ((uint64_t*) PML4T_START) + vaddr.pml4_index;
   if (*pml4_entry == 0) {
     *pml4_entry = allocate_page() | PAGE_PRESENT | PAGE_WRITE;
@@ -166,17 +164,14 @@ void identity_map(uint64_t addr) {
     *pd_entry = allocate_page() | PAGE_PRESENT | PAGE_WRITE;
   }
   uint64_t* pt_entry = ((uint64_t*) (*pd_entry & PAGE_NUMBER_MASK)) + vaddr.pt_index;
-  *pt_entry = (vaddr.value & PAGE_NUMBER_MASK) | PAGE_PRESENT | PAGE_WRITE;
+  *pt_entry = (page_addr & PAGE_NUMBER_MASK) | PAGE_PRESENT | PAGE_WRITE;
 }
 
-// Good explanation of the concepts can be found here: https://back.engineering/23/08/2020/
-bool mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) {
+bool mem_identity_map_range(uint64_t phys_addr, uint64_t size) {
   CHECK_INIT(false);
   for (uint64_t addr = phys_addr; addr < phys_addr + size; addr += PAGE_SIZE) {
-    identity_map(addr);
+    mem_map_page(addr, addr);
   }
-  mem_range_node range = {.phys_addr = phys_addr, .virt_addr = phys_addr, .size = size, .type = type};
-  mem_update_range(&range);
   return true;
 }
 
@@ -220,7 +215,9 @@ bool mem_intersect(mem_range_node* r1, mem_range_node* r2) {
   return (y1 >= x1 && y1 < x2) || (y2 >= x1 && y2 < x2);
 }
 
-bool mem_update_range(mem_range_node* range) {
+bool mem_update_range(uint64_t phys_addr, uint64_t virt_addr, uint64_t size, mem_type type) {
+  mem_range_node range2 = {.phys_addr = phys_addr, .virt_addr = virt_addr, .size = size, .type = type};
+  mem_range_node* range = &range2;
   for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
     if (mem_intersect(r, range)) {
       if (!mem_contains(r, range)) {
@@ -260,6 +257,9 @@ bool mem_update_range(mem_range_node* range) {
       return true;
     }
   }
+  mem_range_node* nr = (mem_range_node*) kmalloc(sizeof(mem_range_node));
+  *nr = *range;
+  dll_add_tail(&_mem_map, (dll_node*) nr);
   return false;
 }
 
@@ -279,10 +279,20 @@ void mem_print_map(__unused int argc, __unused char** argv) {
   printf(" lower %dKB, upper %dKB\n", _mem_lower, _mem_upper);
 }
 
-void mem_print_pt(__unused int argc, __unused char** argv) {
+void mem_print_pt_pgm(__unused int argc, __unused char** argv) {
   CHECK_INIT();
-  printf("Pages: %lld, Used: %lld, Free: %lld\n",
-      pgm_total_pages(_mem_pgm_handle), pgm_used_pages(_mem_pgm_handle), pgm_free_pages(_mem_pgm_handle));
+  printf("Pages: %ld, Used: %ld, Free: %ld\n",
+         pgm_total_pages(_mem_low_pgm_handle),
+         pgm_used_pages(_mem_low_pgm_handle),
+         pgm_free_pages(_mem_low_pgm_handle));
+}
+
+void mem_print_main_pgm(__unused int argc, __unused char** argv) {
+  CHECK_INIT();
+  printf("Pages: %ld, Used: %ld, Free: %ld\n",
+         pgm_total_pages(_mem_main_pgm_handle),
+         pgm_used_pages(_mem_main_pgm_handle),
+         pgm_free_pages(_mem_main_pgm_handle));
 }
 
 void mem_memdump(int argc, char** argv) {
@@ -296,4 +306,8 @@ void mem_memdump(int argc, char** argv) {
   } else {
     printf("Usage: memdump [addr] [size]");
   }
+}
+
+void mem_handle_page_fault(uint64_t virt_addr) {
+  mem_map_page(mem_page_addr(virt_addr), pgm_allocate_page(_mem_main_pgm_handle));
 }

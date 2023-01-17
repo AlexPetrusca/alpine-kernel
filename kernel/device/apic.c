@@ -18,7 +18,8 @@ bool apic_init() {
   SET_APIC_GLOBAL_ENABLE(apic_base_msr);
   msr_write64(IA32_APIC_BASE_MSR, apic_base_msr);
   uint64_t apic_base = GET_APIC_BASE(apic_base_msr);
-  try(mem_identity_map_range(apic_base, 4096, MEMORY_LAPIC), false, "");
+  try(mem_identity_map_range(apic_base, 4096), false, "");
+  mem_update_range(apic_base, apic_base, 4096, MEMORY_LAPIC);
   _apic_base_addr = apic_base;
   return true;
 }

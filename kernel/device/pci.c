@@ -544,7 +544,8 @@ bool pci_init() {
     pci_host_bridge bridge = mcfg->host_bridge[brideg_id];
     mem_range range;
     try(mem_find_range(bridge.base_address, &range), false, "Cannot find PCI bridge memory range\n");
-    try(mem_identity_map_range(range.phys_addr, range.size, MEMORY_PCI_ECAM), false, "");
+    try(mem_identity_map_range(range.phys_addr, range.size), false, "");
+    mem_update_range(range.phys_addr, range.phys_addr, range.size, MEMORY_PCI_ECAM);
 
     for (int bus = bridge.start_bus_number; bus <= bridge.end_bus_number; bus++) {
       for (int dev = 0; dev <= PCI_MAX_DEVICE; dev++) {
@@ -685,11 +686,10 @@ void pci_print_devices(int argc, char** argv) {
     pci_device* device = &node->device;
     pci_class_cames strings;
     pci_get_class_names(device, &strings);
-    printf("%.2x:%.2x.%d: %x:%.4x %d, (%.2x:%.2x:%.2x) %s, %s, %s\n",
+    printf("%.2x:%.2x.%d: %x:%.4x (%.2x:%.2x:%.2x) %s, %s, %s\n",
            device->bus_number, device->device_number, device->function_number,
            device->vendor_id, device->device_id,
            device->base_class_code, device->sub_class_code, device->pi_class_code,
-           device->header_type,
            strings.base_class, strings.sub_class, strings.pif_class);
     if (has_arg("bar", argc, argv)) {
       printf("  BARs: ");

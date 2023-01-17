@@ -1,37 +1,7 @@
 #include <cpuid.h>
 #include <stdio.h>
 #include <kernel/cpu/cpu.h>
-
-// Intel syntax: op dst, src (Intel manuals!)
-// AT&T (gcc/gas) syntax: op src, dst (labs, xv6), uses b, w, l, q suffix on instructions to specify size of operands
-// %q1 - any 64 bit register
-// %k1 - any 32 bit register
-// %h1 - any 8 bit register
-
-/* x86-64 uses %rbx as the base register, so preserve it. */
-/* output register a in __eax, etc. */
-#define __cpuid64(__leaf, __eax, __ebx, __ecx, __edx)      \
-  __asm(                                                  \
-    "  xchgq %%rbx,%q1\n"                                 \
-    "  cpuid\n"                                           \
-    "  xchgq  %%rbx,%q1"                                  \
-    : "=a"(__eax), "=r"(__ebx), "=c"(__ecx), "=d"(__edx)  \
-    : "0"(__leaf))
-
-#define __cr(_cr0, _cr2, _cr3, _cr4)                       \
-  __asm(                                                  \
-    "  mov  %%cr0,%%rax\n"                                \
-    "  mov  %%eax,%0\n"                                   \
-    "  mov  %%cr2,%%rax\n"                                \
-    "  mov  %%eax,%1\n"                                   \
-    "  mov  %%cr3,%%rax\n"                                \
-    "  mov  %%eax,%2\n"                                   \
-    "  mov  %%cr4,%%rax\n"                                \
-    "  mov  %%eax,%3\n"                                   \
-    : "=rm"(_cr0), "=rm"(_cr2), "=rm"(_cr3), "=rm"(_cr4)  \
-    : /* no input */                                      \
-    : "%rax"                                              \
-  )
+#include <kernel/cpu/asm.h>
 
 uint32_t _cpu_core_count;
 
@@ -43,12 +13,6 @@ void cpu_init() {
 
 uint32_t cpu_core_count() {
   return _cpu_core_count;
-}
-
-uint64_t rdtsc() {
-  unsigned int lo, hi;
-  __asm volatile ("rdtsc" : "=a" (lo), "=d" (hi));
-  return ((uint64_t) hi << 32) | lo;
 }
 
 void cpu_delay_us(long us) {
@@ -99,7 +63,7 @@ void cpu_print_info(__unused int argc, __unused char** argv) {
   printf("Physical Address Bits: %d, Linear Address Bits: %d, Physical Cores: %d\n", eax & 0xff,
          (eax >> 8) & 0xff, ecx + 1);
 
-  uint32_t cr0, cr2, cr3, cr4;
+  uint64_t cr0, cr2, cr3, cr4;
   __cr(cr0, cr2, cr3, cr4);
   printf("Protected Mode Enable: %d\n", (cr0 & CR0_PE) != 0);
   printf("Paging Enable: %d\n", (cr0 & CR0_PG) != 0);
@@ -115,6 +79,5 @@ void cpu_print_info(__unused int argc, __unused char** argv) {
   printf("Long Mode Segment Limit Enable: %d\n", (efer & IA32_EFER_MSR_LMSLE) != 0);
   printf("System Call Extensions: %d\n", (efer & IA32_EFER_MSR_SCE) != 0);
 
-  printf("CR0 = 0x%x, \"CR2 = 0x%x, \"CR3 = 0x%x, \"CR4 = 0x%x\n", cr0, cr2, cr3, cr4);
-  printf("EFER = 0x%lx\n", efer);
+  printf("CR0 = 0x%lx, CR2 = 0x%lx, CR3 = 0x%lx, CR4 = 0x%lx, EFER = 0x%lx\n", cr0, cr2, cr3, cr4, efer);
 }

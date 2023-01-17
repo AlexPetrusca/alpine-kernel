@@ -1,5 +1,6 @@
 #include <sys/io.h>
 #include <kernel/cpu/pic.h>
+#include <kernel/cpu/asm.h>
 
 /* reinitialize the PIC controllers, giving them specified vector offsets
    rather than 8h and 70h, as configured by default */
@@ -53,5 +54,5 @@ void pic_init() {
   pic_remap(32, 40);     // todo: don't hardcode
   outb(0x21, 0xfd);
   outb(0xa1, 0xff);
-  __asm volatile ("sti");
+  STI();
 }
