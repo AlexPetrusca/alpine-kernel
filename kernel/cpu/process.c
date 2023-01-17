@@ -4,8 +4,6 @@
 #include <kernel/cpu/process.h>
 #include <kernel/cpu/pic.h>
 
-#define PCS_STACK_SIZE (16 * 1024)
-
 pcs_process _processes[4];
 uint64_t _pcs_stack_addr;
 
@@ -27,14 +25,11 @@ void* pcs_allocate_stack() {
 }
 
 bool pcs_init() {
-  uint32_t core_count = cpu_core_count();
-  mem_range main_mem;
-  try(mem_find_range(MAIN_MEM_START, &main_mem), false, "");
-  uint32_t size = core_count * PCS_STACK_SIZE;
-  _pcs_stack_addr = main_mem.phys_addr + main_mem.size - size;
-  // the stacks still need to be identity mapped because they are used by the trampoline?
-  try(mem_identity_map_range(_pcs_stack_addr, size), false, "");
-  mem_update_range(_pcs_stack_addr, _pcs_stack_addr, size, MEMORY_STACKS);
+  _pcs_stack_addr = STACK_VIRTUAL_ADDR;
+  uint32_t size = cpu_core_count() * PCS_STACK_SIZE;
+  // the stacks need to be fully allocated since we cannot rely on page faults (they use the stack!)
+  try(mem_map_range(_pcs_stack_addr, size), false, "");
+  mem_update_range(_pcs_stack_addr, 0, size, MEMORY_STACKS);
 
   _processes[0].stack = pcs_allocate_stack();
   _processes[0].main = shell_main;

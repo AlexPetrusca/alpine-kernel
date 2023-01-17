@@ -11,6 +11,10 @@
 #define PAGE_SIZE           4096L
 #define MAIN_MEM_START      0x100000
 
+#define HEAP_VIRTUAL_ADDR   0x0000010000000000
+#define STACK_VIRTUAL_ADDR  0x0000020000000000
+#define MAX_VIRTUAL_ADDR    0xFFFFFFFFFFFFFFFF
+
 typedef union {
   uint64_t value;
   struct {
@@ -41,6 +45,7 @@ typedef enum {
   MEMORY_SMP_TRAMPOLINE = 15,
   MEMORY_PAGE_TABLE = 16,
   MEMORY_PGM = 17,
+  MEMORY_KERNEL = 18,
 } mem_type;
 
 typedef struct {
@@ -54,16 +59,16 @@ uint32_t mem_read_8(uint64_t addr);
 uint32_t mem_read_16(uint64_t addr);
 uint32_t mem_read_32(uint64_t addr);
 uint64_t mem_read_64(uint64_t addr);
-uint64_t mem_page_addr(uint64_t addr);
+uint64_t mem_prev_page_addr(uint64_t addr);
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
 void mem_map_page(uint64_t virt_addr, uint64_t page_addr);
 bool mem_identity_map_range(uint64_t phys_addr, uint64_t size) __attribute__((warn_unused_result));
+bool mem_map_range(uint64_t virt_addr, uint64_t size) __attribute__((warn_unused_result));
 bool mem_update_range(uint64_t phys_addr, uint64_t virt_addr, uint64_t size, mem_type type);
 bool mem_find_range(uint64_t addr, mem_range* range) __attribute__((warn_unused_result));
 bool mem_find_range_by_type(mem_type type, mem_range* range);
 uint64_t mem_get_pml4_addr();
-uint64_t mem_get_heap_addr();
 
 void mem_print_map(int argc, char** argv);
 void mem_print_pt_pgm(int argc, char** argv);

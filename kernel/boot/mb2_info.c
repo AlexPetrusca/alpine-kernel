@@ -73,7 +73,7 @@ void mb2_info_print(__unused int argc, __unused char** argv) {
   printf("Load base addr 0x%lx\n", mbi.kernel_base_addr);
   printf("APM cseg=%d:%d, dseg=%d:%d\n", mbi.apm_tag->cseg, mbi.apm_tag->cseg_len, mbi.apm_tag->dseg,
          mbi.apm_tag->dseg_len);
-  printf("ELF sections: %d\n", mbi.elf_sections_tag->num);
+  printf("ELF sections: %d\n", mbi.elf_sections_tag->count);
   printf("Screen %d x %d\n", mbi.framebuffer_tag->common.framebuffer_width,
          mbi.framebuffer_tag->common.framebuffer_height);
   printf("Command line = %s\n", mbi.kernel_cmd_line);

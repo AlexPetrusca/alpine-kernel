@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <kernel/cpu/cpu.h>
 #include <kernel/cpu/asm.h>
+#include <math.h>
 
 uint32_t _cpu_core_count;
 
 void cpu_init() {
   uint32_t eax, ebx, ecx, edx;
   __cpuid(1, eax, ebx, ecx, edx);
-  _cpu_core_count = (ebx >> 16) & 0xFF;
+  _cpu_core_count = MAX((ebx >> 16) & 0xFF, 1); // if multithreading is off the count will be 0, which is wrong
 }
 
 uint32_t cpu_core_count() {
