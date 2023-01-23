@@ -2,41 +2,37 @@
 #define ALPINE_KERNEL_IDT_H
 
 #include <stdint.h>
-
-#include <sys/int128.h>
+#include <kernel/cpu/isr.h>
 
 #define IDT_MAX_LENGTH 256
 
-typedef union {
-  uint128_t value;
-  struct {
-    uint128_t size: 16;    // The size of the table in bytes subtracted by 1
-    uint128_t offset: 64;  // The linear address of the IDT (not the physical address, paging applies)
-  };
-} idt_descriptor;
+typedef struct {
+  uint16_t size;    // The size of the table in bytes subtracted by 1
+  uint64_t offset;  // The linear address of the IDT (not the physical address, paging applies)
+} __attribute__((packed)) idt_descriptor;
+static_assert(sizeof(idt_descriptor) == 10, "");
 
 typedef union {
   uint8_t value;
   struct {
     uint8_t gate_type: 4;   // 0xE = 64-bit Interrupt Gate and 0xF = 64-bit Trap Gate
-    uint8_t _reserved: 1;
+    uint8_t : 1;            // reserved
     uint8_t privilege: 2;   // CPU Privilege Level bits
     uint8_t present: 1;     // Present bit (must be set to 1 for the descriptor to be valid)
   };
 } __attribute__((packed)) idt_access_byte;
+static_assert(sizeof(idt_access_byte) == 1, "");
 
-typedef union {
-  uint128_t value;
-  struct {
-    uint128_t offset1: 16;      // offset: A 64-bit value, represents the address of the Interrupt Service Routine
-    uint128_t selector: 16;     // A Segment Selector which must point to a valid code segment in the GDT
-    uint128_t ist: 3;           // offset into the Interrupt Stack Table (set to 0 to not use IST)
-    uint128_t _reserved1: 5;
-    uint128_t access_ctrl: 8;   // segment access control bits
-    uint128_t offset2: 48;
-    uint128_t _reserved2: 32;
-  };
+typedef struct {
+  uint16_t offset1: 16;      // offset: A 64-bit value, represents the address of the Interrupt Service Routine
+  uint16_t selector: 16;     // A Segment Selector which must point to a valid code segment in the GDT
+  uint8_t ist: 3;            // offset into the Interrupt Stack Table (set to 0 to not use IST)
+  uint8_t : 5;               // reserved
+  uint8_t access_ctrl: 8;    // segment access control bits
+  uint64_t offset2: 48;
+  uint64_t : 32;             // reserved
 } __attribute__((packed)) idt_entry;
+static_assert(sizeof(idt_entry) == 16, "");
 
 typedef struct {
   uint16_t length;

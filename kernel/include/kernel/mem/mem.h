@@ -6,8 +6,10 @@
 
 #include <sys/dll.h>
 #include <kernel/boot/mb2_type.h>
+#include <kernel/cpu/isr.h>
 
-#define PAGE_SIZE 4096L
+#define PAGE_SIZE           4096L
+#define MAIN_MEM_START      0x100000
 
 typedef union {
   uint64_t value;
@@ -38,6 +40,7 @@ typedef enum {
   MEMORY_MOTHERBOARD_BIOS = 14,
   MEMORY_SMP_TRAMPOLINE = 15,
   MEMORY_PAGE_TABLE = 16,
+  MEMORY_PGM = 17,
 } mem_type;
 
 typedef struct {
@@ -51,18 +54,22 @@ uint32_t mem_read_8(uint64_t addr);
 uint32_t mem_read_16(uint64_t addr);
 uint32_t mem_read_32(uint64_t addr);
 uint64_t mem_read_64(uint64_t addr);
-
 uint64_t mem_page_addr(uint64_t addr);
 
-uint64_t mem_get_pml4_addr();
-uint64_t mem_get_heap_addr();
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
-bool mem_identity_map_range(uint64_t phys_addr, uint64_t size, mem_type type) __attribute__((warn_unused_result));
+void mem_map_page(uint64_t virt_addr, uint64_t page_addr);
+bool mem_identity_map_range(uint64_t phys_addr, uint64_t size) __attribute__((warn_unused_result));
+bool mem_update_range(uint64_t phys_addr, uint64_t virt_addr, uint64_t size, mem_type type);
 bool mem_find_range(uint64_t addr, mem_range* range) __attribute__((warn_unused_result));
 bool mem_find_range_by_type(mem_type type, mem_range* range);
+uint64_t mem_get_pml4_addr();
+uint64_t mem_get_heap_addr();
 
 void mem_print_map(int argc, char** argv);
-void mem_print_pt(int argc, char** argv);
+void mem_print_pt_pgm(int argc, char** argv);
+void mem_print_main_pgm(int argc, char** argv);
 void mem_memdump(int argc, char** argv);
+
+void mem_handle_page_fault(uint64_t virt_addr);
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_

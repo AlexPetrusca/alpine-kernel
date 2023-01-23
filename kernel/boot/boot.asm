@@ -64,8 +64,6 @@ SCREEN_DEPTH    equ 32
 
 extern main_gdt_pointer_size
 extern main_gdt_pointer_base
-extern main_idt_pointer_size
-extern main_idt_pointer_base
 
 section .multiboot
 align 8
@@ -101,9 +99,9 @@ section .data
 align 4
 idt:
     .Length:
-        main_idt_pointer_size dw 0
+        dw 0
     .Base:
-        main_idt_pointer_base dq 0
+        dq 0
 
 gdt:
     .Null:

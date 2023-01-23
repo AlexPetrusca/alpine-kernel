@@ -1,7 +1,8 @@
 #include <kernel/cpu/msr.h>
+#include <kernel/cpu/asm.h>
 
 void msr_read(uint32_t msr, uint32_t* lo, uint32_t* hi) {
-  __asm volatile("rdmsr" : "=a"(*lo), "=d"(*hi) : "c"(msr));
+  RDMSR(msr, *lo, *hi);
 }
 
 uint64_t msr_read64(uint32_t msr) {
@@ -11,7 +12,7 @@ uint64_t msr_read64(uint32_t msr) {
 }
 
 void msr_write(uint32_t msr, uint32_t lo, uint32_t hi) {
-  __asm volatile("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
+  WRMSR(msr, lo, hi);
 }
 
 void msr_write64(uint32_t msr, uint64_t value) {

@@ -10,9 +10,6 @@
 #include <kernel/cpu/cpu.h>
 #include <kernel/cpu/process.h>
 #include <kernel/cpu/idt.h>
-#include <kernel/shell/sh.h>
-
-__attribute__((__noreturn__)) extern void enter_smp();
 
 void validate_boot(unsigned long magic, unsigned long kernel_addr) {
   assert(magic == MB2_BOOTLOADER_MAGIC, "Invalid magic number: 0x%x\n", (unsigned) magic);
@@ -21,22 +18,20 @@ void validate_boot(unsigned long magic, unsigned long kernel_addr) {
 
 void kernel_init(uint64_t kernel_addr) {
   mb2_info* mbi = mb2_info_init(kernel_addr);
+  idt_init();
   mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag);
   tty_init(mbi->framebuffer_tag);
-  idt_init(); // todo: need to do this earlier?
   cpu_init();
   acpi_init(mbi->rsdp_tag);
   assert(apic_init(), "Could not initialize PCI subsystem");
   warn(pci_init(), , "Could not initialize PCI subsystem");
   warn(usb_init(), , "Could not initialize USB subsystem");
-//  pcs_init(); // todo: re-enable
-//  smp_init();
+  pcs_init();
+  smp_init();
 }
 
 void kernel_main(uint64_t magic, uint64_t kernel_addr) {
   validate_boot(magic, kernel_addr);
   kernel_init(kernel_addr);
-//  enter_smp(); // todo: re-enable
-
-  sh_start();
+  enter_smp();
 }

@@ -3,9 +3,16 @@
 #include <kernel/cpu/isr.h>
 #include <sys/io.h>
 #include <kernel/device/kb.h>
+#include <kernel/cpu/cpu.h>
+#include <kernel/cpu/asm.h>
+#include <kernel/mem/pgm.h>
 
-__attribute__((interrupt)) void isr(struct interrupt_frame* frame) {
-  printf(" frame: %p\n", frame);
+isr void default_isr(__unused interrupt_frame* frame) {
+  printf("Default Interrupt Handler\n");
+}
+
+isr void keyboard_isr(__unused interrupt_frame* frame) {
+//  printf(" frame: %p\n", frame);
 
 //  // keyboard interrupt handling
 //  int scan = kb_readscan();

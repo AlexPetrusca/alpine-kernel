@@ -71,6 +71,7 @@ cpu/gdt.o \
 cpu/idt.o \
 cpu/pic.o \
 cpu/isr.o \
+cpu/isr-wrapper.o \
 device/acpi.o \
 device/apic.o \
 device/pci.o \

@@ -15,7 +15,8 @@ void acpi_init(mb2_tag_new_acpi* rsdp_tag) {
   _rsdp = (acpi_rsdp*) &rsdp_tag->rsdp;
   mem_range range;
   assert(mem_find_range(_rsdp->rsdt_address, &range), "Cannot find ACPI memory range\n");
-  assert(mem_identity_map_range(range.phys_addr, range.size, MEMORY_ACPI), "Cannot map the ACPI memory range");
+  assert(mem_identity_map_range(range.phys_addr, range.size), "Cannot map the ACPI memory range");
+  mem_update_range(range.phys_addr, range.phys_addr, range.size, MEMORY_ACPI);
   acpi_inited = true;
 }
 

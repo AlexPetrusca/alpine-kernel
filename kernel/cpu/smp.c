@@ -7,16 +7,10 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/cpu/smp.h>
 
-//extern volatile uint16_t main_idt_pointer_size;
 extern volatile uint16_t smp_idt_pointer_size;
-//extern volatile uint32_t main_idt_pointer_base;
 extern volatile uint32_t smp_idt_pointer_base;
-
-//extern volatile uint16_t main_gdt_pointer_size;
 extern volatile uint16_t smp_gdt_pointer_size;
-//extern volatile uint64_t main_gdt_pointer_base;
 extern volatile uint64_t smp_gdt_pointer_base;
-
 extern volatile uint64_t smp_pml4_base;
 
 void smp_init() {
