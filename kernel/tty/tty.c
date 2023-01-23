@@ -67,7 +67,7 @@ bool ttyd_init(mb2_tag_framebuffer* framebuffer_tag) {
   mb2_tag_framebuffer_common fb_info = framebuffer_tag->common;
   if (fb_info.framebuffer_type == MB2_FRAMEBUFFER_TYPE_RGB) {
     size_t fb_size = (fb_info.framebuffer_width * fb_info.framebuffer_height) * sizeof(uint32_t);
-    try(mem_identity_map_range(fb_info.framebuffer_addr, fb_size), false, "");
+    try(mem_map_range_4k(fb_info.framebuffer_addr, fb_info.framebuffer_addr, fb_size), false, "");
     mem_update_range(fb_info.framebuffer_addr, fb_info.framebuffer_addr, fb_size, MEMORY_FRAME_BUFFER);
     *ttyd = vbe_ttyd_init(fb_info.framebuffer_addr, fb_info.framebuffer_width, fb_info.framebuffer_height);
   } else {

@@ -8,7 +8,8 @@
 #include <kernel/boot/mb2_type.h>
 #include <kernel/cpu/isr.h>
 
-#define PAGE_SIZE           4096L
+#define PAGE_SIZE_4K        4096L
+#define PAGE_SIZE_2M        2 * 1024L * 1024L
 #define MAIN_MEM_START      0x100000
 
 #define HEAP_VIRTUAL_ADDR   0x0000010000000000
@@ -20,9 +21,9 @@ typedef union {
   struct {
     uint64_t offset: 12;
     uint64_t pt_index: 9;
-    uint64_t pd_index: 9;
+    uint64_t pdt_index: 9;
     uint64_t pdpt_index: 9;
-    uint64_t pml4_index: 9;
+    uint64_t pml4t_index: 9;
     uint64_t reserved: 16;
   };
 } __attribute__((packed)) VirtualAddress;
@@ -59,14 +60,17 @@ uint32_t mem_read_8(uint64_t addr);
 uint32_t mem_read_16(uint64_t addr);
 uint32_t mem_read_32(uint64_t addr);
 uint64_t mem_read_64(uint64_t addr);
-uint64_t mem_prev_page_addr(uint64_t addr);
+uint64_t mem_prev_page_addr_4k(uint64_t addr);
+uint64_t mem_prev_page_addr_2m(uint64_t addr);
+
+#define err __attribute__((warn_unused_result))
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map);
-void mem_map_page(uint64_t virt_addr, uint64_t page_addr);
-bool mem_identity_map_range(uint64_t phys_addr, uint64_t size) __attribute__((warn_unused_result));
-bool mem_map_range(uint64_t virt_addr, uint64_t size) __attribute__((warn_unused_result));
+bool mem_map_range_4k(uint64_t phys_addr, uint64_t virt_addr, uint64_t size) err;
+bool mem_map_range_2m(uint64_t phys_addr, uint64_t virt_addr, uint64_t size) err;
+bool mem_allocate_range(uint64_t virt_addr, uint64_t size) err;
 bool mem_update_range(uint64_t phys_addr, uint64_t virt_addr, uint64_t size, mem_type type);
-bool mem_find_range(uint64_t addr, mem_range* range) __attribute__((warn_unused_result));
+bool mem_find_range(uint64_t addr, mem_range* range) err;
 bool mem_find_range_by_type(mem_type type, mem_range* range);
 uint64_t mem_get_pml4_addr();
 

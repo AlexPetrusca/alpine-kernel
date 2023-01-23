@@ -15,19 +15,19 @@ typedef struct {
 } pgm_header;
 
 uint64_t pgm_init(uint64_t base, uint64_t size) {
-  assert(mem_prev_page_addr(base) == base, "Page Manager: Address should be at a page boundary");
-  assert(size % PAGE_SIZE == 0, "Page Manager: Size should be an integer number of pages");
-  uint64_t total_pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+  assert(mem_prev_page_addr_4k(base) == base, "Page Manager: Address should be at a page boundary");
+  assert(size % PAGE_SIZE_4K == 0, "Page Manager: Size should be an integer number of pages");
+  uint64_t total_pages = (size + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K;
   uint64_t dir_bytes = (total_pages + 7) / 8;
-  uint64_t dir_pages = (dir_bytes + PAGE_SIZE - 1) / PAGE_SIZE;
+  uint64_t dir_pages = (dir_bytes + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K;
   pgm_header header;
   header.dir_ptr = (uint64_t*) (base + sizeof(pgm_header));
-  header.dir_size = dir_pages * PAGE_SIZE;
+  header.dir_size = dir_pages * PAGE_SIZE_4K;
   header.mem_ptr = (uint64_t*) (base + header.dir_size);
   header.ptr = (uint64_t*) header.dir_ptr;
   header.mem_pages = total_pages - dir_pages;
   header.free_pages = header.mem_pages;
-  try(mem_identity_map_range(base, header.dir_size), 0, "");
+  try(mem_map_range_4k(base, base, header.dir_size), 0, "");
   memset((void*) header.dir_ptr, 0xFF, header.dir_size - sizeof(pgm_header));
   *((pgm_header*)base) = header;
   return HANDLE(base);
@@ -72,14 +72,14 @@ uint64_t pgm_allocate_page(uint64_t handle) {
   *_pgm_info->ptr ^= (1L << bit); // flip bit
   _pgm_info->free_pages--;
   uint64_t bytes = (uint64_t) _pgm_info->ptr - (uint64_t) _pgm_info->dir_ptr;
-  return (uint64_t) _pgm_info->mem_ptr + (bytes * 8L + bit) * PAGE_SIZE;
+  return (uint64_t) _pgm_info->mem_ptr + (bytes * 8L + bit) * PAGE_SIZE_4K;
 }
 
 void pgm_free_page(uint64_t addr, uint64_t handle) {
-  assert(mem_prev_page_addr(addr) == addr, "Page Manager: Page address is not a page boundary");
+  assert(mem_prev_page_addr_4k(addr) == addr, "Page Manager: Page address is not a page boundary");
   pgm_header* _pgm_info = HEADER(handle);
-  assert(addr % PAGE_SIZE == 0, "Page Manager: invalid page address");
-  uint64_t page_index = (addr - (uint64_t) _pgm_info->mem_ptr) / PAGE_SIZE;
+  assert(addr % PAGE_SIZE_4K == 0, "Page Manager: invalid page address");
+  uint64_t page_index = (addr - (uint64_t) _pgm_info->mem_ptr) / PAGE_SIZE_4K;
   uint64_t* ptr = _pgm_info->dir_ptr + page_index / 64L;
   int bit_index = page_index % 64;
   *ptr ^= (1L << bit_index);  // flip bit

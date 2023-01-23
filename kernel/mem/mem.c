@@ -9,12 +9,14 @@
 #include <kernel/cpu/cpu.h>
 #include <kernel/cpu/process.h>
 
-#define PAGE_NUMBER_MASK    0x0000FFFFFFFFF000
-#define PAGE_PRESENT        (1 << 0)
-#define PAGE_WRITE          (1 << 1)
+#define PTE_PAGE_NUMBER_MASK_4K   0x0000FFFFFFFFF000   /* bits [12-47]*/
+#define PTE_PAGE_NUMBER_MASK_2M   0x0000FFFFFFE00000   /* bits [21-47]*/
+#define PTE_PAGE_PRESENT          (1 << 0)
+#define PTE_PAGE_WRITE            (1 << 1)
+#define PTE_PAGE_SIZE_2M          (1 << 7)
 
 #define PML4T_START         0x3000
-#define HEAP_SIZE           (512 * PAGE_SIZE)
+#define HEAP_SIZE           (512 * PAGE_SIZE_4K)
 
 typedef struct {
   dll_node node;
@@ -86,12 +88,16 @@ void mem_mark_range(uint64_t addr, mem_type type) {
   }
 }
 
-uint64_t mem_prev_page_addr(uint64_t addr) {
-  return addr & PAGE_NUMBER_MASK;
+uint64_t mem_prev_page_addr_4k(uint64_t addr) {
+  return addr & PTE_PAGE_NUMBER_MASK_4K;
+}
+
+uint64_t mem_prev_page_addr_2m(uint64_t addr) {
+  return addr & PTE_PAGE_NUMBER_MASK_2M;
 }
 
 uint64_t mem_next_page_addr(uint64_t addr) {
-  return (addr + PAGE_SIZE - 1) & PAGE_NUMBER_MASK;
+  return (addr + PAGE_SIZE_4K - 1) & PTE_PAGE_NUMBER_MASK_4K;
 }
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
@@ -103,21 +109,20 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   mem_inited = true;
 
   // initialize the low page manager
-  long pgm_start_addr = PML4T_START - PAGE_SIZE;
+  long pgm_start_addr = PML4T_START - PAGE_SIZE_4K;
   mb2_mmap_entry* lower_mem = mem_find(mem_map, pgm_start_addr);
-  long pgm_end_addr = mem_prev_page_addr(lower_mem->addr + lower_mem->len);
+  long pgm_end_addr = mem_prev_page_addr_4k(lower_mem->addr + lower_mem->len);
   _mem_low_pgm_handle = pgm_init(pgm_start_addr, pgm_end_addr - pgm_start_addr);
   pgm_allocate_page(_mem_low_pgm_handle); // pml4
   pgm_allocate_page(_mem_low_pgm_handle); // pdpt
   pgm_allocate_page(_mem_low_pgm_handle); // pdt
-  pgm_allocate_page(_mem_low_pgm_handle); // pt
 
   // initialize the main page manager
   mb2_mmap_entry* main_mem = mem_find(mem_map, MAIN_MEM_START);
   assert(main_mem != NULL, "Could not find main memory region.");
 
   // for some reason one more page has to be allocated for the kernel, otherwise it fails
-  uint64_t main_pgm_start_addr = mem_next_page_addr(elf_get_max_kernel_addr()) + PAGE_SIZE;
+  uint64_t main_pgm_start_addr = mem_next_page_addr(elf_get_max_kernel_addr()) + PAGE_SIZE_4K;
   uint64_t main_pgm_end_addr = main_mem->addr + main_mem->len;
   long main_pgm_size = main_pgm_end_addr - main_pgm_start_addr;
   _mem_main_pgm_handle = pgm_init(main_pgm_start_addr, main_pgm_size);
@@ -140,7 +145,7 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   // mark some memory areas
   mem_mark_range(0xA0000 - 1, MEMORY_EBDA);         // EBDA, if exists, is just under 0xA0000
   mem_mark_range(0xF0000, MEMORY_MOTHERBOARD_BIOS); // The BIOS ROM is at 0xF0000
-  mem_update_range(0x1000, 0x1000, PAGE_SIZE, MEMORY_SMP_TRAMPOLINE);
+  mem_update_range(0x1000, 0x1000, PAGE_SIZE_4K, MEMORY_SMP_TRAMPOLINE);
   mem_mark_range(0x2000, MEMORY_PAGE_TABLE);
   mem_update_range(MAIN_MEM_START, MAIN_MEM_START, main_pgm_start_addr - MAIN_MEM_START, MEMORY_KERNEL);
   mem_update_range(main_pgm_start_addr, main_pgm_start_addr, main_pgm_size, MEMORY_PGM);
@@ -149,42 +154,60 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
 
 uint64_t allocate_page() {
   uint64_t page_ptr = pgm_allocate_page(_mem_low_pgm_handle);
-  memset((void*) page_ptr, 0, PAGE_SIZE);
+  memset((void*) page_ptr, 0, PAGE_SIZE_4K);
   return page_ptr;
 }
 
-void mem_map_page(uint64_t virt_addr, uint64_t page_addr) {
+void mem_map_page(uint64_t virt_addr, uint64_t page_addr, bool use_2m_page) {
   VirtualAddress vaddr = {virt_addr};
-  uint64_t* pml4_entry = ((uint64_t*) PML4T_START) + vaddr.pml4_index;
-  if (*pml4_entry == 0) {
-    *pml4_entry = allocate_page() | PAGE_PRESENT | PAGE_WRITE;
+  uint64_t* pml4t_entry = ((uint64_t*) PML4T_START) + vaddr.pml4t_index;
+  if (*pml4t_entry == 0) {
+    *pml4t_entry = allocate_page() | PTE_PAGE_PRESENT | PTE_PAGE_WRITE;
   }
-  uint64_t* pdpt_entry = ((uint64_t*) (*pml4_entry & PAGE_NUMBER_MASK)) + vaddr.pdpt_index;
+  uint64_t* pdpt_entry = ((uint64_t*) (*pml4t_entry & PTE_PAGE_NUMBER_MASK_4K)) + vaddr.pdpt_index;
   if (*pdpt_entry == 0) {
-    *pdpt_entry = allocate_page() | PAGE_PRESENT | PAGE_WRITE;
+    *pdpt_entry = allocate_page() | PTE_PAGE_PRESENT | PTE_PAGE_WRITE;
   }
-  uint64_t* pd_entry = ((uint64_t*) (*pdpt_entry & PAGE_NUMBER_MASK)) + vaddr.pd_index;
-  if (*pd_entry == 0) {
-    *pd_entry = allocate_page() | PAGE_PRESENT | PAGE_WRITE;
+  uint64_t* pdt_entry = ((uint64_t*) (*pdpt_entry & PTE_PAGE_NUMBER_MASK_4K)) + vaddr.pdt_index;
+  if (use_2m_page) {
+    *pdt_entry = (page_addr & PTE_PAGE_NUMBER_MASK_2M) | PTE_PAGE_PRESENT | PTE_PAGE_WRITE | PTE_PAGE_SIZE_2M;
+  } else {
+    if (*pdt_entry == 0) {
+      *pdt_entry = allocate_page() | PTE_PAGE_PRESENT | PTE_PAGE_WRITE;
+    }
+    uint64_t* pt_entry = ((uint64_t*) (*pdt_entry & PTE_PAGE_NUMBER_MASK_4K)) + vaddr.pt_index;
+    *pt_entry = (page_addr & PTE_PAGE_NUMBER_MASK_4K) | PTE_PAGE_PRESENT | PTE_PAGE_WRITE;
   }
-  uint64_t* pt_entry = ((uint64_t*) (*pd_entry & PAGE_NUMBER_MASK)) + vaddr.pt_index;
-  *pt_entry = (page_addr & PAGE_NUMBER_MASK) | PAGE_PRESENT | PAGE_WRITE;
 }
 
-bool mem_identity_map_range(uint64_t phys_addr, uint64_t size) {
+bool mem_map_range_4k(uint64_t phys_addr, uint64_t virt_addr, uint64_t size) {
   CHECK_INIT(false);
-  for (uint64_t addr = phys_addr; addr < phys_addr + size; addr += PAGE_SIZE) {
-    mem_map_page(addr, addr);
+  assert(mem_prev_page_addr_4k(phys_addr) == phys_addr, "Physical address of mapped range must be a 4K page boundary");
+  assert(mem_prev_page_addr_4k(virt_addr) == phys_addr, "Virtual address of mapped range must be a 4K page boundary");
+  assert(size % PAGE_SIZE_4K == 0, "Mapped range must contain an integer number of 4K pages");
+  for (uint64_t pa = phys_addr, va = virt_addr; pa < phys_addr + size; pa += PAGE_SIZE_4K, va += PAGE_SIZE_4K) {
+    mem_map_page(va, pa, false);
   }
   return true;
 }
 
-bool mem_map_range(uint64_t virt_addr, uint64_t size) {
+bool mem_map_range_2m(uint64_t phys_addr, uint64_t virt_addr, uint64_t size) {
   CHECK_INIT(false);
-  assert(mem_prev_page_addr(virt_addr) == virt_addr, "Cannot map a range that does not start at a page boundary");
-  assert(size % PAGE_SIZE == 0, "Region size should be an integer number of pages");
-  for (uint64_t addr = virt_addr; addr < virt_addr + size; addr += PAGE_SIZE) {
-    mem_map_page(addr, pgm_allocate_page(_mem_main_pgm_handle));
+  assert(mem_prev_page_addr_2m(phys_addr) == phys_addr, "Physical address of mapped range must be a 2M page boundary");
+  assert(mem_prev_page_addr_2m(virt_addr) == phys_addr, "Virtual address of mapped range must be a 2M page boundary");
+  assert(size % PAGE_SIZE_2M == 0, "Mapped range must contain an integer number of 2M pages");
+  for (uint64_t pa = phys_addr, va = virt_addr; pa < phys_addr + size; pa += PAGE_SIZE_2M, va += PAGE_SIZE_2M) {
+    mem_map_page(va, pa, true);
+  }
+  return true;
+}
+
+bool mem_allocate_range(uint64_t virt_addr, uint64_t size) {
+  CHECK_INIT(false);
+  assert(mem_prev_page_addr_4k(virt_addr) == virt_addr, "Mapped range must start at 4K page boundary");
+  assert(size % PAGE_SIZE_4K == 0, "Mapped range must contain an integer number of 4K pages");
+  for (uint64_t addr = virt_addr; addr < virt_addr + size; addr += PAGE_SIZE_4K) {
+    mem_map_page(addr, pgm_allocate_page(_mem_main_pgm_handle), false);
   }
   return true;
 }
@@ -287,7 +310,7 @@ void mem_print_map(__unused int argc, __unused char** argv) {
            r->phys_addr + r->size,
            r->virt_addr == MAX_VIRTUAL_ADDR ? 0 : r->virt_addr,
            r->size,
-           r->size / PAGE_SIZE,
+           r->size / PAGE_SIZE_4K,
            _mem_type[r->type]);
   }
   printf(" lower %dKB, upper %dKB\n", _mem_lower, _mem_upper);
@@ -323,5 +346,5 @@ void mem_memdump(int argc, char** argv) {
 }
 
 void mem_handle_page_fault(uint64_t virt_addr) {
-  mem_map_page(mem_prev_page_addr(virt_addr), pgm_allocate_page(_mem_main_pgm_handle));
+  mem_map_page(mem_prev_page_addr_4k(virt_addr), pgm_allocate_page(_mem_main_pgm_handle), false);
 }
