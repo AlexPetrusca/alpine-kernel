@@ -544,7 +544,7 @@ bool pci_init() {
     pci_host_bridge bridge = mcfg->host_bridge[brideg_id];
     mem_range range;
     try(mem_find_range(bridge.base_address, &range), false, "Cannot find PCI bridge memory range\n");
-    try(mem_identity_map_range(range.phys_addr, range.size), false, "");
+    try(mem_map_range_2m(range.phys_addr, range.phys_addr, range.size), false, "");
     mem_update_range(range.phys_addr, range.phys_addr, range.size, MEMORY_PCI_ECAM);
 
     for (int bus = bridge.start_bus_number; bus <= bridge.end_bus_number; bus++) {

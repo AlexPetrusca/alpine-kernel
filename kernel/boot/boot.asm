@@ -48,11 +48,11 @@ PAGE_SIZE     equ 4096      ; 4 KB
 PML4T_START   equ 0x3000
 PDPT_START    equ 0x4000
 PDT_START     equ 0x5000
-PT_START      equ 0x6000
 
 ; Page access bits
 PAGE_PRESENT    equ (1 << 0)
 PAGE_WRITE      equ (1 << 1)
+PAGE_SIZE_2M    equ (1 << 7)
 
 ; Stack constants
 STACK_SIZE      equ 16384   ; 16 KB
@@ -151,18 +151,7 @@ _start:
     mov edi, PDPT_START
     mov DWORD [edi], PDT_START | PAGE_PRESENT | PAGE_WRITE    ; PDPT points to PDT
     mov edi, PDT_START
-    mov DWORD [edi], PT_START | PAGE_PRESENT | PAGE_WRITE     ; PDT points to PT
-
-    ; Build the PT table identify mapping the head 2Mb
-    mov edi, PT_START
-    mov ebx, PAGE_PRESENT | PAGE_WRITE
-    mov ecx, 512                 ; map 512 4k pages = 2Mb
-
-.set_entry:
-    mov DWORD [edi], ebx
-    add ebx, PAGE_SIZE           ; move to the next 4k page
-    add edi, 8
-    loop .set_entry
+    mov DWORD [edi], 0 | PAGE_PRESENT | PAGE_WRITE | PAGE_SIZE_2M  ; PDT does not point to PT, 2Mb page
 
     ; Disable IRQs
     mov al, 0xFF                 ; Out 0xFF to 0xA1 and 0x21 to disable all IRQs.
