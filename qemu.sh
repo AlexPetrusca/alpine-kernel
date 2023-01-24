@@ -5,7 +5,7 @@ set -e
 echo "Running QEMU..."
 qemu-system-x86_64                                    \
 		-machine q35                                      \
-		-smp 2                                            \
+		-smp 1                                            \
 		-m 256M                                           \
 		-usb -device qemu-xhci,id=xhci -device usb-mouse  \
     -cdrom build/alpine.iso                           \

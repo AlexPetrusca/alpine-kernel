@@ -15,7 +15,7 @@ typedef struct {
 } pgm_header;
 
 uint64_t pgm_init(uint64_t base, uint64_t size) {
-  assert(mem_page_addr(base) == base, "Page Manager: Address should be at a page boundary");
+  assert(mem_prev_page_addr(base) == base, "Page Manager: Address should be at a page boundary");
   assert(size % PAGE_SIZE == 0, "Page Manager: Size should be an integer number of pages");
   uint64_t total_pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
   uint64_t dir_bytes = (total_pages + 7) / 8;
@@ -76,7 +76,7 @@ uint64_t pgm_allocate_page(uint64_t handle) {
 }
 
 void pgm_free_page(uint64_t addr, uint64_t handle) {
-  assert(mem_page_addr(addr) == addr, "Page Manager: Page address is not a page boundary");
+  assert(mem_prev_page_addr(addr) == addr, "Page Manager: Page address is not a page boundary");
   pgm_header* _pgm_info = HEADER(handle);
   assert(addr % PAGE_SIZE == 0, "Page Manager: invalid page address");
   uint64_t page_index = (addr - (uint64_t) _pgm_info->mem_ptr) / PAGE_SIZE;

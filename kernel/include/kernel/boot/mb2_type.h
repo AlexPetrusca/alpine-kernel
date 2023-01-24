@@ -313,9 +313,9 @@ typedef struct {
 typedef struct {
   uint32_t type;
   uint32_t size;
-  uint32_t num;
-  uint32_t entsize;
-  uint32_t shndx;
+  uint32_t count;
+  uint32_t entry_size;
+  uint32_t section_name_table_index;
   char sections[0];
 } mb2_tag_elf_sections;
 

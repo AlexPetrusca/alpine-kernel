@@ -5,13 +5,15 @@
 #include <kernel/mem/heap.h>
 #include <kernel/mem/pgm.h>
 #include <kernel/cpu/asm.h>
+#include <kernel/boot/elf.h>
+#include <kernel/cpu/cpu.h>
+#include <kernel/cpu/process.h>
 
 #define PAGE_NUMBER_MASK    0x0000FFFFFFFFF000
 #define PAGE_PRESENT        (1 << 0)
 #define PAGE_WRITE          (1 << 1)
 
 #define PML4T_START         0x3000
-#define MAX_VIRTUAL_ADDR    0xFFFFFFFFFFFFFFFF
 #define HEAP_SIZE           (512 * PAGE_SIZE)
 
 typedef struct {
@@ -28,14 +30,13 @@ bool mem_inited = false;
 uint32_t _mem_lower = 0;
 uint32_t _mem_upper = 0;
 dll_list _mem_map;
-uint64_t _mem_heap_addr;
 uint64_t _mem_low_pgm_handle;
 uint64_t _mem_main_pgm_handle;
 
 char* _mem_type[] = {
   "", "Available", "Reserved", "ACPI Reclaimable", "NVS", "Bad", "PCIe Config", "USB (xHCI)", "Kernel Heap",
   "Frame Buffer", "ACPI", "LAPIC", "Process Stacks", "EBDA", "Motherboard BIOS", "SMP Trampoline", "Page Table",
-  "Page Manager"
+  "Page Manager", "Kernel"
 };
 
 uint32_t mem_read_8(uint64_t addr) {
@@ -69,10 +70,6 @@ uint64_t mem_get_pml4_addr() {
   return PML4T_START;
 }
 
-uint64_t mem_get_heap_addr() {
-  return _mem_heap_addr;
-}
-
 mem_range_node* mem_find_range_internal(uint64_t addr) {
   for (mem_range_node* r = (mem_range_node*) _mem_map.head; r != NULL; r = (mem_range_node*) r->node.next) {
     if (addr >= r->phys_addr && addr < r->phys_addr + r->size) {
@@ -89,8 +86,12 @@ void mem_mark_range(uint64_t addr, mem_type type) {
   }
 }
 
-uint64_t mem_page_addr(uint64_t addr) {
-  return (addr >> 12) << 12;
+uint64_t mem_prev_page_addr(uint64_t addr) {
+  return addr & PAGE_NUMBER_MASK;
+}
+
+uint64_t mem_next_page_addr(uint64_t addr) {
+  return (addr + PAGE_SIZE - 1) & PAGE_NUMBER_MASK;
 }
 
 void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
@@ -104,7 +105,7 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   // initialize the low page manager
   long pgm_start_addr = PML4T_START - PAGE_SIZE;
   mb2_mmap_entry* lower_mem = mem_find(mem_map, pgm_start_addr);
-  long pgm_end_addr = mem_page_addr(lower_mem->addr + lower_mem->len);
+  long pgm_end_addr = mem_prev_page_addr(lower_mem->addr + lower_mem->len);
   _mem_low_pgm_handle = pgm_init(pgm_start_addr, pgm_end_addr - pgm_start_addr);
   pgm_allocate_page(_mem_low_pgm_handle); // pml4
   pgm_allocate_page(_mem_low_pgm_handle); // pdpt
@@ -114,13 +115,15 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   // initialize the main page manager
   mb2_mmap_entry* main_mem = mem_find(mem_map, MAIN_MEM_START);
   assert(main_mem != NULL, "Could not find main memory region.");
-  long main_pgm_size = 4 * HEAP_SIZE;
-  uint64_t main_pgm_start_addr = main_mem->addr + main_mem->len - main_pgm_size;
+
+  // for some reason one more page has to be allocated for the kernel, otherwise it fails
+  uint64_t main_pgm_start_addr = mem_next_page_addr(elf_get_max_kernel_addr()) + PAGE_SIZE;
+  uint64_t main_pgm_end_addr = main_mem->addr + main_mem->len;
+  long main_pgm_size = main_pgm_end_addr - main_pgm_start_addr;
   _mem_main_pgm_handle = pgm_init(main_pgm_start_addr, main_pgm_size);
 
   // initialize the heap
-  _mem_heap_addr = 0x10000000000;
-  heap_init(_mem_heap_addr, HEAP_SIZE);
+  heap_init(HEAP_VIRTUAL_ADDR, HEAP_SIZE);
 
   // save the memory map
   for (mb2_mmap_entry* mmap = mem_map->entries;
@@ -135,12 +138,13 @@ void mem_init(mb2_tag_basic_meminfo* basic_meminfo, mb2_tag_mmap* mem_map) {
   }
 
   // mark some memory areas
-  mem_update_range(_mem_heap_addr, _mem_heap_addr, HEAP_SIZE, MEMORY_HEAP);
   mem_mark_range(0xA0000 - 1, MEMORY_EBDA);         // EBDA, if exists, is just under 0xA0000
   mem_mark_range(0xF0000, MEMORY_MOTHERBOARD_BIOS); // The BIOS ROM is at 0xF0000
   mem_update_range(0x1000, 0x1000, PAGE_SIZE, MEMORY_SMP_TRAMPOLINE);
   mem_mark_range(0x2000, MEMORY_PAGE_TABLE);
+  mem_update_range(MAIN_MEM_START, MAIN_MEM_START, main_pgm_start_addr - MAIN_MEM_START, MEMORY_KERNEL);
   mem_update_range(main_pgm_start_addr, main_pgm_start_addr, main_pgm_size, MEMORY_PGM);
+  mem_update_range(HEAP_VIRTUAL_ADDR, HEAP_VIRTUAL_ADDR, HEAP_SIZE, MEMORY_HEAP);
 }
 
 uint64_t allocate_page() {
@@ -171,6 +175,16 @@ bool mem_identity_map_range(uint64_t phys_addr, uint64_t size) {
   CHECK_INIT(false);
   for (uint64_t addr = phys_addr; addr < phys_addr + size; addr += PAGE_SIZE) {
     mem_map_page(addr, addr);
+  }
+  return true;
+}
+
+bool mem_map_range(uint64_t virt_addr, uint64_t size) {
+  CHECK_INIT(false);
+  assert(mem_prev_page_addr(virt_addr) == virt_addr, "Cannot map a range that does not start at a page boundary");
+  assert(size % PAGE_SIZE == 0, "Region size should be an integer number of pages");
+  for (uint64_t addr = virt_addr; addr < virt_addr + size; addr += PAGE_SIZE) {
+    mem_map_page(addr, pgm_allocate_page(_mem_main_pgm_handle));
   }
   return true;
 }
@@ -309,5 +323,5 @@ void mem_memdump(int argc, char** argv) {
 }
 
 void mem_handle_page_fault(uint64_t virt_addr) {
-  mem_map_page(mem_page_addr(virt_addr), pgm_allocate_page(_mem_main_pgm_handle));
+  mem_map_page(mem_prev_page_addr(virt_addr), pgm_allocate_page(_mem_main_pgm_handle));
 }

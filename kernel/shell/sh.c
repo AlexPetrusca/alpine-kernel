@@ -23,6 +23,7 @@
 #include <kernel/cpu/idt.h>
 #include <kernel/mem/mem.h>
 #include <kernel/mem/heap.h>
+#include <kernel/boot/elf.h>
 
 #define SH_MAX_HISTORY 5
 #define SH_MAX_COMMAND 4096
@@ -52,6 +53,7 @@ sh_command sh_commands[] = {
   {"idt", idt_print_info},
   {"int", idt_interrupt},
   {"memdump", mem_memdump},
+  {"elf", elf_print_info},
   {"", NULL}
 };
 

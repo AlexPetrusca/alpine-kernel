@@ -83,6 +83,7 @@ test/tests.o \
 test/test.o \
 mem/pgm.o \
 mem/pgm_test.o \
+boot/elf.o \
 
 OBJS=\
 boot/crti.o \
