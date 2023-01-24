@@ -19,29 +19,13 @@ CR4_PGE         equ 1 << 7
 CR4_OSFXSR      equ 1 << 9
 CR4_OSXMMEXCPT  equ 1 << 10
 
-; GDT access bits
-ACCESSED      equ 1 << 0
-RW            equ 1 << 1
-DC            equ 1 << 2
-EXEC          equ 1 << 3
-NOT_SYS       equ 1 << 4
-RING1         equ 1 << 5
-RING2         equ 1 << 6
-RING3         equ (1 << 5) | (1 << 6)
-PRESENT       equ 1 << 7
-
-; GDT flag bits
-LONG_MODE     equ 1 << 5
-SZ_32         equ 1 << 6
-GRAN_4K       equ 1 << 7
-
 extern smp_idt_pointer_size
 extern smp_idt_pointer_base
 extern smp_gdt_pointer_size
 extern smp_gdt_pointer_base
 extern smp_pml4_base
-extern _processes;
-extern enter_smp;
+extern _processes
+extern enter_smp
 
 [BITS 16]
 section .trampoline

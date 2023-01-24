@@ -79,6 +79,6 @@ void mem_print_pt_pgm(int argc, char** argv);
 void mem_print_main_pgm(int argc, char** argv);
 void mem_memdump(int argc, char** argv);
 
-void mem_handle_page_fault(uint64_t virt_addr);
+void mem_page_fault_handler(interrupt_frame* frame);
 
 #endif //KERNEL_INCLUDE_KERNEL_MEM_H_
