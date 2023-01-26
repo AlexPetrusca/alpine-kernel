@@ -345,6 +345,7 @@ void mem_memdump(int argc, char** argv) {
   }
 }
 
-void mem_handle_page_fault(uint64_t virt_addr) {
-  mem_map_page(mem_prev_page_addr_4k(virt_addr), pgm_allocate_page(_mem_main_pgm_handle), false);
+void mem_page_fault_handler(interrupt_frame* frame) {
+  mem_map_page(mem_prev_page_addr_4k(frame->cr2), pgm_allocate_page(_mem_main_pgm_handle), false);
+  frame->cr2 = 0;
 }

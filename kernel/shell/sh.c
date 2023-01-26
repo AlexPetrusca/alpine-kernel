@@ -33,6 +33,10 @@ typedef struct {
   void (* run)(int argc, char** argv);
 } sh_command;
 
+void div0(int argc, __unused char** argv) {
+  printf("%ld", 100L / (argc - 1));
+}
+
 sh_command sh_commands[] = {
   {"cpu", cpu_print_info},
   {"test", tests_run},
@@ -54,6 +58,8 @@ sh_command sh_commands[] = {
   {"int", idt_interrupt},
   {"memdump", mem_memdump},
   {"elf", elf_print_info},
+  {"isr", isr_print_info},
+  {"div0", div0},
   {"", NULL}
 };
 
