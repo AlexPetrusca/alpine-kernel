@@ -15,7 +15,7 @@
 #define TTY_LINE_LIMIT 1000
 #define TAB_LENGTH 8
 
-char tty_buf[TTY_BUFFER_SIZE];
+char* tty_buf;
 struct circ_buf_ptr tty_buf_wptr;
 
 char* tty_line_buf[TTY_LINE_LIMIT];
@@ -78,6 +78,7 @@ bool ttyd_init(mb2_tag_framebuffer* framebuffer_tag) {
 
 void tty_init(mb2_tag_framebuffer* fb_tag) {
   assert(ttyd_init(fb_tag), "");
+  tty_buf = malloc(TTY_BUFFER_SIZE);
   tty_width = ttyd->get_width();
   tty_height = ttyd->get_height();
   tty_setcolor(COLOR_LIGHT_GREEN, COLOR_BLACK);

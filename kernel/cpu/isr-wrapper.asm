@@ -2,8 +2,7 @@ global idt
 global idt_size
 extern main_isr
 
-; TODO There is a strange bug where if this number is large the kernel fails...
-ISR_COUNT equ 128
+ISR_COUNT equ 256
 
 %macro PUSH 1
     mov rax, %1
