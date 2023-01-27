@@ -17,12 +17,13 @@ LDFLAGS:=$(LDFLAGS) -z noexecstack
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
 
 KERNEL_CFLAGS=-m64 -z max-page-size=0x1000 -mno-red-zone -mno-mmx -mno-sse -mno-sse2
+KERNEL_DEBUG_CFLAGS=-s -fno-asynchronous-unwind-tables
 KERNEL_CPPFLAGS=
 KERNEL_ASMFLAGS=-felf64
 KERNEL_LDFLAGS=
 KERNEL_LIBS=
 
-CFLAGS:=$(CFLAGS) $(KERNEL_CFLAGS)
+CFLAGS:=$(CFLAGS) $(KERNEL_CFLAGS) $(KERNEL_DEBUG_CFLAGS)
 CPPFLAGS:=$(CPPFLAGS) $(KERNEL_CPPFLAGS)
 ASMFLAGS:=$(ASMFLAGS) $(KERNEL_ASMFLAGS)
 LDFLAGS:=$(LDFLAGS) $(KERNEL_LDFLAGS)
@@ -109,11 +110,6 @@ alpine.kernel: $(OBJS) linker.ld
 
 crtbegin.o crtend.o:
 	@ OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" ../build/$@
-
-cpu/isr.o:
-	@ cd ../build
-	@ mkdir -p $(@D);
-	$(CC) -MD -c ../kernel/cpu/isr.c -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS) -mgeneral-regs-only
 
 .c.o:
 	@ cd ../build
