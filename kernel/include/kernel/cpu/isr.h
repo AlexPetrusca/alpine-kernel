@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 
+#include <sys/circ_buf.h>
+
 #define Division_Error_VECTOR                           0x00
 #define Debug                                           0x01
 #define Non_Maskable_Interrupt                          0x02
 #define Breakpoint                                      0x03
-#define Overflow                                        0x04
+#define Overflow                                         0x04
 #define Bound_Range_Exceeded                            0x05
 #define Invalid_Opcode                                  0x06
 #define Device_Not_Available                            0x07

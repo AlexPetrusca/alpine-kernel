@@ -19,7 +19,7 @@ char tty_buf[TTY_BUFFER_SIZE];
 struct circ_buf_ptr tty_buf_wptr;
 
 char* tty_line_buf[TTY_LINE_LIMIT];
-struct circ_buf tty_circ_line_buf;
+circ_buf tty_circ_line_buf;
 struct circ_buf_ptr tty_line_buf_rptr;
 
 tty_device* ttyd;

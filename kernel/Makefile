@@ -76,6 +76,7 @@ device/acpi.o \
 device/apic.o \
 device/pci.o \
 device/usb.o \
+device/kb.o \
 mem/mem.o \
 mem/heap.o \
 mem/heap_test.o \
@@ -109,11 +110,6 @@ alpine.kernel: $(OBJS) linker.ld
 
 crtbegin.o crtend.o:
 	@ OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" ../build/$@
-
-cpu/isr.o:
-	@ cd ../build
-	@ mkdir -p $(@D);
-	$(CC) -MD -c ../kernel/cpu/isr.c -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS) -mgeneral-regs-only
 
 .c.o:
 	@ cd ../build

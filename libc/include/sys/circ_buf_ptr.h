@@ -16,7 +16,7 @@ typedef struct circ_buf_ptr {
 __BEGIN_DECLS
 
 void circ_buf_ptr_init(circ_buf_ptr_t ptr, void* ptr_raw, void* buf, size_t buf_capacity, size_t granularity);
-void circ_buf_ptr_init2(circ_buf_ptr_t ptr, void* ptr_raw, circ_buf_t cb);
+void circ_buf_ptr_init2(circ_buf_ptr_t ptr, void* ptr_raw, circ_buf* cb);
 
 void* circ_buf_ptr_increment(circ_buf_ptr_t ptr);
 void* circ_buf_ptr_decrement(circ_buf_ptr_t ptr);

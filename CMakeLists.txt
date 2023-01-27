@@ -120,4 +120,7 @@ add_executable(alpine_kernel
         kernel/include/kernel/cpu/isr.h
         kernel/mem/pgm.c
         kernel/include/kernel/mem/pgm.h
-        kernel/mem/pgm_test.c kernel/include/kernel/cpu/asm.h kernel/boot/elf.c kernel/include/kernel/boot/elf.h)
+        kernel/mem/pgm_test.c
+        kernel/include/kernel/cpu/asm.h
+        kernel/boot/elf.c
+        kernel/include/kernel/boot/elf.h kernel/device/kb.c)

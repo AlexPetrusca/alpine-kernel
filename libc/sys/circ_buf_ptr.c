@@ -7,7 +7,7 @@ void circ_buf_ptr_init(circ_buf_ptr_t ptr, void* ptr_raw, void* buf, size_t buf_
   ptr->granularity = granularity;
 }
 
-void circ_buf_ptr_init2(circ_buf_ptr_t ptr, void* ptr_raw, circ_buf_t cb) {
+void circ_buf_ptr_init2(circ_buf_ptr_t ptr, void* ptr_raw, circ_buf* cb) {
   circ_buf_ptr_init(ptr, ptr_raw, cb->buf, cb->capacity, cb->granularity);
 }
 

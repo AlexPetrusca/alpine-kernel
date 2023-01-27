@@ -64,7 +64,7 @@ sh_command sh_commands[] = {
 };
 
 char sh_history_buf[(SH_MAX_HISTORY + 1) * (SH_MAX_COMMAND + 1)];
-struct circ_buf sh_history_circ_buf;
+circ_buf sh_history_circ_buf;
 
 uint32_t sh_prompt_limit;
 uint32_t sh_history_idx;
