@@ -23,7 +23,7 @@
 #define PIC_LPT2_IRQ        5
 #define PIC_FLOPPY_IRQ      6
 #define PIC_LPT1_IRQ        7
-#define PIC_CMOS_CLOCK_IRQ  8
+#define PIC_RTC_IRQ         8
 #define PIC_FREE1_IRQ       9
 #define PIC_FREE2_IRQ       10
 #define PIC_FREE3_IRQ       11

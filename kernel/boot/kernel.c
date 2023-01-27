@@ -25,6 +25,7 @@ void kernel_init(uint64_t kernel_addr) {
   elf_init(mbi->elf_sections_tag);
   cpu_init();
   idt_init();
+  pic_init();
   mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag);
   tty_init(mbi->framebuffer_tag);
   kb_init();

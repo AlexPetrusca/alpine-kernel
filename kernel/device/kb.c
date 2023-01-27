@@ -1,4 +1,5 @@
 #include <kernel/device/kb.h>
+#include <kernel/cpu/pic.h>
 
 int kb_us_layout[256] = {
     0, KB_ESC, '1', '2', '3', '4', '5', '6', '7', '8',
@@ -39,6 +40,9 @@ volatile circ_buf* kb_event_queue;
 
 void kb_init() {
   kb_event_queue = circ_buf_new(16, 1);
+  // clear any unprocessed kb event on the PIC
+  inb(KB_PS2_DATA);
+  pic_eoi(PIC_KEYBOARD_IRQ);
 }
 
 static inline int kb_scan2release(int scan) {

@@ -14,11 +14,6 @@ void idle_main() {
   }
 }
 
-void shell_main() {
-  pic_init();
-  sh_start();
-}
-
 void* pcs_allocate_stack() {
   _pcs_stack_addr += PCS_STACK_SIZE;
   return (void*) _pcs_stack_addr;
@@ -32,7 +27,7 @@ bool pcs_init() {
   mem_update_range(_pcs_stack_addr, 0, size, MEMORY_STACKS);
 
   _processes[0].stack = pcs_allocate_stack();
-  _processes[0].main = shell_main;
+  _processes[0].main = sh_start;
 
   _processes[1].stack = pcs_allocate_stack();
   _processes[1].main = idle_main;
