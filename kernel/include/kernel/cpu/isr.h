@@ -31,6 +31,32 @@
 #define KEYBOARD_VECTOR                                 0x21
 
 typedef struct {
+  uint64_t CF: 1;
+  uint64_t   : 1;
+  uint64_t PF: 1;
+  uint64_t   : 1;
+  uint64_t AF: 1;
+  uint64_t   : 1;
+  uint64_t ZF: 1;
+  uint64_t SF: 1;
+  uint64_t TF: 1;
+  uint64_t IF: 1;
+  uint64_t DF: 1;
+  uint64_t OF: 1;
+  uint64_t IOPL: 2;
+  uint64_t NT: 1;
+  uint64_t MD: 1;
+  uint64_t RF: 1;
+  uint64_t VM: 1;
+  uint64_t AC: 1;
+  uint64_t VIF: 1;
+  uint64_t VIP: 1;
+  uint64_t ID: 1;
+  uint64_t   : 42;
+} __attribute__((packed)) rflags;
+static_assert(sizeof(rflags) == 8, "");
+
+typedef struct {
   // the last register saved on the stack, lowest address
   uint64_t cr3;
   uint64_t cr0;
@@ -59,7 +85,7 @@ typedef struct {
   uint64_t error_code;          // error code is pushed first by the CPU, highest address
   uint64_t rip;
   uint64_t cs;
-  uint64_t rflags;
+  rflags rfl;
   uint64_t rsp;
   uint64_t ss;
 } __attribute__((packed)) interrupt_frame;
