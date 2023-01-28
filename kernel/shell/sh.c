@@ -297,6 +297,7 @@ void sh_initialize() {
 }
 
 void sh_start() {
+  pit_init();
   sh_initialize();
   while (sh_handle_input(kb_getchar()));
 }

@@ -35,7 +35,7 @@ pcs_process create_process(void (* main)()) {
   f->gs = DATA_SEG;
   f->ss = DATA_SEG;
   f->rfl.IF = 1; // enable interrupts
-  f->rsp = f->rbp = (uint64_t) process.stack;
+  f->rsp = f->rbp = (uint64_t) process.stack - 8;
   f->rip = (uint64_t) main;
   return process;
 }

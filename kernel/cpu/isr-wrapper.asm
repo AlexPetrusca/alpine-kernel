@@ -93,10 +93,9 @@ isr_err_%+i:          ; entry point for an ISR with error code
     mov  rdi, rsp       ; pass the frame pointer as the first arg
     ALLOC 8             ; The SystemV ABI requires rsp be 8-aligned, push 8 bytes
     call main_isr
+    FREE  8             ; Pop the SystemV ABI 8-aligned value
 
     mov rsp, rax        ; restore the stack, potentially a context switch
-
-;    FREE  8             ; Pop the SystemV ABI 8-aligned value
 
     POP cr3             ; restore control registers
     POP cr0

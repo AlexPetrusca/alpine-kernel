@@ -68,14 +68,14 @@ void keyboard_isr() {
   pic_eoi(PIC_KEYBOARD_IRQ); // send interrupt OK signal
 }
 
-extern pcs_process _processes[4];
+extern pcs_process _processes[2];
 volatile int p = 0;
 
 uint64_t pit_isr(interrupt_frame* frame) {
   _processes[p].frame = frame;
   p = p == 0 ? 1 : 0;
   pic_eoi(PIC_PIT_IRQ); // send interrupt OK signal
-  return (uint64_t)_processes[p].frame;
+  return (uint64_t) _processes[p].frame;
 }
 
 uint64_t main_isr(interrupt_frame* frame) {
