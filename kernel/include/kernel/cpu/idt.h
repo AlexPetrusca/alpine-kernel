@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <kernel/cpu/isr.h>
 
+#define CODE_SEG     0x0008
+#define DATA_SEG     0x0010
+
 typedef struct {
   uint16_t size;    // The size of the table in bytes subtracted by 1
   uint64_t offset;  // The linear address of the IDT (not the physical address, paging applies)

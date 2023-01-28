@@ -3,7 +3,7 @@ set -e
 . ./iso.sh
 
 if [ "$1" = '-d' ]; then
-  x86_64-elf-objdump -M intel -D build/alpine.kernel > kernel.dump
+  x86_64-elf-objdump -M intel -D kernel/build/alpine.kernel > kernel.dump
   debug=" -D qemu.log -d int"
   echo "Debugging QEMU..."
 else
