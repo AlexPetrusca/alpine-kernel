@@ -30,7 +30,6 @@ void kernel_init(uint64_t kernel_addr) {
   mem_init(mbi->basic_meminfo_tag, mbi->mem_map_tag);
   tty_init(mbi->framebuffer_tag);
   kb_init();
-  pit_init();
   acpi_init(mbi->rsdp_tag);
   assert(apic_init(), "Could not initialize APIC subsystem");
   warn(pci_init(), , "Could not initialize PCI subsystem");
