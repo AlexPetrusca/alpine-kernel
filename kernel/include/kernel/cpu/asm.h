@@ -10,6 +10,7 @@
 // %h1 - any 8 bit register
 
 #define LIDT(idt_desc)    __asm volatile ("lidt %0" : : "m"(idt_desc))
+#define CLI()             __asm volatile ("cli")
 #define STI()             __asm volatile ("sti")
 #define INT(n)            __asm volatile ("int %0" : : "i"(n))
 
@@ -62,7 +63,7 @@ static inline uint64_t ROL(uint64_t value, int i) {
   return value;
 }
 
-static volatile uint64_t rdtsc() {
+static inline uint64_t rdtsc() {
   unsigned int lo, hi;
   __asm volatile ("rdtsc" : "=a" (lo), "=d" (hi));
   return ((uint64_t) hi << 32) | lo;

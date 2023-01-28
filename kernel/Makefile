@@ -29,71 +29,68 @@ ASMFLAGS:=$(ASMFLAGS) $(KERNEL_ASMFLAGS)
 LDFLAGS:=$(LDFLAGS) $(KERNEL_LDFLAGS)
 LIBS:=$(LIBS) $(KERNEL_LIBS)
 
-KERNEL_OBJS=\
-boot/kernel.o \
-boot/boot.o \
-boot/mb2_info.o \
-tty/tty.o \
-tty/vga_ttyd.o \
-tty/vbe_ttyd.o \
-font/psf_font.o \
-font/Default.o \
-font/Fixed13.o \
-font/Fixed14.o \
-font/Fixed15.o \
-font/Fixed16.o \
-font/Fixed18.o \
-font/Terminus12x6.o \
-font/Terminus14.o \
-font/Terminus16.o \
-font/Terminus18x10.o \
-font/Terminus20x10.o \
-font/Terminus22x11.o \
-font/Terminus24x12.o \
-font/Terminus28x14.o \
-font/Terminus32x16.o \
-font/TerminusBold14.o \
-font/TerminusBold16.o \
-font/TerminusBold18x10.o \
-font/TerminusBold20x10.o \
-font/TerminusBold22x11.o \
-font/TerminusBold24x12.o \
-font/TerminusBold28x14.o \
-font/TerminusBold32x16.o \
-font/TerminusBoldVGA14.o \
-font/TerminusBoldVGA16.o \
-shell/sh.o \
-cpu/msr.o \
-cpu/cpu.o \
-cpu/smp.o \
-cpu/trampoline.o \
-cpu/process.o \
-cpu/gdt.o \
-cpu/idt.o \
-cpu/pic.o \
-cpu/isr.o \
-cpu/isr-wrapper.o \
-device/acpi.o \
-device/apic.o \
-device/pci.o \
-device/usb.o \
-device/kb.o \
-device/pit.o \
-mem/mem.o \
-mem/heap.o \
-mem/heap_test.o \
-test/tests.o \
-test/test.o \
-mem/pgm.o \
-mem/pgm_test.o \
-boot/elf.o \
-
 OBJS=\
-boot/crti.o \
-crtbegin.o \
-$(KERNEL_OBJS) \
-crtend.o \
-boot/crtn.o \
+build/crtbegin.o \
+build/crtend.o \
+build/boot/crti.o \
+build/boot/crtn.o \
+build/boot/elf.o \
+build/boot/kernel.o \
+build/boot/boot.o \
+build/boot/mb2_info.o \
+build/tty/tty.o \
+build/tty/vga_ttyd.o \
+build/tty/vbe_ttyd.o \
+build/font/psf_font.o \
+build/font/Default.o \
+build/font/Fixed13.o \
+build/font/Fixed14.o \
+build/font/Fixed15.o \
+build/font/Fixed16.o \
+build/font/Fixed18.o \
+build/font/Terminus12x6.o \
+build/font/Terminus14.o \
+build/font/Terminus16.o \
+build/font/Terminus18x10.o \
+build/font/Terminus20x10.o \
+build/font/Terminus22x11.o \
+build/font/Terminus24x12.o \
+build/font/Terminus28x14.o \
+build/font/Terminus32x16.o \
+build/font/TerminusBold14.o \
+build/font/TerminusBold16.o \
+build/font/TerminusBold18x10.o \
+build/font/TerminusBold20x10.o \
+build/font/TerminusBold22x11.o \
+build/font/TerminusBold24x12.o \
+build/font/TerminusBold28x14.o \
+build/font/TerminusBold32x16.o \
+build/font/TerminusBoldVGA14.o \
+build/font/TerminusBoldVGA16.o \
+build/shell/sh.o \
+build/cpu/msr.o \
+build/cpu/cpu.o \
+build/cpu/smp.o \
+build/cpu/trampoline.o \
+build/cpu/process.o \
+build/cpu/gdt.o \
+build/cpu/idt.o \
+build/cpu/pic.o \
+build/cpu/isr.o \
+build/cpu/isr-wrapper.o \
+build/device/acpi.o \
+build/device/apic.o \
+build/device/pci.o \
+build/device/usb.o \
+build/device/kb.o \
+build/device/pit.o \
+build/mem/mem.o \
+build/mem/heap.o \
+build/mem/heap_test.o \
+build/mem/pgm.o \
+build/mem/pgm_test.o \
+build/test/tests.o \
+build/test/test.o \
 
 LINK_LIST=\
 $(LDFLAGS) \
@@ -103,39 +100,39 @@ $(LIBS) \
 .PHONY: all clean install install-headers install-kernel
 .SUFFIXES: .o .c .S .asm .psf
 
-all: alpine.kernel
+all: build/alpine.kernel
 
-alpine.kernel: $(OBJS) linker.ld
-	@ cd ../build
-	$(CC) -T ../kernel/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
-	grub-file --is-x86-multiboot2 alpine.kernel
+build/alpine.kernel: $(OBJS) linker.ld
+	@ $(CC) -T linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+	@ grub-file --is-x86-multiboot2 build/alpine.kernel
 
-crtbegin.o crtend.o:
-	@ OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" ../build/$@
-
-.c.o:
-	@ cd ../build
+build/crtbegin.o build/crtend.o:
 	@ mkdir -p $(@D);
-	$(CC) -MD -c ../kernel/$< -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS)
+	@ OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
 
-.S.o:
-	@ cd ../build
+build/%.o : %.c
+	@ echo "Compiling "$<"..."
 	@ mkdir -p $(@D);
-	$(CC) -MD -c ../kernel/$< -o $@ $(CFLAGS) $(CPPFLAGS)
+	$(CC) -MD -c $< -o $@ -std=gnu17 $(CFLAGS) $(CPPFLAGS)
 
-.psf.o:
-	@ cd ../build
+build/%.o : %.S
+	@ echo "Compiling "$<"..."
+	@ mkdir -p $(@D);
+	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
+
+build/%.o : %.psf
+	@ echo "Compiling "$<"..."
 	@ mkdir -p $(@D);
 	cp ../kernel/$< $(@D);
 	x86_64-elf-objcopy -O elf64-x86-64 -B i386 -I binary $< $@
 
-.asm.o:
-	@ cd ../build
+build/%.o : %.asm
+	@ echo "Compiling "$<"..."
 	@ mkdir -p $(@D);
-	$(ASM) ../kernel/$< -o $@ $(ASMFLAGS)
+	$(ASM) $< -o $@ $(ASMFLAGS)
 
 clean:
-	@ rm -f build
+	@ rm -f -r build
 	@ rm -f alpine.kernel
 	@ rm -f $(OBJS) *.o */*.o */*/*.o
 	@ rm -f $(OBJS:.o=.d) *.d */*.d */*/*.d
@@ -146,9 +143,8 @@ install-headers:
 	@ mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	@ cp -R -p include/. $(DESTDIR)$(INCLUDEDIR)/.
 
-install-kernel: alpine.kernel
+install-kernel: build/alpine.kernel
 	@ mkdir -p $(DESTDIR)$(BOOTDIR)
-	@ cd ../build;
-	@ cp alpine.kernel $(DESTDIR)$(BOOTDIR)
+	@ cp build/alpine.kernel $(DESTDIR)$(BOOTDIR)
 
 -include $(OBJS:.o=.d)
