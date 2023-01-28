@@ -80,7 +80,7 @@ enter_smp:
     mov rdi, rax                           ; Save the unique id
 
     mov rax, rdi                           ; get the counter
-    shl rax, 4                             ; multiply by 16 to index into the processes
+    imul rax, 24                             ; multiply by 24 to index into the processes
     add rax, _processes                    ; add the base address of the process table
 
     mov rsp, [rax]                         ; read the stack pointer

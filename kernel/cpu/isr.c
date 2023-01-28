@@ -8,6 +8,7 @@
 #include <kernel/cpu/pic.h>
 #include <kernel/mem/pgm.h>
 #include <kernel/tty/tty.h>
+#include <kernel/cpu/process.h>
 
 // todo: keep counts in an array instead
 volatile uint64_t pit_interrupt_count = 0;
@@ -67,22 +68,24 @@ void keyboard_isr() {
   pic_eoi(PIC_KEYBOARD_IRQ); // send interrupt OK signal
 }
 
-void pit_isr() {
-  if (pit_interrupt_count % 10 == 0) {
-    printf("hit! ");
-  }
+extern pcs_process _processes[4];
+volatile int p = 0;
+
+uint64_t pit_isr(interrupt_frame* frame) {
+  _processes[p].frame = frame;
+  p = p == 0 ? 1 : 0;
   pic_eoi(PIC_PIT_IRQ); // send interrupt OK signal
+  return (uint64_t)_processes[p].frame;
 }
 
-void main_isr(interrupt_frame* frame) {
+uint64_t main_isr(interrupt_frame* frame) {
   switch (frame->vector_num) {
+    case PIT_VECTOR:
+      pit_interrupt_count++;
+      return pit_isr(frame);
     case PAGE_FAULT_VECTOR:
       page_fault_interrupt_count++;
       mem_page_fault_handler(frame);
-      break;
-    case PIT_VECTOR:
-      pit_interrupt_count++;
-      pit_isr();
       break;
     case KEYBOARD_VECTOR:
       keyboard_interrupt_count++;
@@ -91,6 +94,7 @@ void main_isr(interrupt_frame* frame) {
     default:
       default_isr(frame);
   }
+  return (uint64_t) frame;
 }
 
 void isr_print_info(__unused int argc, __unused char** argv) {

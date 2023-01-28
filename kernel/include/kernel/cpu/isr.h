@@ -97,7 +97,7 @@ typedef struct {
 } __attribute__((packed)) interrupt_frame;
 static_assert(sizeof(interrupt_frame) == 760, "");
 
-void main_isr(interrupt_frame* frame);
+uint64_t main_isr(interrupt_frame* frame);
 void isr_print_info(int argc, char** argv);
 
 #endif //ALPINE_KERNEL_ISR_H

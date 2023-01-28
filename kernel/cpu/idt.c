@@ -7,9 +7,6 @@
 #include <kernel/cpu/isr.h>
 #include <kernel/cpu/asm.h>
 
-#define CODE_SEG     0x0008
-#define DATA_SEG     0x0010
-
 idt_descriptor idt_desc;
 extern uint16_t idt_size;
 extern idt_entry idt[256];
