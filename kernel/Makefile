@@ -78,6 +78,7 @@ device/apic.o \
 device/pci.o \
 device/usb.o \
 device/kb.o \
+device/pit.o \
 mem/mem.o \
 mem/heap.o \
 mem/heap_test.o \

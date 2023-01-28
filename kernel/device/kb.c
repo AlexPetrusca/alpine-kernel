@@ -40,6 +40,7 @@ volatile circ_buf* kb_event_queue;
 
 void kb_init() {
   kb_event_queue = circ_buf_new(16, 1);
+  pic_enable_irq(PIC_KEYBOARD_IRQ);
   // clear any unprocessed kb event on the PIC
   inb(KB_PS2_DATA);
   pic_eoi(PIC_KEYBOARD_IRQ);

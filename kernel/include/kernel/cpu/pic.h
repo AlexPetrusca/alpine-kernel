@@ -1,6 +1,8 @@
 #ifndef ALPINE_KERNEL_PIC_H
 #define ALPINE_KERNEL_PIC_H
 
+#include <stdint.h>
+
 #define PIC1                0x20    /* IO base address for master PIC */
 #define PIC2                0xA0    /* IO base address for slave PIC */
 #define PIC1_COMMAND        (PIC1)

@@ -9,8 +9,10 @@
 #include <kernel/mem/pgm.h>
 #include <kernel/tty/tty.h>
 
-uint64_t keyboard_interrupt_count = 0;
-uint64_t page_fault_interrupt_count = 0;
+// todo: keep counts in an array instead
+volatile uint64_t pit_interrupt_count = 0;
+volatile uint64_t keyboard_interrupt_count = 0;
+volatile uint64_t page_fault_interrupt_count = 0;
 
 void default_isr(const interrupt_frame* frame) {
   char flags[128];
@@ -65,11 +67,22 @@ void keyboard_isr() {
   pic_eoi(PIC_KEYBOARD_IRQ); // send interrupt OK signal
 }
 
+void pit_isr() {
+  if (pit_interrupt_count % 10 == 0) {
+    printf("hit! ");
+  }
+  pic_eoi(PIC_PIT_IRQ); // send interrupt OK signal
+}
+
 void main_isr(interrupt_frame* frame) {
   switch (frame->vector_num) {
     case PAGE_FAULT_VECTOR:
       page_fault_interrupt_count++;
       mem_page_fault_handler(frame);
+      break;
+    case PIT_VECTOR:
+      pit_interrupt_count++;
+      pit_isr();
       break;
     case KEYBOARD_VECTOR:
       keyboard_interrupt_count++;

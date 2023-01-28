@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <sys/circ_buf.h>
+#include <kernel/cpu/pic.h>
 
 #define Division_Error_VECTOR                           0x00
 #define Debug                                           0x01
@@ -30,7 +31,8 @@
 #define VMM_Communication_Exception                     0x1D
 #define Security_Exception                              0x1E
 
-#define KEYBOARD_VECTOR                                 0x21
+#define PIT_VECTOR                                      (PIC1_START_VECTOR + PIC_PIT_IRQ)
+#define KEYBOARD_VECTOR                                 (PIC1_START_VECTOR + PIC_KEYBOARD_IRQ)
 
 typedef struct {
   uint64_t CF: 1;

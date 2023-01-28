@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 #include <sys/io.h>
 #include <kernel/cpu/pic.h>
 #include <kernel/cpu/asm.h>
@@ -104,7 +102,6 @@ uint16_t pic_get_isr() {
 
 void pic_init() {
   pic_remap(PIC1_START_VECTOR, PIC2_START_VECTOR);
-  pic_enable_irq(PIC_KEYBOARD_IRQ);
   pic_enable_irq(PIC1_SPURIOUS_IRQ);
   pic_enable_irq(PIC2_SPURIOUS_IRQ);
   STI();
