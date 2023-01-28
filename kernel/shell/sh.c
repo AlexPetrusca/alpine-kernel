@@ -24,6 +24,7 @@
 #include <kernel/mem/mem.h>
 #include <kernel/mem/heap.h>
 #include <kernel/boot/elf.h>
+#include <kernel/cpu/process.h>
 
 #define SH_MAX_HISTORY 5
 #define SH_MAX_COMMAND 4096
@@ -32,10 +33,6 @@ typedef struct {
   char* name;
   void (* run)(int argc, char** argv);
 } sh_command;
-
-void div0(int argc, __unused char** argv) {
-  printf("%ld", 100L / (argc - 1));
-}
 
 sh_command sh_commands[] = {
   {"cpu", cpu_print_info},
@@ -59,7 +56,8 @@ sh_command sh_commands[] = {
   {"memdump", mem_memdump},
   {"elf", elf_print_info},
   {"isr", isr_print_info},
-  {"div0", div0},
+  {"ps", pcs_print_processes},
+  {"spin", spin},
   {"", NULL}
 };
 

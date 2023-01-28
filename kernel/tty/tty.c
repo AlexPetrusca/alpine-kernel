@@ -273,6 +273,10 @@ void tty_putchar(char c) {
   tty_putchar_raw(c);
 }
 
+void tty_putchar_xy(uint32_t x, uint32_t y, char c) {
+  ttyd->put_char(x, y, c);
+}
+
 void tty_write(const char* data, size_t size) {
   for (size_t i = 0; i < size; i++) {
     tty_putchar(data[i]);
