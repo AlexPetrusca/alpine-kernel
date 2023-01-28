@@ -85,6 +85,8 @@ typedef struct {
   uint64_t rcx;
   uint64_t rbx;
   uint64_t rax;
+  uint8_t fx[512];              // all FPU/MMX/SSE registers
+  uint64_t available;           // this is the 16-alignment value required by fxsave
   uint64_t vector_num;
   uint64_t error_code;          // error code is pushed first by the CPU, highest address
   uint64_t rip;
@@ -93,7 +95,7 @@ typedef struct {
   uint64_t rsp;
   uint64_t ss;
 } __attribute__((packed)) interrupt_frame;
-static_assert(sizeof(interrupt_frame) == 30 * 8, "");
+static_assert(sizeof(interrupt_frame) == 760, "");
 
 void main_isr(interrupt_frame* frame);
 void isr_print_info(int argc, char** argv);

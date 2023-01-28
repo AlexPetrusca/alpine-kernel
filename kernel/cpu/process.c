@@ -10,7 +10,7 @@ uint64_t _pcs_stack_addr;
 void idle_main() {
   while (true) {
     cpu_delay_s(1);
-//    printf("I am the idle process\n");
+    printf("I am the idle process 1\n");
   }
 }
 
