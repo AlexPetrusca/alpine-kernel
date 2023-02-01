@@ -24,6 +24,7 @@ void tty_set_cursor_pos(uint64_t pos);
 void tty_set_cursor_pos_xy(uint32_t x, uint32_t y);
 
 void tty_putchar(char c);
+void tty_putchar_xy(uint32_t x, uint32_t y, char c);
 void tty_write(const char* data, size_t size);
 void tty_writestring(const char* data);
 void tty_clear();
